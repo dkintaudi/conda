@@ -3204,7 +3204,7 @@ function ooxmlMimeFor(zip) {
     // Sentence-style role fallback: "Roles discussed were IT Sponsor Jane Doe, Project Manager Pat Lee..."
     addMatch("it_sponsor", /\bIT\s+Sponsor\s+([^,.;]+?)(?:,|;|\band\b|$)/i, 1);
     addMatch("project_sponsor", /\b(?:Business\s+Sponsor|ITB\s+Project\s+Sponsor|Project\s+Sponsor)\s+([^,.;]+?)(?:,|;|\band\b|$)/i, 1);
-    var _ROLE_STOP = "Business|ITB|Project|IT|Resource|Sponsor|Manager|Allocation|PM";
+    var _ROLE_STOP = "Business|ITB|Project|IT|Resource|Sponsor|Manager|Allocation|PM|Date|Prepared|Funding|Fiscal|Estimated|Total|Cost|Phase|Status|Scope|Budget";
     var _ROLE_NAME = "((?!(?:"+_ROLE_STOP+")\\b)[A-Z][A-Za-z.'\\-]+(?:\\s+(?!(?:"+_ROLE_STOP+")\\b)[A-Z][A-Za-z.'\\-]+){0,2})";
     function _roleColon(label){ return new RegExp(label+"\\s*:\\s*"+_ROLE_NAME); }
     addMatch("it_sponsor",      _roleColon("Business\\s+Sponsor"), 1);
