@@ -752,7 +752,7 @@ function loopChildFieldSet(tf) {
 //      fills (fill_type: auto / (intake) / (manual)) and from which profiler_field.
 //      The gap report prefers this over the small hardcoded GAP_REASONS fallback, so
 //      adding a row to the workbook is enough for a new field's reason to be correct.
-var PLACEHOLDER_MAP = {};   // bareTag -> { fill_type, profiler_field, description }
+var PLACEHOLDER_MAP = {"project_name":{"fill_type":"auto","profiler_field":"project_name","description":"Project name (Profiler/TRT)."},"project_level":{"fill_type":"auto","profiler_field":"project_level","description":"CA-PMF level (Profiler/TRT)."},"artifact_tier":{"fill_type":"auto","profiler_field":"artifact_tier","description":"SIMM complexity tier (Profiler/TRT)."},"complexity_zone":{"fill_type":"auto","profiler_field":"complexity_zone","description":"SIMM complexity zone (Profiler/TRT)."},"capmf_phase":{"fill_type":"auto","profiler_field":"(intake)","description":"Current CA-PMF phase."},"methodology":{"fill_type":"auto","profiler_field":"methodology","description":"Delivery methodology from the Profiler."},"version_number":{"fill_type":"auto","profiler_field":"export_version","description":"Charter version; bump on revision."},"date_prepared":{"fill_type":"auto","profiler_field":"generated_on","description":"Date prepared (Profiler generated_on)."},"project_manager":{"fill_type":"auto","profiler_field":"pm","description":"Project Manager (TRT pm)."},"project_sponsor":{"fill_type":"auto","profiler_field":"project_sponsor","description":"Project Sponsor (TRT role line)."},"it_sponsor":{"fill_type":"auto","profiler_field":"(manual)","description":"IT Sponsor name."},"est_total_cost":{"fill_type":"auto","profiler_field":"spend","description":"Estimated total cost (Profiler spend band)."},"funding_source":{"fill_type":"auto","profiler_field":"(manual)","description":"Funding source."},"fiscal_years":{"fill_type":"auto","profiler_field":"(manual)","description":"Fiscal year(s)."},"business_problem":{"fill_type":"auto","profiler_field":"business_problem","description":"Business problem (TRT BUSINESS PROBLEM)."},"objectives":{"fill_type":"loop","profiler_field":"","description":"Objectives rows (Profiler Loops)."},"num":{"fill_type":"loop_field","profiler_field":"","description":"Objective number."},"statement":{"fill_type":"loop_field","profiler_field":"","description":"Objective statement."},"measure":{"fill_type":"loop_field","profiler_field":"","description":"Assessment criteria."},"in_scope":{"fill_type":"loop","profiler_field":"","description":"§4 In-Scope items."},"item":{"fill_type":"loop_field","profiler_field":"","description":"Generic loop item (assumptions/constraints/etc.)."},"out_scope":{"fill_type":"loop","profiler_field":"","description":"§4 Out-of-Scope items."},"milestones":{"fill_type":"loop","profiler_field":"","description":"Milestone rows (Profiler Loops / phases)."},"milestone":{"fill_type":"loop_field","profiler_field":"","description":"Milestone name."},"phase":{"fill_type":"loop_field","profiler_field":"","description":"Column \"phase\" within {#milestones}."},"target_date":{"fill_type":"loop_field","profiler_field":"","description":"Target date."},"assumptions":{"fill_type":"loop","profiler_field":"","description":"Assumption rows (Profiler Loops)."},"constraints":{"fill_type":"loop","profiler_field":"","description":"Constraint rows (Profiler Loops)."},"risks":{"fill_type":"loop","profiler_field":"","description":"Risk rows (Profiler Loops or TRT trt_concerns)."},"risk":{"fill_type":"loop_field","profiler_field":"","description":"Risk text."},"response":{"fill_type":"loop_field","profiler_field":"","description":"Response."},"vc_score":{"fill_type":"auto","profiler_field":"vc_score","description":"V-C score (Profiler/TRT)."},"start_date":{"fill_type":"auto","profiler_field":"(manual)","description":"Project start date — PM-entered (no source)."},"finish_date":{"fill_type":"auto","profiler_field":"(manual)","description":"Project finish date — PM-entered (no source)."},"charter_authorization":{"fill_type":"auto","profiler_field":"recommendation","description":"Authorization statement (TRT RECOMMENDATION)."},"strategic_alignment":{"fill_type":"auto","profiler_field":"recommendation","description":"Strategic alignment (TRT RECOMMENDATION)."},"scope_statement":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Scope statement (TRT PROPOSED SOLUTION)."},"scope_summary":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Scope summary (TRT PROPOSED SOLUTION)."},"benefits_summary":{"fill_type":"auto","profiler_field":"benefits","description":"Benefits (TRT BENEFITS)."},"project_approach":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Project approach (TRT PROPOSED SOLUTION)."},"governance_summary":{"fill_type":"auto","profiler_field":"disposition","description":"Governance summary (TRT DISPOSITION)."},"assumptions_summary":{"fill_type":"auto","profiler_field":"data_text","description":"Assumptions narrative — Copilot last resort. — AnswerText (data_text); Copilot only if blank."},"constraints_summary":{"fill_type":"auto","profiler_field":"pal_text","description":"Constraints narrative — Copilot last resort. — AnswerText (pal_text); Copilot only if blank."},"funding_sources":{"fill_type":"auto","profiler_field":"(manual)","description":"Funding source — PM-entered."},"staffing_essentials":{"fill_type":"auto","profiler_field":"pmexp_text","description":"Staffing essentials — Copilot last resort. — AnswerText (pmexp_text); Copilot only if blank."},"technical_information":{"fill_type":"auto","profiler_field":"impacted_systems","description":"Tech info sources (TRT IMPACTED SYSTEMS)."},"sponsor_approval_text":{"fill_type":"auto","profiler_field":"(manual)","description":"Sponsor approval boilerplate — PM-entered."},"sponsor_signature":{"fill_type":"auto","profiler_field":"project_sponsor","description":"Sponsor signature (TRT role)."},"pmp_introduction":{"fill_type":"auto","profiler_field":"recommendation","description":"PMP intro (TRT RECOMMENDATION)."},"subsidiary_intro":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Subsidiary intro (TRT PROPOSED SOLUTION)."},"sp_change_control":{"fill_type":"auto","profiler_field":"method_text","description":"Change control narrative — Copilot last resort. — AnswerText (method_text); Copilot only if blank."},"sp_communications":{"fill_type":"auto","profiler_field":"coord_text","description":"Communications narrative — Copilot last resort. — AnswerText (coord_text); Copilot only if blank."},"sp_contract":{"fill_type":"auto","profiler_field":"referred_to","description":"Contract/vendor mgmt (TRT REFERRED TO)."},"sp_cost":{"fill_type":"auto","profiler_field":"spend","description":"Cost mgmt baseline (Profiler spend)."},"sp_governance":{"fill_type":"auto","profiler_field":"disposition","description":"Governance mgmt (TRT DISPOSITION)."},"sp_implementation":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Implementation (TRT PROPOSED SOLUTION)."},"sp_issue":{"fill_type":"auto","profiler_field":"impact_if_not_done","description":"Issue mgmt context (TRT IMPACT)."},"sp_mo_transition":{"fill_type":"auto","profiler_field":"support_text","description":"M&O transition — Copilot last resort. — AnswerText (support_text); Copilot only if blank."},"sp_procurement":{"fill_type":"auto","profiler_field":"referred_to","description":"Procurement (TRT REFERRED TO)."},"sp_quality":{"fill_type":"auto","profiler_field":"testing_text","description":"Quality mgmt — Copilot last resort. — AnswerText (testing_text); Copilot only if blank."},"sp_requirements":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Requirements mgmt (TRT PROPOSED SOLUTION)."},"sp_resource":{"fill_type":"auto","profiler_field":"vendor_text","description":"Resource mgmt — Copilot last resort. — AnswerText (vendor_text); Copilot only if blank."},"sp_risk":{"fill_type":"auto","profiler_field":"impact_if_not_done","description":"Risk mgmt (TRT IMPACT)."},"sp_schedule":{"fill_type":"auto","profiler_field":"loe_text","description":"Schedule mgmt — Copilot last resort. — AnswerText (loe_text); Copilot only if blank."},"sp_scope":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Scope mgmt (TRT PROPOSED SOLUTION)."},"sp_stakeholder":{"fill_type":"auto","profiler_field":"impact_text","description":"Stakeholder mgmt — Copilot last resort. — AnswerText (impact_text); Copilot only if blank."},"gov_introduction":{"fill_type":"auto","profiler_field":"recommendation","description":"Gov intro (TRT RECOMMENDATION)."},"gov_approach":{"fill_type":"auto","profiler_field":"disposition","description":"Gov approach (TRT DISPOSITION)."},"gov_structure":{"fill_type":"auto","profiler_field":"eddnext_text","description":"Gov structure — Copilot last resort. — AnswerText (eddnext_text); Copilot only if blank."},"gov_processes_intro":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Gov processes (TRT PROPOSED SOLUTION)."},"gov_monitoring":{"fill_type":"auto","profiler_field":"impact_if_not_done","description":"Gov monitoring (TRT IMPACT)."},"roles":{"fill_type":"loop","profiler_field":"","description":"Roles rows (TRT role scalars / hand-entered)."},"budget":{"fill_type":"loop","profiler_field":"","description":"Budget rows (hand-entered / Profiler)."},"stakeholders":{"fill_type":"loop","profiler_field":"","description":"Stakeholder rows (Profiler Loops)."},"dependencies":{"fill_type":"loop","profiler_field":"","description":"Dependency rows (Profiler Loops)."},"bodies":{"fill_type":"loop","profiler_field":"","description":"Governing bodies (hand-entered)."},"decisions":{"fill_type":"loop","profiler_field":"","description":"Decision authority (hand-entered)."},"sc_processes":{"fill_type":"loop","profiler_field":"","description":"Steering Committee processes."},"gov_process_steps":{"fill_type":"loop","profiler_field":"","description":"Gov process steps (TRT trt_discussion)."},"start":{"fill_type":"loop_field","profiler_field":"","description":"Start date (Mini tasks)."},"end":{"fill_type":"loop_field","profiler_field":"","description":"End date (Mini tasks)."},"severity":{"fill_type":"loop_field","profiler_field":"","description":"Severity."},"role":{"fill_type":"loop_field","profiler_field":"","description":"Role name."},"assigned_to":{"fill_type":"loop_field","profiler_field":"","description":"Assigned person."},"responsibility":{"fill_type":"loop_field","profiler_field":"","description":"Responsibility."},"category":{"fill_type":"loop_field","profiler_field":"","description":"Budget category."},"estimate":{"fill_type":"loop_field","profiler_field":"","description":"Budget estimate."},"id":{"fill_type":"loop_field","profiler_field":"","description":"Stakeholder ID."},"stakeholder":{"fill_type":"loop_field","profiler_field":"","description":"Stakeholder name."},"stk_role":{"fill_type":"loop_field","profiler_field":"","description":"Stakeholder role."},"influence":{"fill_type":"loop_field","profiler_field":"","description":"Influence."},"interest":{"fill_type":"loop_field","profiler_field":"","description":"Interest."},"body":{"fill_type":"loop_field","profiler_field":"","description":"Governing body."},"composition":{"fill_type":"loop_field","profiler_field":"","description":"Composition."},"purpose":{"fill_type":"loop_field","profiler_field":"","description":"Purpose."},"decision_type":{"fill_type":"loop_field","profiler_field":"","description":"Decision type."},"authority":{"fill_type":"loop_field","profiler_field":"","description":"Authority."},"project_summary":{"fill_type":"auto","profiler_field":"recommendation","description":"Mini PMP project summary (TRT RECOMMENDATION)."},"subordinate_intro":{"fill_type":"auto","profiler_field":"proposed_solution","description":"Subordinate-plans intro (TRT PROPOSED SOLUTION)."},"communications":{"fill_type":"loop","profiler_field":"","description":"Mini PMP communications rows."},"comm_group":{"fill_type":"loop_field","profiler_field":"","description":"Stakeholder group."},"comm_item":{"fill_type":"loop_field","profiler_field":"","description":"Communication item."},"comm_purpose":{"fill_type":"loop_field","profiler_field":"","description":"Purpose."},"schedule":{"fill_type":"loop","profiler_field":"","description":"Mini PMP schedule rows (Profiler Loops / phases)."},"task":{"fill_type":"loop_field","profiler_field":"","description":"Milestone/task."},"sched_start":{"fill_type":"loop_field","profiler_field":"","description":"Estimated start."},"sched_end":{"fill_type":"loop_field","profiler_field":"","description":"Estimated end."},"sched_actual":{"fill_type":"loop_field","profiler_field":"","description":"Actual date / % complete."},"sched_owner":{"fill_type":"loop_field","profiler_field":"","description":"Owner."},"issues":{"fill_type":"loop","profiler_field":"","description":"Mini PMP issue rows (TRT/CRAID)."},"issue_title":{"fill_type":"loop_field","profiler_field":"","description":"Issue title."},"issue_statement":{"fill_type":"loop_field","profiler_field":"","description":"Issue statement."},"issue_date":{"fill_type":"loop_field","profiler_field":"","description":"Date identified."},"issue_originator":{"fill_type":"loop_field","profiler_field":"","description":"Originator."},"issue_impact":{"fill_type":"loop_field","profiler_field":"","description":"Impact rating."},"issue_resolution":{"fill_type":"loop_field","profiler_field":"","description":"Resolution."},"mini_risks":{"fill_type":"loop","profiler_field":"","description":"Mini PMP risk rows (TRT trt_concerns / CRAID)."},"risk_title":{"fill_type":"loop_field","profiler_field":"","description":"Risk title."},"risk_statement":{"fill_type":"loop_field","profiler_field":"","description":"Risk statement."},"risk_date":{"fill_type":"loop_field","profiler_field":"","description":"Date identified."},"risk_originator":{"fill_type":"loop_field","profiler_field":"","description":"Originator."},"risk_impact":{"fill_type":"loop_field","profiler_field":"","description":"Impact rating."},"risk_mitigation":{"fill_type":"loop_field","profiler_field":"","description":"Mitigation / resolution."},"mo_transition":{"fill_type":"loop","profiler_field":"","description":"Mini PMP M&O transition rows."},"mo_item":{"fill_type":"loop_field","profiler_field":"","description":"M&O transition item."},"mo_yesno":{"fill_type":"loop_field","profiler_field":"","description":"Yes/No."},"mo_mitigation":{"fill_type":"loop_field","profiler_field":"","description":"Mitigation steps if No."}};   // bareTag -> {fill_type,profiler_field,description}. DEFAULT = bundled ESPMO-Template-Map (auto-loaded); a dropped map merges/overrides via loadPlaceholderMap.
 function loadPlaceholderMap(arrayBuffer) {
   try {
     var wb = readWorkbookCompat(arrayBuffer);
@@ -1937,7 +1937,9 @@ function buildGapReport(tf, data, MARK) {
   function nr_emitAnswerText(data) {
     var st = ESPMO_NARRATIVE_RULES.answerText || {};
     Object.keys(st).forEach(function (qid) {
-      var raw = data[qid];
+      // Prefer the raw answer CODE companion ({id}__v) the Profiler now emits; fall back
+      // to the bare field. answerText is keyed by code (waterfall/public/4), not the label.
+      var raw = (data[qid + "__v"] != null && data[qid + "__v"] !== "") ? data[qid + "__v"] : data[qid];
       if (raw == null || raw === "") return;
       var byVal = st[qid] || {};
       var hit = byVal[String(raw).trim()];
@@ -1953,7 +1955,7 @@ function buildGapReport(tf, data, MARK) {
   // resolve a *_text_lc token: lower-cased first char of the seeded *_text.
   function nr_textLc(data, qid) {
     var st = (ESPMO_NARRATIVE_RULES.answerText || {})[qid] || {};
-    var raw = data[qid];
+    var raw = (data[qid + "__v"] != null && data[qid + "__v"] !== "") ? data[qid + "__v"] : data[qid];
     var hit = raw != null ? st[String(raw).trim()] : null;
     return hit && hit.text ? nr_lcFirst(hit.text) : "";
   }
@@ -2463,6 +2465,93 @@ function buildData(profileBuild, templateKey, templateBuf) {
             var val = data[src];
             if (val !== undefined && val !== null && String(val).trim() !== "") data[ph] = val;
           });
+        })();
+        // ---- Governance Management Plan: compose from tier + answer text ----
+        // The governance regime is defined by the tier. Compose the narrative blocks from
+        // the tier's governance model (mirrors the Profiler GOV text) woven with the
+        // answer-text fragments (method_text, phase_text, impact_text, …, already emitted
+        // by applyNarrativeRules), and seed the standard governing bodies / roles /
+        // decisions / processes for the tier. Seeded narrative is [REVIEW]; names stay
+        // human. Never clobbers a value a TRT/source already supplied. Scoped to the
+        // Governance Management Plan template only.
+        (function fillGovernancePlan(){
+          if (!/Governance[_ ]?Management[_ ]?Plan/i.test(String(templateKey || ""))) return;
+          var tier = parseInt(String(data.artifact_tier || data.governance_tier || "2").replace(/[^0-9]/g, ""), 10);
+          if (!(tier >= 1 && tier <= 4)) tier = 2;
+          var R = "[REVIEW] ";
+          var yes = function (v) { return /^\s*yes\b/i.test(String(v == null ? "" : v)); };
+          var J = function () { return Array.prototype.slice.call(arguments).filter(function (s) { return s && String(s).trim(); }).join(" "); };
+          var set = function (tag, val) { if (val && (data[tag] == null || String(data[tag]).trim() === "")) data[tag] = val; };
+          var seedLoop = function (tag, rows) { if (rows && rows.length && (!Array.isArray(data[tag]) || !data[tag].length)) data[tag] = rows; };
+          var GOVTXT = {
+            1: "Light governance: the project manager runs delivery with regular status reporting and the sponsor kept informed — no Steering Committee and no formal gates.",
+            2: "Standard governance: a governance plan with a stakeholder/RACI view, periodic checkpoints, and the sponsor kept in the loop at milestones.",
+            3: "Full-rigor governance: a Project Steering Committee, the sponsor informed at each gate, risk acceptance on the record, and ESPMO/portfolio oversight.",
+            4: "PAL governance: full-rigor Tier-3 oversight plus the CDT Project Approval Lifecycle Stage 1–4 gate package (SIMM §19)."
+          };
+          // --- narrative blocks (tier model + answer-text fragments) ---
+          set("gov_introduction", J(R + "This Governance Management Plan defines how", (data.project_name || "the project"), "will be governed as a Governance Tier " + tier + " effort.", data.method_text, data.phase_text));
+          set("gov_approach", J(R + GOVTXT[tier], data.impact_text, data.coord_text, (yes(data.eddnext) ? data.eddnext_text : ""), (yes(data.pal) ? data.pal_text : "")));
+          set("gov_structure", R + (tier >= 3
+              ? "Oversight is exercised through a Project Steering Committee, the Technical Architecture Review Committee (TARC), and ESPMO/portfolio oversight, with the sponsor informed at each gate. The standard Tier-" + tier + " governing bodies are listed below — confirm membership."
+              : tier === 2
+              ? "Oversight is exercised through periodic sponsor checkpoints and a stakeholder/RACI structure; TARC reviews architecture. Confirm membership below."
+              : "The project manager runs delivery with regular status reporting to the sponsor; no Steering Committee or formal gates."));
+          set("gov_processes_intro", R + "The following governance processes apply at Governance Tier " + tier + ":");
+          set("gov_monitoring", R + (tier >= 3
+              ? "Progress is monitored through regular status reporting, Steering Committee checkpoints, risk acceptance on the record, and ESPMO/portfolio oversight reporting."
+              : tier === 2
+              ? "Progress is monitored through regular status reporting and milestone checkpoints with the sponsor."
+              : "Progress is monitored through regular status reporting to the sponsor."));
+          // --- governing bodies ---
+          seedLoop("bodies", tier >= 3 ? [
+            { body: "Project Steering Committee", composition: "Project Sponsor, IT Sponsor, key stakeholders", purpose: "Strategic direction, gate decisions, risk acceptance, and escalation" },
+            { body: "TARC (Technical Architecture Review Committee)", composition: "Architecture, Security, Infrastructure, Procurement (TGD)", purpose: "Technical and architecture review before work proceeds" },
+            { body: "ESPMO / Portfolio Oversight", composition: "ESPMO", purpose: "Portfolio-level oversight and reporting" }
+          ] : tier === 2 ? [
+            { body: "Sponsor Checkpoints", composition: "Project Sponsor, Project Manager", purpose: "Periodic milestone review and direction" },
+            { body: "TARC", composition: "Architecture / Security reviewers", purpose: "Architecture review" }
+          ] : [
+            { body: "Sponsor Updates", composition: "Project Sponsor, Project Manager", purpose: "Regular status and direction" }
+          ]);
+          // --- roles (names stay human) — only if synthesizeRolesLoop found none ---
+          var roles = [
+            { role: "Project Sponsor", assigned_to: (data.project_sponsor || data.business_sponsor || "[PM TO COMPLETE]"), responsibility: "Provides sponsorship, approval direction, and escalation support." },
+            { role: "IT Sponsor", assigned_to: (data.it_sponsor || "[PM TO COMPLETE]"), responsibility: "Provides technology sponsorship and removes IT delivery barriers." },
+            { role: "Project Manager", assigned_to: (data.project_manager || data.pm || "[PM TO COMPLETE]"), responsibility: "Coordinates planning, delivery tracking, status reporting, and issue follow-up." }
+          ];
+          if (tier >= 3) roles.push({ role: "Project Steering Committee", assigned_to: "[PM TO COMPLETE]", responsibility: "Gate decisions, risk acceptance, and strategic direction." });
+          seedLoop("roles", roles);
+          // --- decision-making authority ---
+          seedLoop("decisions", tier >= 3 ? [
+            { decision_type: "Scope / baseline changes", authority: "Project Steering Committee" },
+            { decision_type: "Budget / schedule changes beyond tolerance", authority: "Steering Committee / Sponsor" },
+            { decision_type: "Risk acceptance", authority: "Project Steering Committee" },
+            { decision_type: "Technical / architecture decisions", authority: "TARC" },
+            { decision_type: "Gate approvals", authority: "Sponsor (informed) / Steering Committee" }
+          ] : [
+            { decision_type: "Scope / schedule / budget changes", authority: "Project Sponsor" },
+            { decision_type: "Day-to-day delivery decisions", authority: "Project Manager" }
+          ]);
+          // --- steering-committee processes + governance process steps ---
+          if (tier >= 3) {
+            seedLoop("sc_processes", [
+              { item: "Steering Committee convenes at each gate and at scheduled checkpoints" },
+              { item: "Status, risks, and issues are reviewed; decisions and risk acceptances are recorded" },
+              { item: "Escalations are resolved or routed to the sponsor" }
+            ]);
+            seedLoop("gov_process_steps", [
+              { item: "PM prepares the gate review package" },
+              { item: "TARC performs the technical / architecture review" },
+              { item: "Steering Committee makes the gate decision and records risk acceptance" },
+              { item: "ESPMO / portfolio oversight reporting is updated" }
+            ]);
+          } else {
+            seedLoop("gov_process_steps", [
+              { item: "PM prepares a milestone / status update" },
+              { item: "Sponsor reviews and provides direction" }
+            ]);
+          }
         })();
         // ---- Visible-gap pass: any charter slot that did not fill gets a [PM TO COMPLETE]
         //      marker so a generated charter self-documents what still needs a human. Only

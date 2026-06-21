@@ -2177,6 +2177,7 @@ function saveAsExcel(){
           if(opt) label = opt.l;
         }
         fieldRows.push([q.id, String(label)]);              // stable semantic tag (author with THIS)
+        fieldRows.push([q.id+"__v", String(v)]);            // raw answer CODE companion (the narrative engine keys on codes, not labels)
         if(Q_NUM_F[q.id]) fieldRows.push([Q_NUM_F[q.id], String(label)]); // positional crutch (same value)
       });
     }
