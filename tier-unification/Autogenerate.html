@@ -2409,10 +2409,10 @@ function buildData(profileBuild, templateKey, templateBuf) {
         (function synthesizeRolesLoop(){
           function respFor(label) {
             label = String(label || "").toLowerCase();
+            if (/it sponsor|technology sponsor/.test(label))   // specific before the broad "sponsor"
+              return "Provides technology sponsorship and removes IT delivery barriers.";
             if (/project sponsor|business sponsor|sponsor/.test(label))
               return "Provides sponsorship, approval direction, and escalation support.";
-            if (/it sponsor|technology sponsor/.test(label))
-              return "Provides technology sponsorship and removes IT delivery barriers.";
             if (/project manager|pm/.test(label))
               return "Coordinates planning, delivery tracking, status reporting, and issue follow-up.";
             if (/it lead|technical lead|tech lead/.test(label))
