@@ -2273,10 +2273,16 @@ function buildData(profileBuild, templateKey, templateBuf) {
         // deterministic per objectiveMeasureRule. Out of Scope is NEVER inferred — it
         // is filled only when a source explicitly lists it (exclusions are a human call).
         (function () {
+          // The template's scope cells use an INLINE loop ({#in_scope}{item}{/in_scope}),
+          // so items would otherwise concatenate. linebreaks:true is on, so we give each
+          // item a leading newline (after the first) + a bullet, rendering one per line.
+          var asLines = function (arr, prefix) {
+            return arr.map(function (s, i) { return { item: (i ? "\n" : "") + "• " + (prefix || "") + s }; });
+          };
           var explicitIn = trtLoopItems("in_scope");
           if (explicitIn.length) {
             if (!Array.isArray(data.in_scope) || !data.in_scope.length)
-              data.in_scope = explicitIn.map(function (s) { return { item: s }; });
+              data.in_scope = asLines(explicitIn, "");
           } else if (!Array.isArray(data.in_scope) || !data.in_scope.length) {
             var yes = function (v) { return /^\s*yes\b/i.test(String(v == null ? "" : v)); };
             var sec = String(data.sec == null ? "" : data.sec);
@@ -2290,11 +2296,11 @@ function buildData(profileBuild, templateKey, templateBuf) {
             if (yes(data.data)) draft.push("Implement privacy and data-protection controls for sensitive data");
             if (/many|critical/i.test(deps)) draft.push("Integrate with the dependent systems, interfaces, or shared data");
             if (/vendor|contractor/i.test(vendor) && !/^\s*no\b/i.test(vendor)) draft.push("Manage vendor / contractor-delivered scope (SOW and acceptance)");
-            if (draft.length) data.in_scope = draft.map(function (s) { return { item: "[REVIEW] " + s }; });
+            if (draft.length) data.in_scope = asLines(draft, "[REVIEW] ");
           }
           var explicitOut = trtLoopItems("out_scope");   // explicit only — exclusions are never inferred
           if (explicitOut.length && (!Array.isArray(data.out_scope) || !data.out_scope.length))
-            data.out_scope = explicitOut.map(function (s) { return { item: s }; });
+            data.out_scope = asLines(explicitOut, "");
         })();
         function pushUnique(rows, row, key) {
           key = key || "item";
