@@ -1101,6 +1101,14 @@ function buildGapReport(tf, data, MARK) {
       }
       return "";
     };
+    // PRIMARY signal: the Profiler's unified governance tier (authoritative — it already
+    // applied the corner/EDD-Next/PAL rules). Tier 1 = Mini band; Tier 2+ = Full. This keeps
+    // Autogenerate's band filters in lock-step with the tier the Profiler actually emitted,
+    // so an EDD-Next/PAL project that is Tier 3 by force (but low value/complexity) is treated
+    // as Full here too. Falls back to value/complexity only for older exports lacking it.
+    var gtRaw = get("governance_tier") || get("artifact_tier");
+    if (gtRaw !== "" && !isNaN(parseFloat(gtRaw))) return { known: true, full: parseFloat(gtRaw) >= 2 };
+
     var VALUE_HIGH = 60;     // value_score >= 60 is "high value" (aligned to the T1->T2 cut)
     var CX_AVG_HIGH = 2.5;   // complexity_avg >= 2.5 is "high complexity" (SIMM zone threshold)
 
