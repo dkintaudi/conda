@@ -2585,6 +2585,38 @@ function buildData(profileBuild, templateKey, templateBuf) {
             if (hasText(b)) data.benefits_summary = b;
           }
         })();
+        // ---- Mini PMP operational tables: seed usable rows so the plan is not a wall of
+        // blank markers. Real signal where it exists (summary from TRT/business problem,
+        // schedule from the CA-PMF phases, owner from the PM); standard [REVIEW] starter
+        // rows for the operational tables. Every cell carries content or "TBD" so it reads
+        // as an intentional draft rather than a missing field. ----
+        (function fillMiniPmp(){
+          if (!/Management_Plan_Mini/i.test(String(templateKey || ""))) return;
+          var owner = firstText(data.project_manager, data.pm) || "[PM TO COMPLETE]";
+          if (!hasText(data.project_summary)) {
+            var ps = firstText(data.recommendation, data.business_problem, data.proposed_solution);
+            if (hasText(ps)) data.project_summary = ps;
+          }
+          var seed = function (tag, rows) { if (!Array.isArray(data[tag]) || !data[tag].length) data[tag] = rows; };
+          seed("schedule", ["Concept", "Initiate", "Plan", "Execute", "Close"].map(function (ph) {
+            return { task: "[REVIEW] " + ph + " phase complete", sched_start: "TBD", sched_end: "TBD", sched_actual: "TBD", sched_owner: owner };
+          }));
+          seed("communications", [
+            { comm_group: "Project Sponsor", comm_item: "[REVIEW] Status update", comm_purpose: "Decisions, risks, and escalations" },
+            { comm_group: "Project Team", comm_item: "[REVIEW] Working check-in", comm_purpose: "Coordination and progress" },
+            { comm_group: "Stakeholders", comm_item: "[REVIEW] Milestone updates", comm_purpose: "Awareness and input" }
+          ]);
+          seed("mini_risks", [
+            { risk_title: "[REVIEW] See CRAID Log", risk_statement: "Key risks are summarized here; the full register lives in the CRAID Log.", risk_date: "TBD", risk_originator: owner, risk_impact: "TBD", risk_mitigation: "TBD" }
+          ]);
+          seed("issues", [
+            { issue_title: "[REVIEW] None at planning", issue_statement: "No issues identified at planning; new issues are tracked in the CRAID Log.", issue_date: "TBD", issue_originator: owner, issue_impact: "TBD", issue_resolution: "TBD" }
+          ]);
+          seed("mo_transition", [
+            { mo_item: "[REVIEW] Support & M&O model defined", mo_yesno: "TBD", mo_mitigation: "TBD" },
+            { mo_item: "[REVIEW] Operational readiness confirmed", mo_yesno: "TBD", mo_mitigation: "TBD" }
+          ]);
+        })();
         // ---- Visible-gap pass: any charter slot that did not fill gets a [PM TO COMPLETE]
         //      marker so a generated charter self-documents what still needs a human. Only
         //      applied to known charter fields, and only when the template actually uses them. ----
