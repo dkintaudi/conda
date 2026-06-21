@@ -2451,6 +2451,14 @@ function buildData(profileBuild, templateKey, templateBuf) {
           addRole("IT Lead", data.it_lead);
           addRole("Business Owner", data.business_owner);
           addRole("System Owner", data.system_owner);
+          // If no one was named (no TRT), still SEED the core governance roles with their
+          // responsibilities filled in — only the Assigned-To name stays for a human/TRT.
+          // That turns a blank [PM TO COMPLETE] marker row into a usable, named-role table.
+          if (!rows.length) {
+            rows.push({ role: "Project Sponsor", assigned_to: "", responsibility: respFor("Project Sponsor") });
+            rows.push({ role: "IT Sponsor",      assigned_to: "", responsibility: respFor("IT Sponsor") });
+            rows.push({ role: "Project Manager", assigned_to: "", responsibility: respFor("Project Manager") });
+          }
           if (rows.length) data.roles = rows;
         })();
         // ---- Map-driven fill: use ESPMO-Template-Map.xlsx as a TRANSLATION TABLE. ----
@@ -2559,6 +2567,22 @@ function buildData(profileBuild, templateKey, templateBuf) {
               { item: "PM prepares a milestone / status update" },
               { item: "Sponsor reviews and provides direction" }
             ]);
+          }
+        })();
+        // ---- Narrative fallback: fill scope/benefits summaries from the best available
+        // source (TRT first via the map/name-match, then Profiler/answer-text), so the Mini
+        // charter is not left blank when there is no TRT. Marked [REVIEW] when derived.
+        (function narrativeFallback(){
+          var inScopeTxt = (Array.isArray(data.in_scope) && data.in_scope.length)
+            ? data.in_scope.map(function(r){ return String(r.item||"").replace(/^[•\s]*(\[REVIEW\]\s*)?/,"").trim(); }).filter(Boolean).join("; ")
+            : "";
+          if (!hasText(data.scope_summary)) {
+            var s = firstText(data.proposed_solution, data.scope_statement, inScopeTxt ? ("[REVIEW] In scope: " + inScopeTxt + ".") : "");
+            if (hasText(s)) data.scope_summary = s;
+          }
+          if (!hasText(data.benefits_summary)) {
+            var b = firstText(data.benefits, data.benefit_text, data.impact_text);
+            if (hasText(b)) data.benefits_summary = b;
           }
         })();
         // ---- Visible-gap pass: any charter slot that did not fill gets a [PM TO COMPLETE]
@@ -3281,7 +3305,9 @@ function ooxmlMimeFor(zip) {
       ["funding_source", ["Funding Source", "Funding", "Fund Source", "Source of Funds", "Funding Type"]],
       ["date_prepared",  ["Date Prepared", "Prepared Date", "Prepared On", "Date"]],
       ["fiscal_years",   ["Fiscal Years", "Fiscal Year", "FY"]],
-      ["est_total_cost", ["Estimated Total Cost", "Total Cost", "Estimated Cost", "ROM Cost", "Cost Estimate"]]
+      ["est_total_cost", ["Estimated Total Cost", "Total Cost", "Estimated Cost", "ROM Cost", "Cost Estimate"]],
+      ["start_date",     ["Start Date", "Project Start", "Planned Start", "Target Start", "Kickoff", "Kick-off"]],
+      ["finish_date",    ["Finish Date", "End Date", "Target Completion", "Planned Finish", "Go-Live", "Go Live", "Completion Date"]]
     ];
     fieldSpecs.forEach(function (spec) {
       var tag = spec[0], labels = spec[1];
