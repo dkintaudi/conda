@@ -2617,6 +2617,81 @@ function buildData(profileBuild, templateKey, templateBuf) {
             { mo_item: "[REVIEW] Operational readiness confirmed", mo_yesno: "TBD", mo_mitigation: "TBD" }
           ]);
         })();
+        // ---- Full Charter: seed the Tier-2+ narrative slots and loops so the Full
+        // charter reaches the same "usable first draft" bar as the Mini. Prefer real
+        // signal (TRT recommendation/disposition, Profiler/answer-text), else a
+        // [REVIEW] starter; names stay human. Never clobbers a value already supplied.
+        // Scoped to the Full Charter template only. ----
+        (function fillFullCharter(){
+          if (!/Project_Charter_Full/i.test(String(templateKey || ""))) return;
+          var R = "[REVIEW] ";
+          var name = firstText(data.project_name) || "this project";
+          var set = function (tag, val) { if (hasText(val) && !hasText(data[tag])) data[tag] = val; };
+          set("charter_authorization", firstText(data.recommendation, data.charter_authorization)
+              || (R + "This charter authorizes " + name + " to proceed into planning based on the documented business need. Confirm the authorizing decision and approver."));
+          set("strategic_alignment", firstText(data.strategic_alignment, data.benefits_summary, data.benefit_text, data.recommendation)
+              || (R + "Describe how " + name + " aligns with department strategic goals and the enterprise IT roadmap."));
+          set("funding_sources", firstText(data.funding_sources, data.funding_source)
+              || (R + "Identify the funding source(s) and fiscal year(s) for " + name + "."));
+          set("governance_summary", firstText(data.governance_summary, data.disposition)
+              || (R + "Governance follows the assigned governance tier; see the Project Governance Plan for governing bodies, gates, and decision authority."));
+          set("staffing_essentials", firstText(data.staffing_essentials)
+              || (R + "Identify the core team roles and any specialized skills required for delivery."));
+          set("technical_information", firstText(data.technical_information, data.proposed_solution, data.technical_text)
+              || (R + "Summarize the technical approach, impacted systems, and integration points."));
+          set("project_approach", firstText(data.project_approach, data.method_text, data.proposed_solution)
+              || (R + "Describe the delivery approach (methodology, phasing, and major workstreams)."));
+          set("sponsor_approval_text", R + "By approving this charter, the Project Sponsor authorizes the project to proceed into planning and commits the sponsorship and resources described herein.");
+          set("sponsor_signature", firstText(data.project_sponsor, data.business_sponsor) || "[PM TO COMPLETE]");
+          var seedItems = function (tag, items) {
+            if (Array.isArray(data[tag]) && data[tag].length) return;
+            data[tag] = items.map(function (t) { return { item: t }; });
+          };
+          seedItems("assumptions", [
+            R + "TRT disposition, scope, and planning information remain valid for charter development.",
+            R + "Required staff and funding will be available as planned."
+          ]);
+          seedItems("constraints", [
+            R + "Delivery is constrained by the approved scope, schedule, and budget.",
+            R + "Work must comply with applicable security, privacy, and procurement requirements."
+          ]);
+          seedItems("dependencies", [
+            R + "Delivery depends on stakeholder availability and timely decisions.",
+            R + "Technical dependencies (integrations, environments, access) must be coordinated with the responsible teams."
+          ]);
+          if (Array.isArray(data.stakeholders) && data.stakeholders.length) {
+            data.stakeholders.forEach(function (r) {
+              r = r || {};
+              if (!hasText(r.influence)) r.influence = "[REVIEW]";
+              if (!hasText(r.interest)) r.interest = "[REVIEW]";
+            });
+          } else {
+            data.stakeholders = [
+              { id: "1", stakeholder: firstText(data.project_sponsor, data.business_sponsor) || "[PM TO COMPLETE]", stk_role: "Project Sponsor", influence: "High", interest: "High" },
+              { id: "2", stakeholder: firstText(data.it_sponsor) || "[PM TO COMPLETE]", stk_role: "IT Sponsor", influence: "High", interest: "High" },
+              { id: "3", stakeholder: firstText(data.project_manager, data.pm) || "[PM TO COMPLETE]", stk_role: "Project Manager", influence: "Medium", interest: "High" }
+            ];
+          }
+        })();
+        // ---- Full PMP: seed the Introduction and the subsidiary-plan narrative slots
+        // that have no direct Profiler/TRT source (contract, governance, procurement),
+        // so the Full PMP draft is complete. Real signal first, else a [REVIEW] starter.
+        // Scoped to the Full PMP template only (not the Mini). ----
+        (function fillFullPmp(){
+          var key = String(templateKey || "");
+          if (!/Project_Management_Plan/i.test(key) || /Mini/i.test(key)) return;
+          var R = "[REVIEW] ";
+          var name = firstText(data.project_name) || "this project";
+          var set = function (tag, val) { if (hasText(val) && !hasText(data[tag])) data[tag] = val; };
+          set("pmp_introduction", firstText(data.recommendation, data.business_problem, data.proposed_solution)
+              || (R + "This Project Management Plan describes how " + name + " will be planned, executed, monitored, and closed, and how the subsidiary plans below are applied."));
+          set("sp_governance", firstText(data.disposition, data.governance_summary)
+              || (R + "Governance follows the assigned governance tier; see the Project Governance Plan for governing bodies, gates, and decision authority."));
+          set("sp_contract", firstText(data.referred_to)
+              || (R + "No contract/vendor management is anticipated unless procurement is identified; if vendors are engaged, manage contracts per department procurement policy."));
+          set("sp_procurement", firstText(data.referred_to)
+              || (R + "No procurement is anticipated; if goods or services are required, follow department and statewide procurement processes."));
+        })();
         // ---- Visible-gap pass: any charter slot that did not fill gets a [PM TO COMPLETE]
         //      marker so a generated charter self-documents what still needs a human. Only
         //      applied to known charter fields, and only when the template actually uses them. ----
