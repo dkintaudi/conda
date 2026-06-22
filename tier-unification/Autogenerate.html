@@ -1594,15 +1594,15 @@ function buildGapReport(tf, data, MARK) {
       },
       "2": {
         "tag": "coord_text",
-        "text": "Delivery requires coordination across a few teams or units."
+        "text": "Delivery requires coordination across a few teams or units (2–4)."
       },
       "3": {
         "tag": "coord_text",
-        "text": "Delivery requires coordination across several teams or divisions."
+        "text": "Delivery requires coordination across several teams or divisions (5–9)."
       },
       "4": {
         "tag": "coord_text",
-        "text": "Delivery requires coordination across many groups spanning organizational lines."
+        "text": "Delivery requires coordination across many groups spanning organizational lines (10+)."
       }
     },
     "vendor": {
@@ -1614,9 +1614,17 @@ function buildGapReport(tf, data, MARK) {
         "tag": "vendor_text",
         "text": "One vendor or contractor is responsible for part or all of delivery."
       },
+      "few": {
+        "tag": "vendor_text",
+        "text": "A few vendors or contractors (2–4) are responsible for part or all of delivery."
+      },
+      "sev": {
+        "tag": "vendor_text",
+        "text": "Several vendors or contractors (5–9) are responsible for delivery."
+      },
       "mlt": {
         "tag": "vendor_text",
-        "text": "Multiple vendors or contractors are responsible for delivery."
+        "text": "Many vendors or contractors (10+) are responsible for delivery."
       },
       "ns": {
         "tag": "vendor_text",
@@ -1630,11 +1638,15 @@ function buildGapReport(tf, data, MARK) {
       },
       "f": {
         "tag": "deps_text",
-        "text": "The project has a few dependencies on other systems, integrations, or shared data."
+        "text": "The project has a few dependencies (2–4) on other systems, integrations, or shared data."
+      },
+      "sev": {
+        "tag": "deps_text",
+        "text": "The project has several dependencies (5–9) on other systems, integrations, or shared data."
       },
       "m": {
         "tag": "deps_text",
-        "text": "The project has many or critical dependencies on other systems, integrations, or shared data."
+        "text": "The project has many or critical dependencies (10+) on other systems, integrations, or shared data."
       },
       "ns": {
         "tag": "deps_text",
