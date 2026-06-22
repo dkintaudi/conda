@@ -4530,51 +4530,54 @@ function jiraCsv(snap, docType){
   return csvTable(headers, rows);
 }
 
-// ---- Related-projects coding worksheet (HUMAN-CODED, never auto-linked) ----
+// ---- Related-projects coding worksheets (HUMAN-CODED, never auto-linked) ----
 // The PM lists related projects as free text in the questionnaire. That text is NOT
-// turned into Jira links here — instead this worksheet hands each entry to a Jira-literate
-// reviewer who looks it up, fills the real Resolved Jira Key, and codes the Relationship
-// (self / child / parent / related / depends / blocks). Every row carries a STABLE Link
-// External ID so the reviewer can re-code and re-import later without creating duplicates
-// or breaking existing links. The recommended Jira target field is suggested per row.
-//   relatedRows = [{ name, rel, note }]  (rel = the PM's stated intent; the reviewer confirms)
-function jiraLinksWorksheetCsv(snap, relatedRows){
-  var src = snap.project.name, pid = snap.profileId;
-  // PM intent -> a starting Coded Relationship + the Jira field that carries it.
-  var MAP = {
-    parent:  { coded:'parent',  field:'Parent field (this Epic’s Parent = Resolved Key)' },
-    child:   { coded:'child',   field:'Parent field (Resolved Key’s Parent = this Epic)' },
-    related: { coded:'related', field:'Issue link: relates to' },
-    depends: { coded:'depends', field:'Issue link: is blocked by / depends on' },
-    blocks:  { coded:'blocks',  field:'Issue link: blocks' },
-    unsure:  { coded:'',        field:'(reviewer decides)' },
-    '':      { coded:'',        field:'(reviewer decides)' }
-  };
+// turned into Jira links here. Instead we hand a Jira-literate reviewer turnkey, split
+// worksheets to resolve keys + code relationships, then import:
+//   • parent worksheet — parent/child rows, columns map straight to Issue Key + Parent.
+//   • links  worksheet — related/depends/blocks rows, as issue links.
+// Each worksheet has a one-line INSTRUCTIONS header row (delete before import) spelling
+// out the column mapping, and every row carries a STABLE Link External ID so the reviewer
+// can re-code (promote/demote) and re-import without creating duplicates or breaking links.
+//   relatedRows = [{ name, rel, note }]   (rel = the PM's stated intent; reviewer confirms)
+function jiraLinkWorksheets(snap, relatedRows){
+  var pid = snap.profileId;
+  function line(a){ return a.map(csvCell).join(','); }
+  function build(instr, head, rows){
+    return '﻿' + [line([instr]), line(head)].concat(rows.map(line)).join('\r\n') + '\r\n';
+  }
   var REL_LABEL = { parent:'Parent of my project', child:'Child of my project', related:'Related',
                     depends:'My project depends on it', blocks:'My project blocks it', unsure:'Not sure', '':'' };
-  var headers = [
-    'Link External ID','Source Project','Source Profile ID','Source Jira Key (reviewer fills)',
-    'Related (PM entered)','PM Relationship','PM Note',
-    'Resolved Jira Key (reviewer fills)','Coded Relationship (self/child/parent/related/depends/blocks)',
-    'Recommended Jira Field','Status'
-  ];
-  var rows = (relatedRows||[]).filter(function(r){ return r && String(r.name||'').trim(); })
+  var LINK_TYPE = { related:'relates to', depends:'is blocked by', blocks:'blocks', unsure:'', '':'' };
+
+  var items = (relatedRows||[]).filter(function(r){ return r && String(r.name||'').trim(); })
     .map(function(r, i){
-      var rel = String(r.rel||'').trim().toLowerCase();
-      var m = MAP[rel] || MAP[''];
-      return [
-        pid + '-LNK-' + (i+1),               // stable, re-runnable dedupe key
-        src, pid, '',                        // source Jira key blank for the reviewer
-        String(r.name||'').trim(),           // the raw PM text (the "slop")
-        REL_LABEL[rel] || rel,               // PM's stated intent (human-readable)
-        String(r.note||'').trim(),
-        '',                                  // Resolved Jira Key — reviewer fills
-        m.coded,                             // Coded Relationship — seeded from intent, reviewer confirms
-        m.field,                             // recommended Jira field
-        ''                                   // Status
-      ];
+      return { extId: pid + '-LNK-' + (i+1), name: String(r.name||'').trim(),
+               rel: String(r.rel||'').trim().toLowerCase(), note: String(r.note||'').trim() };
     });
-  return csvTable(headers, rows);
+  var parentItems = items.filter(function(it){ return it.rel==='parent' || it.rel==='child'; });
+  // related / depends / blocks / unsure default to the (safer, non-parenting) links sheet.
+  var linkItems   = items.filter(function(it){ return !(it.rel==='parent' || it.rel==='child'); });
+
+  var INSTR_PARENT = 'INSTRUCTIONS (delete this row before import): resolve keys, then map "Issue Key"->Issue Key and "Parent"->Parent. '
+    + 'For "parent" rows put THIS project’s key in Issue Key and the related project’s key in Parent; for "child" rows reverse them. '
+    + 'Re-importing with Issue Key set UPDATES in place; clear Parent to make a project standalone (self). '
+    + 'Changing hierarchy LEVEL (Epic<->Initiative) must be done via Jira Move, not CSV.';
+  var INSTR_LINKS = 'INSTRUCTIONS (delete this row before import): resolve keys, then map "Issue Key"->Issue Key (THIS project’s key) '
+    + 'and add each as an issue link using "Link Type" + "Linked Issue Key" (relates to / blocks / is blocked by). '
+    + 'Re-importing updates links idempotently when Issue Key is set.';
+
+  var pHead = ['Issue Key','Parent','Coded Relationship','Related (PM entered)','PM Relationship','PM Note','Link External ID'];
+  var lHead = ['Issue Key','Link Type','Linked Issue Key','Related (PM entered)','PM Relationship','PM Note','Link External ID'];
+  var pRows = parentItems.map(function(it){ return ['', '', it.rel, it.name, REL_LABEL[it.rel]||it.rel, it.note, it.extId]; });
+  var lRows = linkItems.map(function(it){ return ['', (LINK_TYPE[it.rel]||''), '', it.name, REL_LABEL[it.rel]||it.rel||'', it.note, it.extId]; });
+
+  return {
+    parentCsv: parentItems.length ? build(INSTR_PARENT, pHead, pRows) : '',
+    linkCsv:   linkItems.length   ? build(INSTR_LINKS,  lHead, lRows) : '',
+    hasParent: parentItems.length > 0,
+    hasLinks:  linkItems.length > 0
+  };
 }
 // Epic Link references the Epic Name string. (If you switch to keyed epics later,
 // this is the one spot to swap in the issue key.)
@@ -4623,7 +4626,7 @@ function jiraJson(snap){
 global.ProfilerJira = {
   jiraCsv: jiraCsv,
   jiraJson: jiraJson,
-  jiraLinksWorksheetCsv: jiraLinksWorksheetCsv,
+  jiraLinkWorksheets: jiraLinkWorksheets,
   epicDescription: epicDescription,
   jiraLabels: jiraLabels
 };
@@ -4876,7 +4879,9 @@ global.ProfilerAlign = { alignCsv: alignCsv, epicExtId: epicExtId, featExtId: fe
       // keys + code relationships (re-runnable via stable Link External IDs).
       var relRows = (typeof state!=='undefined' && Array.isArray(state.__related)) ? state.__related : [];
       if(relRows.some(function(r){ return r && String(r.name||'').trim(); })){
-        dl(base+'_jira_links_TOCODE.csv', PJ.jiraLinksWorksheetCsv(snap, relRows), 'text/csv');
+        var ws = PJ.jiraLinkWorksheets(snap, relRows);
+        if(ws.hasParent) dl(base+'_jira_parent_TOCODE.csv', ws.parentCsv, 'text/csv');
+        if(ws.hasLinks)  dl(base+'_jira_links_TOCODE.csv',  ws.linkCsv,  'text/csv');
       }
     }
   }
