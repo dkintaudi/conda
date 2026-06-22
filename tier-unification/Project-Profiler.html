@@ -4426,29 +4426,64 @@ function jiraLabels(snap){
 // Per-document issue type is configurable (JIRA_DOC_ISSUETYPE / docType arg).
 // The score columns ride along only on the Epic row (documents leave them blank);
 // map them to numeric custom fields, or leave unmapped, at import.
-function jiraCsv(snap, docType){
+// opts (all optional) carry the project's place in the Jira hierarchy, keyed by Jira
+// issue key (the user's chosen identifier — no Profile-ID/name mapping needed at import):
+//   opts.parentKey    : if THIS project is a CHILD of a larger effort, the parent's
+//                       Jira key (e.g. "EDD-1234"). Emitted in a "Parent" column on the
+//                       Epic row so the importer files this project under that parent.
+//                       Blank = top-level / standalone (current default behavior).
+//   opts.dependsOn    : [{ key, type }] cross-project dependencies. type 'blocks' means
+//                       THIS project blocks key; anything else means it depends on key.
+//                       Each becomes its own issue-link column ("Depends On" / "Blocks")
+//                       holding the target key — map it as an issue link at import.
+// Hierarchy + dependencies are ALSO written into the Epic Description (import-safe even
+// if the Parent/link columns are left unmapped). Document rows are unaffected.
+function jiraCsv(snap, docType, opts){
+  opts = opts || {};
   var s = snap.scores, g = snap.governance;
   var DT = docType || JIRA_DOC_ISSUETYPE;
   var epicName = snap.project.name;          // the link key shared by Epic + its documents
+  var parentKey = String(opts.parentKey == null ? '' : opts.parentKey).trim();
+  var deps = (Array.isArray(opts.dependsOn) ? opts.dependsOn : [])
+    .map(function(d){ return { key:String(d&&d.key||'').trim(), type:(String(d&&d.type||'').toLowerCase()==='blocks'?'blocks':'depends') }; })
+    .filter(function(d){ return d.key; });
   var headers = [
-    'Issue Type','Summary','Description','Labels','Epic Name','Epic Link',
+    'Issue Type','Summary','Description','Labels','Epic Name','Epic Link','Parent',
     'Value Score','Business Complexity','Technical Complexity','Value-to-Complexity',
     'Band','Zone','Criticality','Artifact Tier','Governance Level','PII Floor',
     'PMO Documents','TARC Documents','Total Documents','Profile ID'
   ];
+  // One column per dependency, headed by its link phrase (repeated headers are fine for
+  // Jira's CSV importer — each maps to an issue link).
+  deps.forEach(function(d){ headers.push(d.type==='blocks' ? 'Blocks' : 'Depends On'); });
+
+  // Epic Description gets the hierarchy + dependency story appended (import-safe text).
+  var epicDesc = epicDescription(snap);
+  epicDesc += '\n\nHIERARCHY\n  ' + (parentKey ? ('Child of parent: ' + parentKey) : 'Top-level project (no parent).');
+  epicDesc += '\nDEPENDENCIES\n  ' + (deps.length
+    ? deps.map(function(d){ return (d.type==='blocks'?'blocks ':'depends on ') + d.key; }).join('; ')
+    : 'No cross-project dependencies recorded.');
+
+  // Labels reflect the hierarchy so the board can filter on it.
+  var epicLabels = jiraLabels(snap);
+  if(parentKey) epicLabels.push('Child-Project');
+  if(deps.length) epicLabels.push('Has-Dependencies');
+
   var rows = [];
-  // Row 1 — the Epic (the project). Epic Name set; Epic Link blank (it IS the parent).
+  // Row 1 — the Epic (the project). Epic Name set; Epic Link blank (it IS the doc parent).
+  // Parent column carries the higher-level parent key when this project is a child.
   rows.push([
     'Epic',
     epicName,
-    epicDescription(snap),
-    jiraLabels(snap).join(' '),
+    epicDesc,
+    epicLabels.join(' '),
     epicName,                                // Epic Name — required for Epic issuetype on many instances
     '',                                      // Epic Link — blank on the Epic itself
+    parentKey,                               // Parent — higher-level parent (child projects only)
     s.valueScore, s.businessComplexity, s.technicalComplexity, s.valueToComplexity,
     s.band, s.zone, s.criticality, s.artifactTier, g.level, g.piiFloor?'Yes':'No',
     g.pmoDocumentCount, g.tarcDocumentCount, snap.documents.length, snap.profileId
-  ]);
+  ].concat(deps.map(function(d){ return d.key; })));   // dependency link columns -> target keys
   // Rows 2..n — one per triggered document, each linked back to the Epic.
   snap.documents.forEach(function(d){
     var labels = ['ESPMO-Doc', 'Owner-' + jiraLabel(d.ownerGroup)];
@@ -4461,10 +4496,11 @@ function jiraCsv(snap, docType){
       labels.join(' '),
       '',                                    // Epic Name — only the Epic defines it
       epicLink(epicName),                    // Epic Link — files this doc under the project Epic
+      '',                                    // Parent — only the project Epic carries it
       '','','','',                            // score columns blank on document rows
       '','','','','','',
       '','','',''
-    ]);
+    ].concat(deps.map(function(){ return ''; })));    // dependency columns blank on doc rows
   });
   return csvTable(headers, rows);
 }
@@ -4760,7 +4796,25 @@ global.ProfilerAlign = { alignCsv: alignCsv, epicExtId: epicExtId, featExtId: fe
       }).filter(function(d){ return d.title; }) : [];
       dl(base+'_align.csv', PA.alignCsv(snap, { parentProfileId: parent, related: related, deliverables: deliverables }), 'text/csv');
     } else {
-      dl(base+'_jira.csv',  PJ.jiraCsv(snap),  'text/csv');
+      // Jira CSV (the reliable path). Ask the two hierarchy questions, keyed by Jira issue
+      // key so links resolve at import with no name/Profile-ID mapping pass.
+      var parentKey = (prompt(
+        'Jira hierarchy — parent / child\n\n' +
+        'Is this project a CHILD of a larger effort (program, portfolio, or parent epic)?\n' +
+        'If so, enter the PARENT\'s Jira issue key (e.g. EDD-1234) and this project imports ' +
+        'under it.\n\nLeave blank if this is a top-level / standalone project (a parent in its own right).',
+        '') || '').trim();
+      var depRaw = (prompt(
+        'Jira dependencies (optional)\n\n' +
+        'Other projects/issues this one DEPENDS ON — comma-separate their Jira keys.\n' +
+        'Add ":blocks" after a key to flag what THIS project blocks instead.\n\n' +
+        'Example:  EDD-1200, EDD-1300:blocks\n\nLeave blank for none.',
+        '') || '').trim();
+      var dependsOn = depRaw ? depRaw.split(',').map(function(tok){
+        var parts = tok.split(':');
+        return { key:(parts[0]||'').trim(), type:((parts[1]||'depends').trim().toLowerCase()==='blocks'?'blocks':'depends') };
+      }).filter(function(r){ return r.key; }) : [];
+      dl(base+'_jira.csv',  PJ.jiraCsv(snap, null, { parentKey: parentKey, dependsOn: dependsOn }),  'text/csv');
     }
   }
     function init(){
