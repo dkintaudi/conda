@@ -763,8 +763,9 @@ function computeValue(){ let acc=0; VALUE_MODEL.forEach(c=>{ acc+=c.w*valItem(c)
 // criteria that actually predict approach: requirements/technology novelty & volatility,
 // scope stability, customer/product-owner availability, and infrastructure/migration
 // scope (Project Type matrix → Hybrid). Regulatory/mandate drives documentation & tier
-// rigor — NOT the method — and coordination count drives complexity, not method; both are
-// intentionally excluded here (see ESPMO Delivery-Approach Findings & Recommendation memo).
+// rigor — NOT the method. Coordination breadth is used only as a SECONDARY team-size signal
+// (a small dedicated team → Agile; many cross-boundary units → Waterfall) and still drives
+// complexity; regulatory/mandate is excluded from the method decision (see ESPMO memo).
 function recommendMethod(){
   let agile=0, wf=0; const factors=[];
   const nt=state.novelTech, nb=state.novelBiz;
@@ -784,6 +785,10 @@ function recommendMethod(){
   // 4) New service/software delivery (when not infrastructure-led)
   const infra=(state.cloud==='y'||state.migrate==='y');
   if(state.newcap==='y' && !infra){ agile+=1; factors.push('New service/software delivery — rapid iteration suits Agile.'); }
+  // 5) Team size (coordination breadth) — SECONDARY. A small dedicated team favors Agile;
+  //    work spread across many units (hand-off coordination) favors Waterfall.
+  if(state.coord==='1'){ agile+=1; factors.push('A single, small dedicated team — small-team delivery suits Agile.'); }
+  else if(state.coord==='3'||state.coord==='4'){ wf+=1; factors.push('Work spread across many teams/units with hand-offs — larger-team coordination suits Waterfall.'); }
   // Decision: infrastructure/cloud/migration → Hybrid; otherwise a clear lean (≥2); else Hybrid.
   let rec, why;
   if(infra){
