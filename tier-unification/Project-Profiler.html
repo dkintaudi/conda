@@ -489,6 +489,13 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
             <div class="note" style="margin-top:8px;font-size:11px;">Value&ndash;to&ndash;Complexity (V&ndash;C) = <b>Total Value &minus; (Average Complexity &times; 2.5)</b>, where Average Complexity is the 0&ndash;4 mean of Business &amp; Technical. This is <b>not a prioritization rank</b> &mdash; it shows how a project&rsquo;s average complexity adjusts its value. Total Value stands on its own; the map shows the adjustment. Tunable.</div>
           </div>
           <div class="sect">
+            <h3>Recommended Delivery Approach <span class="ct">EDD PM Framework</span></h3>
+            <div class="simmrow"><span class="k">Framework recommends</span><span class="v" id="methodRec"></span></div>
+            <div class="simmrow"><span class="k">You selected</span><span class="v" id="methodSel"></span></div>
+            <div class="note" id="methodWhy" style="margin-top:6px;font-size:11px;"></div>
+            <div class="note" style="margin-top:4px;font-size:11px;color:#8a93a0;">Advisory only &mdash; from the EDD PM Framework SDLC &amp; Project-Type decision matrices (novelty, coordination, mandate, cloud/migration, new capability). It supplements your delivery-approach answer; it doesn&rsquo;t override it.</div>
+          </div>
+          <div class="sect">
             <h3>Value-to-Complexity map <span class="ct">value &times; complexity</span></h3>
             <svg class="quad" id="quadChart" viewBox="0 0 300 244" xmlns="http://www.w3.org/2000/svg">
               <!-- Value-to-Complexity map. Top two bands are V–C diagonals (V–C = value − cxi/10);
@@ -751,6 +758,35 @@ function valItem(c){
 function valContribution(c){ return c.w*valItem(c)/VALUE_MAX*100; }
 function computeValue(){ let acc=0; VALUE_MODEL.forEach(c=>{ acc+=c.w*valItem(c); }); return Math.round(acc/VALUE_MAX*100); }
 
+// ── Delivery-approach recommendation (Waterfall / Agile / Hybrid) ───────────────
+// Advisory only — supplements the PM's own delivery-approach answer. Scores the
+// project against the EDD PM Framework's SDLC Decision Matrix (complexity/repeatability,
+// resources/coordination, regulatory mandate) and Project Type Decision Matrix
+// (software → Agile, infrastructure & cloud migration → Hybrid, regulatory → Waterfall).
+function recommendMethod(){
+  let agile=0, wf=0; const factors=[];
+  const nt=state.novelTech, nb=state.novelBiz;
+  const novelHigh=(nt==='y'||nb==='y'), novelLow=(nt==='n'&&nb==='n');
+  if(novelHigh){ agile+=2; factors.push('High novelty — work needs to adapt, pivot and validate as it goes (Agile).'); }
+  else if(novelLow){ wf+=2; factors.push('Repeatable, well-understood work with steps known in advance (Waterfall).'); }
+  else if(nt==='s'||nb==='s'){ agile+=1; factors.push('Some new components — a degree of adaptability helps.'); }
+  if(state.mandate==='y'){ wf+=2; factors.push('Hard mandate / regulatory driver — favors predictive Waterfall for documentation and compliance.'); }
+  if(state.coord==='1'){ agile+=1; factors.push('A single dedicated team — suits Agile coordination.'); }
+  else if(state.coord==='3'||state.coord==='4'){ wf+=1; factors.push('Many groups coordinating via handoff points — suits Waterfall sequencing.'); }
+  const infra=(state.cloud==='y'||state.migrate==='y');
+  if(state.newcap==='y' && !infra && state.mandate!=='y'){ agile+=1; factors.push('New service/software delivery — rapid iteration suits Agile.'); }
+  let rec, why;
+  if(infra && !(state.mandate==='y' && novelLow)){
+    rec='Hybrid';
+    why='Infrastructure / cloud or data-migration work — the framework pairs Agile delivery with structured, plan-driven execution.';
+    factors.unshift('Cloud / infrastructure or data migration → Project Type matrix recommends Hybrid.');
+  } else if(agile-wf>=2){ rec='Agile'; why='Variability, adaptability, and close collaboration dominate the project profile.'; }
+  else if(wf-agile>=2){ rec='Waterfall'; why='Scope is predictable and the effort is compliance- and handoff-driven.'; }
+  else { rec='Hybrid'; why='The project mixes predictable and adaptive characteristics — combine structured planning with iterative delivery.'; }
+  return {rec, why, factors};
+}
+const METHOD_LABEL={agile:'Agile',waterfall:'Waterfall',hybrid:'Hybrid',tbd:'Not yet determined'};
+
 const state = {};
 const CONTEXT_LIMIT = 500;
 function htmlEsc(s){
@@ -988,6 +1024,21 @@ function compute(){
         +'<span style="flex:0 0 66px;text-align:right;color:#222;font-weight:600;">'+got.toFixed(1)+' / '+share.toFixed(1)+'</span>'
         +'</div>';
     }).join('');
+  }
+  // Recommended delivery approach (advisory) vs the PM's own selection
+  const mrec=recommendMethod();
+  const mRecEl=document.getElementById('methodRec'), mSelEl=document.getElementById('methodSel'), mWhyEl=document.getElementById('methodWhy');
+  if(mRecEl){
+    const recColor={Agile:'#2c623f',Waterfall:'#7a5230',Hybrid:'#1c6fb0'}[mrec.rec]||'#222';
+    mRecEl.innerHTML='<b style="color:'+recColor+'">'+mrec.rec+'</b>';
+    const sel=state.method? METHOD_LABEL[state.method] : '';
+    if(!sel){ mSelEl.innerHTML='<span style="color:#8a93a0">(not answered)</span>'; }
+    else if(state.method==='tbd'){ mSelEl.innerHTML='Not yet determined'; }
+    else {
+      const agree=(sel===mrec.rec);
+      mSelEl.innerHTML='<b>'+sel+'</b> '+(agree?'<span style="color:#2c623f">✓ matches</span>':'<span style="color:#b3541e">— differs from recommendation</span>');
+    }
+    mWhyEl.innerHTML='<b>Why '+mrec.rec+':</b> '+htmlEsc(mrec.why)+(mrec.factors.length?('<ul style="margin:4px 0 0;padding-left:16px;">'+mrec.factors.map(f=>'<li>'+htmlEsc(f)+'</li>').join('')+'</ul>'):'');
   }
   document.getElementById('prioNum').textContent=priority;
   document.getElementById('prioFill').style.width=Math.max(0,Math.min(100,priority))+'%';
@@ -1788,6 +1839,7 @@ function saveAsExcel(){
     [{v:'Average Complexity (of 4)',s:label},{v:+r.avgCx.toFixed(2),s:val}],
     [{v:'Criticality',s:label},{v:'Zone '+r.zone+' · '+r.crit,s:val}],
     [{v:'Project Level',s:label},{v:(window.__LEVEL||'Standard'),s:valNum}],
+    [{v:'Recommended Approach',s:label},{v:recommendMethod().rec+(state.method&&state.method!=='tbd'?(' (selected: '+METHOD_LABEL[state.method]+')'):''),s:valNum}],
     [{v:'',s:val},{v:'',s:val}],
     [{v:'Triggered Drivers',s:section},{v:'',s:section}],
   ];
@@ -1797,7 +1849,7 @@ function saveAsExcel(){
   } else {
     P.push([{v:'(none)',s:val},{v:'',s:val}]);
   }
-  const driverHdrRow=14; // 0-indexed row of "Triggered Drivers"
+  const driverHdrRow=15; // 0-indexed row of "Triggered Drivers" (shifted +1 by Recommended Approach row)
   // Assessment feedback section
   P.push([{v:'',s:val},{v:'',s:val}]);
   const fbHdrRow=P.length;
