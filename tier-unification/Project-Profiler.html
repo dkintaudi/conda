@@ -482,6 +482,8 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
             <h3>Value &amp; Value-to-Complexity</h3>
             <div class="simmrow"><span class="k">Value Score</span><span class="v" id="valScore"></span></div>
             <div class="priowrap"><div class="priobar"><div class="priofill" id="prioFill"></div></div><div class="prionum" id="prioNum">&mdash;</div></div>
+            <div id="valBreakdown" style="margin-top:8px;"></div>
+            <div class="note" style="margin-top:4px;font-size:11px;">Where the value comes from &mdash; each driver&rsquo;s share of the 100, weighted: Strategic Alignment &times;5, Time &times;4, Risk Management &times;3, Customer/Stakeholder &times;2, Resource Availability &times;1 (People + Funding, each half).</div>
             <div class="simmrow"><span class="k">V&ndash;C Read</span><span class="v" id="bandTxt"></span></div>
             <div class="simmrow"><span class="k">Value &times; Complexity Map</span><span class="v" id="quadTxt"></span></div>
             <div class="note" style="margin-top:8px;font-size:11px;">Value&ndash;to&ndash;Complexity (V&ndash;C) = <b>Total Value &minus; (Average Complexity &times; 2.5)</b>, where Average Complexity is the 0&ndash;4 mean of Business &amp; Technical. This is <b>not a prioritization rank</b> &mdash; it shows how a project&rsquo;s average complexity adjusts its value. Total Value stands on its own; the map shows the adjustment. Tunable.</div>
@@ -964,6 +966,29 @@ function compute(){
   if(cxCap) cxCap.innerHTML='<b style="color:'+cxZone[1]+'">'+cxZone[0]+'.</b> Business '+bizCx.toFixed(1)+'/4 \u00B7 Technical '+techCx.toFixed(1)+'/4. '+cxZone[2];
   // value & priority
   document.getElementById('valScore').innerHTML='<b>'+value+'</b> / 100';
+  // Value breakdown — show where the value comes from, per driver (points / max share of 100).
+  // The two Resource Availability halves (People + Funding) are combined into one row.
+  const vbEl=document.getElementById('valBreakdown');
+  if(vbEl){
+    const byK={}; VALUE_MODEL.forEach(c=>byK[c.k]=c);
+    const DISPLAY=[
+      ['Strategic Alignment',['strat']],
+      ['Time / Mandate',['time']],
+      ['Risk Management',['risk']],
+      ['Customer / Stakeholder',['cust']],
+      ['Resource Availability (People + Funding)',['res_people','res_funding']]
+    ];
+    vbEl.innerHTML=DISPLAY.map(d=>{
+      let got=0, share=0;
+      d[1].forEach(k=>{ const c=byK[k]; if(c){ got+=valContribution(c); share+=c.w/VALUE_WSUM*100; } });
+      const pct=share>0?Math.max(0,Math.min(100,Math.round(got/share*100))):0;
+      return '<div style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:11px;">'
+        +'<span style="flex:0 0 44%;color:#555;">'+htmlEsc(d[0])+'</span>'
+        +'<span style="flex:1;height:8px;background:#eef0f3;border-radius:4px;overflow:hidden;"><span style="display:block;height:100%;width:'+pct+'%;background:#1c6fb0;"></span></span>'
+        +'<span style="flex:0 0 66px;text-align:right;color:#222;font-weight:600;">'+got.toFixed(1)+' / '+share.toFixed(1)+'</span>'
+        +'</div>';
+    }).join('');
+  }
   document.getElementById('prioNum').textContent=priority;
   document.getElementById('prioFill').style.width=Math.max(0,Math.min(100,priority))+'%';
   document.getElementById('bandTxt').innerHTML='<b>'+bandInfo.t+'</b>';
