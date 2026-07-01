@@ -789,17 +789,25 @@ function recommendMethod(){
   //    work spread across many units (hand-off coordination) favors Waterfall.
   if(state.coord==='1'){ agile+=1; factors.push('A single, small dedicated team — small-team delivery suits Agile.'); }
   else if(state.coord==='3'||state.coord==='4'){ wf+=1; factors.push('Work spread across many teams/units with hand-offs — larger-team coordination suits Waterfall.'); }
-  // Decision: infrastructure/cloud/migration → Hybrid; otherwise a clear lean (≥2); else Hybrid.
-  let rec, why;
+  // Decision. Infrastructure / cloud / migration applies a STRONG Hybrid bias — iterative
+  // practices inside a gated structure — but NOT a hard override: the other signals still
+  // tilt it, producing "Hybrid — leaning Agile" or "Hybrid — leaning Waterfall" (or balanced).
+  // Non-infra work resolves to a clear lean (net ≥ 2) or, when balanced, Hybrid.
+  const lean = agile - wf;                    // + toward Agile, − toward Waterfall
+  const leanWord = n => n>=2 ? 'leaning Agile' : n<=-2 ? 'leaning Waterfall'
+                      : n===1 ? 'slight Agile lean' : n===-1 ? 'slight Waterfall lean' : 'balanced';
+  let rec, recFull, why;
   if(infra){
     rec='Hybrid';
-    why='Infrastructure / cloud or data-migration scope — pair Agile delivery with structured, plan-driven execution.';
-    factors.unshift('Cloud / infrastructure or data migration → Project Type matrix recommends Hybrid.');
-  } else if(agile-wf>=2){ rec='Agile'; why='Evolving scope, novelty, and close collaboration dominate the profile.'; }
-  else if(wf-agile>=2){ rec='Waterfall'; why='Scope is stable and the effort is plan- and milestone-driven.'; }
-  else { rec='Hybrid'; why='The project mixes predictable and adaptive characteristics — combine structured planning with iterative delivery.'; }
+    const lw=leanWord(lean);
+    recFull = (lw==='balanced') ? 'Hybrid' : 'Hybrid — '+lw;
+    why='Infrastructure / cloud or data-migration work runs iterative practices inside a gated structure — Hybrid. The lean is set by scope stability, team size, and stakeholder availability.';
+    factors.unshift('Cloud / infrastructure or data migration → strong Hybrid bias; result: '+recFull+'.');
+  } else if(lean>=2){ rec='Agile'; recFull='Agile'; why='Evolving scope, novelty, and close collaboration dominate the profile.'; }
+  else if(lean<=-2){ rec='Waterfall'; recFull='Waterfall'; why='Scope is stable and the effort is plan- and milestone-driven.'; }
+  else { rec='Hybrid'; const lw=leanWord(lean); recFull=(lw==='balanced')?'Hybrid':'Hybrid ('+lw+')'; why='The project mixes predictable and adaptive characteristics — combine structured planning with iterative delivery.'; }
   if(!factors.length) factors.push('Answer the novelty (new to business / new to IT), scope-stability, and business-partner availability questions to sharpen this recommendation.');
-  return {rec, why, factors};
+  return {rec, recFull, lean, why, factors};
 }
 const METHOD_LABEL={agile:'Agile',waterfall:'Waterfall',hybrid:'Hybrid',tbd:'Not yet determined'};
 
@@ -1046,7 +1054,7 @@ function compute(){
   const mRecEl=document.getElementById('methodRec'), mSelEl=document.getElementById('methodSel'), mWhyEl=document.getElementById('methodWhy');
   if(mRecEl){
     const recColor={Agile:'#2c623f',Waterfall:'#7a5230',Hybrid:'#1c6fb0'}[mrec.rec]||'#222';
-    mRecEl.innerHTML='<b style="color:'+recColor+'">'+mrec.rec+'</b>';
+    mRecEl.innerHTML='<b style="color:'+recColor+'">'+mrec.recFull+'</b>';
     const sel=state.method? METHOD_LABEL[state.method] : '';
     if(!sel){ mSelEl.innerHTML='<span style="color:#8a93a0">(not answered)</span>'; }
     else if(state.method==='tbd'){ mSelEl.innerHTML='Not yet determined'; }
@@ -1855,7 +1863,7 @@ function saveAsExcel(){
     [{v:'Average Complexity (of 4)',s:label},{v:+r.avgCx.toFixed(2),s:val}],
     [{v:'Criticality',s:label},{v:'Zone '+r.zone+' · '+r.crit,s:val}],
     [{v:'Project Level',s:label},{v:(window.__LEVEL||'Standard'),s:valNum}],
-    [{v:'Recommended Approach',s:label},{v:recommendMethod().rec+(state.method&&state.method!=='tbd'?(' (selected: '+METHOD_LABEL[state.method]+')'):''),s:valNum}],
+    [{v:'Recommended Approach',s:label},{v:recommendMethod().recFull+(state.method&&state.method!=='tbd'?(' (selected: '+METHOD_LABEL[state.method]+')'):''),s:valNum}],
     [{v:'',s:val},{v:'',s:val}],
     [{v:'Triggered Drivers',s:section},{v:'',s:section}],
   ];
