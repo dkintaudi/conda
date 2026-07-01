@@ -888,8 +888,8 @@ function tshirtProfile(flags){
     ? 'PAL tier (anticipated) — PAL document set; overrides Mini/Standard/Large. Delivery method: '+method+'.'
     : method+' delivery'+(sizeWord?(', '+sizeWord+' size — '+tier+' tier'):' — tier not set, defaulting to Standard')
       +(src==='recommended'?' (method from recommendation)':'')+'.';
-  // PAL is its own tier and stands alone (no method prefix); the others read "{Method} · {Tier} Tier".
-  const label = isPAL ? 'PAL Tier' : (method+' · '+tier+' Tier');
+  // PAL stands alone as "PAL"; the others read "{Method} · {Tier}" (Mini / Standard / Large).
+  const label = isPAL ? 'PAL' : (method+' · '+tier);
   return {col, method, tier, label, why};
 }
 // Templates the Mini tier keeps regardless of what the sheet's column marks (ESPMO rule):
