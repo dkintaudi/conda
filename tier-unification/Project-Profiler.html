@@ -863,17 +863,27 @@ function determinePAL(){
 // in ESPMO_RULES.tshirt (single source of truth; also exported to the Rules workbook).
 // ---------------------------------------------------------------------------
 const TSHIRT = ESPMO_RULES.tshirt || {templates:[]};
-const TSHIRT_COLS = {pal:'PAL', hyb:'Hybrid-Agile', wl:'Waterfall — Large', wm:'Waterfall — Medium', ws:'Waterfall — Small'};
+// T-shirt size maps to the ESPMO tier name: Small = Mini, Medium = Standard, Large = Large.
+// The CA-PMF profile is shown as "{approach} · {tier} Tier" (e.g. "Waterfall · Large Tier",
+// "Agile · Standard Tier", "Hybrid · Mini Tier"); PAL is its own tier.
+const TSHIRT_TIER = {s:'Mini', m:'Standard', l:'Large', u:'Standard'};
+const SIZE_WORD   = {s:'Small', m:'Medium', l:'Large'};
 function tshirtProfile(flags){
   if(flags && flags.pal) return {col:'pal', label:'PAL', why:'PAL anticipated — most rigorous document set (overrides size & method).'};
   let m=state.method, src='selected';
   if(!m || m==='tbd'){ m=(recommendMethod().rec||'').toLowerCase(); src='recommended'; }
-  if(m==='agile'||m==='hybrid') return {col:'hyb', label:'Hybrid-Agile',
-    why:(src==='recommended'?'No approach selected — using the recommended approach: ':'')+'Agile / Hybrid delivery.'};
+  const tierName=TSHIRT_TIER[state.loe]||'Standard';
+  const sizeWord=SIZE_WORD[state.loe];
+  if(m==='agile'||m==='hybrid'){
+    const appr=(m==='hybrid')?'Hybrid':'Agile';
+    return {col:'hyb', label:appr+' · '+tierName+' Tier',
+      why:(src==='recommended'?'No approach selected — using the recommended approach: ':'')+appr+' delivery'+(sizeWord?(', '+sizeWord+' size ('+tierName+' tier)'):'')+'.'};
+  }
   const bySize={l:'wl', m:'wm', s:'ws'}[state.loe];
-  if(bySize) return {col:bySize, label:TSHIRT_COLS[bySize],
-    why:'Waterfall delivery, '+({l:'Large', m:'Medium', s:'Small'}[state.loe])+' T-shirt size.'};
-  return {col:'wm', label:'Waterfall — Medium', why:'Waterfall delivery; T-shirt size not set — defaulting to Medium. Set the T-shirt size to refine.'};
+  if(bySize) return {col:bySize, label:'Waterfall · '+tierName+' Tier',
+    why:'Waterfall delivery, '+sizeWord+' size ('+tierName+' tier).'};
+  return {col:'wm', label:'Waterfall · Standard Tier',
+    why:'Waterfall delivery; T-shirt size not set — defaulting to Standard (Medium). Set the T-shirt size to refine.'};
 }
 function tshirtDocs(flags){
   const p=tshirtProfile(flags), req=[], rec=[];
