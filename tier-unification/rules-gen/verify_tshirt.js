@@ -70,17 +70,16 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
  ok('optionalShown deduped vs original panel', d.optionalShown.every(t=>!orig.has(norm(t.name))));
  ok('optionalShown excludes required', d.optionalShown.every(t=>!d.required.some(r=>norm(r.name)===norm(t.name))));
  ok('requiredShown <= required (some may already be above)', d.requiredShown.length<=d.required.length);
- // EVERY CA-PMF section (required + optional) must be inside a collapsed <details>
- const secs=[...dc.querySelectorAll('#tshirt details.tshirt-sec')];
- ok('CA-PMF sections rendered as <details>', secs.length>=1, secs.length);
- ok('all sections collapsed by default', secs.every(x=>!x.open));
- ok('summaries mention click to view', secs.every(x=>/click to view/.test(x.querySelector('summary').textContent)));
- const reqSec=secs.find(x=>/^Required/.test(x.querySelector('summary').textContent));
- const optSec=secs.find(x=>/^Optional/.test(x.querySelector('summary').textContent));
- if(d.requiredShown.length) ok('Required section present & collapsed', !!reqSec && !reqSec.open);
- if(d.optionalShown.length) ok('Optional section present & collapsed', !!optSec && !optSec.open);
- // NOTHING CA-PMF renders outside a <details> (default view stays the core list above)
- ok('no CA-PMF rows outside a dropdown', [...dc.querySelectorAll('#tshirt > .artgroup .art')].length===0);
+ // The WHOLE CA-PMF set is behind ONE collapsed reference disclosure (de-emphasized)
+ const ref=dc.querySelector('#tshirt > details.tshirt-ref');
+ ok('CA-PMF is a single collapsed reference <details>', !!ref && !ref.open, ref?('open='+ref.open):'none');
+ ok('summary marks it as reference', ref && /reference/i.test(ref.querySelector('summary').textContent));
+ ok('carries a "reference only / not built" note', ref && /reference only/i.test(ref.textContent) && /built/i.test(ref.textContent));
+ // nothing CA-PMF renders outside that one disclosure (default view stays the signals + docs above)
+ ok('no CA-PMF rows outside the reference disclosure', [...dc.querySelectorAll('#tshirt > .artgroup, #tshirt > .art')].length===0);
+ // optional sits in a nested, also-collapsed dropdown
+ const opt=ref && ref.querySelector('details.tshirt-opt');
+ if(d.optionalShown.length) ok('optional nested & collapsed', !!opt && !opt.open);
 }
 console.log('\n'+(fail.length? fail.length+' FAIL: '+fail.join(' | '):'ALL T-SHIRT CHECKS PASSED'));
 process.exit(fail.length?1:0);
