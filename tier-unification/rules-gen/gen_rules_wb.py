@@ -36,7 +36,7 @@ def widths(ws,ws_w):
 # ---------- _meta ----------
 ws=sheet("_meta"); band_row(ws,"EDD · ESPMO · GOVERNANCE RULES (round-trip schema)",2)
 meta=[("Description","Regenerated FROM the live Profiler ESPMO_RULES block — questions, scoring, triggers, and the PAL calculation all derive from the same source, so the tool and this workbook cannot drift."),
- ("schema","RT-1.1"),("rulesVersion","01.03"),("generatedFrom","Profiler ESPMO_RULES (32 questions, weighted value model, ESPMO_RULES.pal)"),
+ ("schema","RT-1.1"),("rulesVersion","01.04"),("generatedFrom","Profiler ESPMO_RULES (32 questions, weighted value model, ESPMO_RULES.pal, ESPMO_RULES.tshirt)"),
  ("zoneThreshold",R['scoring']['zoneThreshold']),("value.model","weighted 0/1/3/9 drivers, normalized to 100 (Σ weight×value / "+str(D['valueMax'])+" × 100)"),
  ("value.weightSum",D['valueWsum']),("value.max",D['valueMax']),
  ("pal.spec",R['pal']['spec']),("pal.palTier",R['pal']['palTier']),
@@ -142,7 +142,18 @@ widths(ws,[6,30,26,12,60])
 for r in range(1,ws.max_row+1):
     ws.cell(r,1).alignment=top
 
+# ---------- Tshirt_Templates (CA-PMF matrix; aligned with ESPMO_RULES.tshirt) ----------
+TS=R.get('tshirt',{}).get('templates',[])
+ws=sheet("Tshirt_Templates"); band_row(ws,"CA-PMF T-shirt template matrix — Required (R) / Recommended (O) per profile",11)
+datarow(ws,["Profile column chosen PAL \u2192 delivery approach \u2192 Waterfall T-shirt size. R = Required, O = Recommended/optional, blank = not needed.","","","","","","","","","",""])
+hdr(ws,["template","file","phase","owner","PAL","Hybrid-Agile","WF-Large","WF-Medium","WF-Small","SharePoint path","note"])
+for t in TS:
+    datarow(ws,[t.get('name',''),t.get('file','') or '(to build)',t.get('phase',''),t.get('resp',''),
+                t.get('pal',''),t.get('hyb',''),t.get('wl',''),t.get('wm',''),t.get('ws',''),
+                t.get('path',''),t.get('note','')])
+widths(ws,[34,42,14,8,6,12,9,10,9,46,40])
+
 # freeze header-ish rows and save
-out="/tmp/ESPMO-Rules-v01.03.xlsx"
+out="/tmp/ESPMO-Rules-v01.04.xlsx"
 wb.save(out)
 print("saved",out,"sheets:",wb.sheetnames)

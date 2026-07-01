@@ -26,7 +26,20 @@ cost UNKNOWN → INDETERMINATE, any trigger → PAL → governance Tier 4).
 ## Sheets
 
 `_meta · Questions · Value · Value_Score_Responses · RatingMaps · SIMM_Biz ·
-SIMM_Tech · Triggers · TierQuestionIds · PAL_Determination`
+SIMM_Tech · Triggers · TierQuestionIds · PAL_Determination · Tshirt_Templates`
+
+## CA-PMF T-shirt template matrix
+
+`ESPMO_RULES.tshirt` holds the authoritative EDD/CA-PMF template catalog + the
+Required/Recommended matrix per profile (source: `EDD_TSHIRT_SZ_BREAKDOWN.xlsx`,
+the "T-SHIRT SZ BRKDWN" + "mast_data" sheets). The Profiler picks ONE profile
+column per project — **PAL → delivery approach → Waterfall T-shirt size** — via
+`tshirtProfile()` / `tshirtDocs()`, renders it in the "CA-PMF template set" panel,
+and writes it to the workbook's "CA-PMF Templates" sheet. The `Tshirt_Templates`
+sheet in the Rules workbook mirrors the same matrix. `mast_data`'s SharePoint
+paths also feed the Autogenerator's `template-paths.xlsx` (folders + 51 files) so
+the generator can resolve the real templates. `verify_tshirt.js` checks the
+profile mapping and the Required/Recommended counts per column.
 
 The `PAL_Determination` sheet documents the exact rule: config
 (`EDD_COST_DELEGATION` / `COST_KNOWN`), the five triggers with their source
