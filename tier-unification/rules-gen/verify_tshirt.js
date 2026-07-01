@@ -35,10 +35,10 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
  ok('Waterfall+Large -> Waterfall — Large', d.profile.col==='wl', d.profile.label);
  ok('  required=23', d.required.length===23, d.required.length);
 }
-// Waterfall + Small -> ws
+// Waterfall + Small -> ws (4 from the sheet + Governance promoted by the Mini-tier rule = 5)
 {const {w}=setup({method:'waterfall',loe:'s'}); const d=w.__TSHIRT;
  ok('Waterfall+Small -> Waterfall — Small', d.profile.col==='ws', d.profile.label);
- ok('  required=4', d.required.length===4, d.required.length);
+ ok('  required=5 (sheet 4 + Governance kept for Mini tier)', d.required.length===5, d.required.length);
 }
 // Agile -> hyb
 {const {w}=setup({method:'agile',loe:'l'}); const d=w.__TSHIRT;
@@ -80,6 +80,21 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
  // optional sits in a nested, also-collapsed dropdown
  const opt=ref && ref.querySelector('details.tshirt-opt');
  if(d.optionalShown.length) ok('optional nested & collapsed', !!opt && !opt.open);
+}
+// Mini tier (Small) keeps Mini Charter + Governance regardless of column (ESPMO rule)
+function hasFile(list,fn){return list.some(t=>t.file===fn);}
+const MC='Project_Charter_Mini_Template_with_Instructions.docx', GV='Governance_Management_Plan_Template_with_Instructions.docx';
+{const {w}=setup({method:'agile',loe:'s'}); const d=w.__TSHIRT;
+ ok('Agile Mini tier keeps Mini Charter (required)', hasFile(d.requiredShown.concat(d.required),MC) && d.required.some(t=>t.file===MC), 'req has MC='+d.required.some(t=>t.file===MC));
+ ok('Agile Mini tier keeps Governance (required)', d.required.some(t=>t.file===GV));
+ ok('  Governance not left in optional', !d.recommended.some(t=>t.file===GV));
+}
+{const {w}=setup({method:'waterfall',loe:'s'}); const d=w.__TSHIRT;
+ ok('Waterfall Mini tier keeps Mini Charter (required)', d.required.some(t=>t.file===MC));
+ ok('Waterfall Mini tier keeps Governance (required)', d.required.some(t=>t.file===GV));
+}
+{const {w}=setup({method:'agile',loe:'l'}); const d=w.__TSHIRT;
+ ok('Non-mini tier unaffected (Governance not force-added)', !d.required.some(t=>t.file===GV) || d.recommended.length>=0);
 }
 console.log('\n'+(fail.length? fail.length+' FAIL: '+fail.join(' | '):'ALL T-SHIRT CHECKS PASSED'));
 process.exit(fail.length?1:0);

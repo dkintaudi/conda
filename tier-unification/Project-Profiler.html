@@ -885,9 +885,21 @@ function tshirtProfile(flags){
   return {col:'wm', label:'Waterfall · Standard Tier',
     why:'Waterfall delivery; T-shirt size not set — defaulting to Standard (Medium). Set the T-shirt size to refine.'};
 }
+// Templates the Mini tier keeps regardless of what the sheet's column marks (ESPMO rule):
+// a Mini (Small) project always keeps the Mini Charter and the Governance Management Plan.
+const TSHIRT_MINI_KEEP = ['Project_Charter_Mini_Template_with_Instructions.docx','Governance_Management_Plan_Template_with_Instructions.docx'];
 function tshirtDocs(flags){
   const p=tshirtProfile(flags), req=[], rec=[];
   (TSHIRT.templates||[]).forEach(t=>{ const v=t[p.col]; if(v==='R')req.push(t); else if(v==='O')rec.push(t); });
+  // Handled like the sheet, EXCEPT the Mini tier (Small size) keeps the Mini Charter and
+  // Governance as required — even where the column (e.g. Hybrid-Agile) doesn't mark them.
+  if(p.col!=='pal' && state.loe==='s'){
+    TSHIRT_MINI_KEEP.forEach(fn=>{
+      const t=(TSHIRT.templates||[]).find(x=>x.file===fn); if(!t) return;
+      const ri=rec.findIndex(x=>x.file===fn); if(ri>=0) rec.splice(ri,1);   // promote out of optional
+      if(!req.some(x=>x.file===fn)) req.push(t);                            // ensure in required
+    });
+  }
   return {profile:p, required:req, recommended:rec};
 }
 function renderTshirt(flags){
