@@ -70,13 +70,17 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
  ok('optionalShown deduped vs original panel', d.optionalShown.every(t=>!orig.has(norm(t.name))));
  ok('optionalShown excludes required', d.optionalShown.every(t=>!d.required.some(r=>norm(r.name)===norm(t.name))));
  ok('requiredShown <= required (some may already be above)', d.requiredShown.length<=d.required.length);
- // optional must be inside a <details> (collapsed) not directly visible
- const det=dc.querySelector('#tshirt details.tshirt-optional');
- ok('optional list is inside a <details> dropdown', !!det && !det.open, det?('open='+det.open):'no details');
- ok('dropdown summary mentions optional count', det && /click to view/.test(det.querySelector('summary').textContent), det?det.querySelector('summary').textContent:'');
- // required rows render OUTSIDE the details (default-visible)
- const reqRows=[...dc.querySelectorAll('#tshirt > .artgroup .art')].length;
- ok('required rows visible by default (outside dropdown)', reqRows===d.requiredShown.length, reqRows+'/'+d.requiredShown.length);
+ // EVERY CA-PMF section (required + optional) must be inside a collapsed <details>
+ const secs=[...dc.querySelectorAll('#tshirt details.tshirt-sec')];
+ ok('CA-PMF sections rendered as <details>', secs.length>=1, secs.length);
+ ok('all sections collapsed by default', secs.every(x=>!x.open));
+ ok('summaries mention click to view', secs.every(x=>/click to view/.test(x.querySelector('summary').textContent)));
+ const reqSec=secs.find(x=>/^Required/.test(x.querySelector('summary').textContent));
+ const optSec=secs.find(x=>/^Optional/.test(x.querySelector('summary').textContent));
+ if(d.requiredShown.length) ok('Required section present & collapsed', !!reqSec && !reqSec.open);
+ if(d.optionalShown.length) ok('Optional section present & collapsed', !!optSec && !optSec.open);
+ // NOTHING CA-PMF renders outside a <details> (default view stays the core list above)
+ ok('no CA-PMF rows outside a dropdown', [...dc.querySelectorAll('#tshirt > .artgroup .art')].length===0);
 }
 console.log('\n'+(fail.length? fail.length+' FAIL: '+fail.join(' | '):'ALL T-SHIRT CHECKS PASSED'));
 process.exit(fail.length?1:0);
