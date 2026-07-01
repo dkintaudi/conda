@@ -561,6 +561,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           <div class="sect">
             <h3>CA-PMF template set <span class="ct" id="tshirtProfileTag">by size &amp; approach</span></h3>
             <p style="margin:2px 0 8px;font-size:12px;color:#5a6472;font-style:italic;">The core project documents are the list above. The fuller EDD / CA-PMF set for this profile (PAL &rarr; delivery approach &rarr; Waterfall T-shirt size) is deduped against that list and tucked into the dropdowns below — required and optional, each a click to open. The full set still exports to the workbook.</p>
+            <p style="margin:0 0 8px;font-size:11px;color:#7a8592;">Source: <b>EDD T-Shirt Size / Template Breakdown</b> — reproduced in full (56 templates &times; 5 profiles, cell-for-cell); the author's per-template comments are preserved as notes. Collapsing is display-only; nothing was dropped or reweighted.</p>
             <div id="tshirt"></div>
           </div>
         </div>
@@ -2454,22 +2455,22 @@ function saveAsExcel(){
     const recFill ={font:{name:F,bold:true,sz:9,color:{rgb:'3A5A78'}},fill:{fgColor:{rgb:'EEF2F7'}},alignment:{horizontal:'center',vertical:'center'}};
     const noteRowT={font:{name:F,italic:true,sz:8,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}};
     const TT=[
-      [{v:'Profile: '+prof.label+'. '+prof.why+'  Official EDD / CA-PMF templates for this profile — Required and Recommended — from the EDD T-shirt size breakdown. Chosen PAL → delivery approach → Waterfall T-shirt size.',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT}],
-      [{v:'Template',s:colhdr},{v:'Need',s:colhdr},{v:'Phase',s:colhdr},{v:'Owner',s:colhdr},{v:'File',s:colhdr},{v:'SharePoint path',s:colhdr}]
+      [{v:'Profile: '+prof.label+'. '+prof.why+'  Source: EDD T-Shirt Size / Template Breakdown — reproduced in full (56 templates × 5 profiles, cell-for-cell; author’s per-template comments preserved in the Note column). Required and Recommended for this profile; chosen PAL → delivery approach → Waterfall T-shirt size.',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT},{v:'',s:noteRowT}],
+      [{v:'Template',s:colhdr},{v:'Need',s:colhdr},{v:'Phase',s:colhdr},{v:'Owner',s:colhdr},{v:'File',s:colhdr},{v:'SharePoint path',s:colhdr},{v:'Note (author)',s:colhdr}]
     ];
     const PH=['A. Concept','B. Initiation','C. Planning','D. Execution','E. Close'];
     const emit=(list,needLbl,needStyle)=>{
       if(!list.length) return;
-      TT.push([{v:needLbl+' · '+list.length,s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT}]);
+      TT.push([{v:needLbl+' · '+list.length,s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT},{v:'',s:catHdrT}]);
       PH.forEach(ph=>{ list.filter(t=>t.phase===ph).forEach(t=>{
         const z=(TT.length%2===0); const base=z?cellZ:cell;
-        TT.push([{v:t.name,s:base},{v:needLbl,s:needStyle},{v:ph.replace(/^[A-E]\.\s*/,''),s:base},{v:t.resp||'',s:base},{v:t.file||'(to build)',s:base},{v:t.path||'',s:base}]);
+        TT.push([{v:t.name,s:base},{v:needLbl,s:needStyle},{v:ph.replace(/^[A-E]\.\s*/,''),s:base},{v:t.resp||'',s:base},{v:t.file||'(to build)',s:base},{v:t.path||'',s:base},{v:t.note||'',s:base}]);
       });});
     };
     emit(td.required,'Required',reqFill); emit(td.recommended,'Recommended',recFill);
-    if(!td.required.length && !td.recommended.length) TT.push([{v:'(no templates matched this profile)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
-    const ch=withChrome(TT,6,'CA-PMF Templates',8); const tWs=makeSheet(ch.rows,[34,12,12,8,40,46],ch.merges,ch.rowH);
-    tWs['!merges']=(tWs['!merges']||[]).concat([M(1,0,1,5)]);
+    if(!td.required.length && !td.recommended.length) TT.push([{v:'(no templates matched this profile)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
+    const ch=withChrome(TT,7,'CA-PMF Templates',8); const tWs=makeSheet(ch.rows,[34,12,12,8,40,46,40],ch.merges,ch.rowH);
+    tWs['!merges']=(tWs['!merges']||[]).concat([M(1,0,1,6)]);
     XLSX.utils.book_append_sheet(wb, tWs, 'CA-PMF Templates'); }
 
   // ---------- Sheets 9–11: HANDOFF (machine-readable, for the Autogenerate) ----------
