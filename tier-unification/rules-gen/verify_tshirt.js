@@ -28,7 +28,7 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
 // PAL -> pal column; PAL is its own tier, method still named
 {const {w}=setup({pal_legis:'y'}); const d=w.__TSHIRT;
  ok('PAL project -> pal column & PAL tier', d.profile.col==='pal'&&d.profile.tier==='PAL', d.profile.label);
- ok('  label reads "{Method} · PAL Tier"', /· PAL Tier$/.test(d.profile.label), d.profile.label);
+ ok('  label is "PAL Tier" (no method prefix)', d.profile.label==='PAL Tier', d.profile.label);
  ok('  required=23 recommended=25', d.required.length===23&&d.recommended.length===25, d.required.length+'/'+d.recommended.length);
 }
 // Waterfall + Large -> wl
