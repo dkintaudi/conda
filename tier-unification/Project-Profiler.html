@@ -863,27 +863,32 @@ function determinePAL(){
 // in ESPMO_RULES.tshirt (single source of truth; also exported to the Rules workbook).
 // ---------------------------------------------------------------------------
 const TSHIRT = ESPMO_RULES.tshirt || {templates:[]};
-// T-shirt size maps to the ESPMO tier name: Small = Mini, Medium = Standard, Large = Large.
-// The CA-PMF profile is shown as "{approach} · {tier} Tier" (e.g. "Waterfall · Large Tier",
-// "Agile · Standard Tier", "Hybrid · Mini Tier"); PAL is its own tier.
+// Two orthogonal axes:
+//   TIER    (Mini · Standard · Large · PAL) — Small=Mini, Medium=Standard, Large=Large; PAL is its own tier.
+//   METHOD  (Waterfall · Agile · Hybrid)    — the delivery method.
+// The CA-PMF profile reads "{Method} · {Tier} Tier" for all four tiers, e.g.
+// "Waterfall · Large Tier", "Agile · Standard Tier", "Hybrid · Mini Tier", "Agile · PAL Tier".
 const TSHIRT_TIER = {s:'Mini', m:'Standard', l:'Large', u:'Standard'};
 const SIZE_WORD   = {s:'Small', m:'Medium', l:'Large'};
 function tshirtProfile(flags){
-  if(flags && flags.pal) return {col:'pal', label:'PAL', why:'PAL anticipated — most rigorous document set (overrides size & method).'};
+  // Delivery method (selected, else recommended).
   let m=state.method, src='selected';
   if(!m || m==='tbd'){ m=(recommendMethod().rec||'').toLowerCase(); src='recommended'; }
-  const tierName=TSHIRT_TIER[state.loe]||'Standard';
+  const method = (m==='hybrid')?'Hybrid' : (m==='agile')?'Agile' : 'Waterfall';
   const sizeWord=SIZE_WORD[state.loe];
-  if(m==='agile'||m==='hybrid'){
-    const appr=(m==='hybrid')?'Hybrid':'Agile';
-    return {col:'hyb', label:appr+' · '+tierName+' Tier',
-      why:(src==='recommended'?'No approach selected — using the recommended approach: ':'')+appr+' delivery'+(sizeWord?(', '+sizeWord+' size ('+tierName+' tier)'):'')+'.'};
-  }
-  const bySize={l:'wl', m:'wm', s:'ws'}[state.loe];
-  if(bySize) return {col:bySize, label:'Waterfall · '+tierName+' Tier',
-    why:'Waterfall delivery, '+sizeWord+' size ('+tierName+' tier).'};
-  return {col:'wm', label:'Waterfall · Standard Tier',
-    why:'Waterfall delivery; T-shirt size not set — defaulting to Standard (Medium). Set the T-shirt size to refine.'};
+  // Tier: PAL overrides the size-based tier.
+  const isPAL = !!(flags && flags.pal);
+  const tier = isPAL ? 'PAL' : (TSHIRT_TIER[state.loe]||'Standard');
+  // Template column (the sheet's grouping): PAL → pal; Agile/Hybrid → hyb; Waterfall → size col.
+  let col;
+  if(isPAL) col='pal';
+  else if(m==='agile'||m==='hybrid') col='hyb';
+  else col={l:'wl', m:'wm', s:'ws'}[state.loe] || 'wm';
+  const why = isPAL
+    ? 'PAL tier (anticipated) — PAL document set; overrides Mini/Standard/Large. Delivery method: '+method+'.'
+    : method+' delivery'+(sizeWord?(', '+sizeWord+' size — '+tier+' tier'):' — tier not set, defaulting to Standard')
+      +(src==='recommended'?' (method from recommendation)':'')+'.';
+  return {col, method, tier, label:method+' · '+tier+' Tier', why};
 }
 // Templates the Mini tier keeps regardless of what the sheet's column marks (ESPMO rule):
 // a Mini (Small) project always keeps the Mini Charter and the Governance Management Plan.
