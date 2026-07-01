@@ -560,7 +560,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           </div>
           <div class="sect">
             <h3>CA-PMF template set <span class="ct" id="tshirtProfileTag">by size &amp; approach</span></h3>
-            <p style="margin:2px 0 8px;font-size:12px;color:#5a6472;font-style:italic;">The official EDD / CA-PMF templates for this project's profile — chosen PAL &rarr; delivery approach &rarr; Waterfall T-shirt size — split into Required and Recommended (from the EDD T-shirt size breakdown).</p>
+            <p style="margin:2px 0 8px;font-size:12px;color:#5a6472;font-style:italic;">The EDD / CA-PMF templates <b>required</b> for this project's profile (PAL &rarr; delivery approach &rarr; Waterfall T-shirt size), deduped against the documents above so nothing repeats. Optional / recommended templates are tucked behind a dropdown — open it only if they're useful to your project.</p>
             <div id="tshirt"></div>
           </div>
         </div>
@@ -887,36 +887,62 @@ function renderTshirt(flags){
   const tag=document.getElementById('tshirtProfileTag'); if(tag) tag.textContent=profile.label;
   const PHASES=['A. Concept','B. Initiation','C. Planning','D. Execution','E. Close'];
   const phLabel=p=>p.replace(/^[A-E]\.\s*/,'');
+  // Dedupe against the ORIGINAL "Documents triggered" panel (kept authoritative — it carries
+  // TARC-routed artifacts and other items the CA-PMF matrix doesn't). Only bring a CA-PMF
+  // template in where it's REQUIRED for this profile AND not already shown above.
+  const norm=s=>String(s||'').toLowerCase().replace(/\(.*?\)/g,'').replace(/[^a-z0-9]/g,'');
+  const inOriginal=new Set((window.__ARTIFACTS_FULL||[]).map(a=>norm(a.nm)));
+  const reqShown=required.filter(t=>!inOriginal.has(norm(t.name)));
+  const reqNorms=new Set(required.map(t=>norm(t.name)));
+  const optShown=recommended.filter(t=>!inOriginal.has(norm(t.name)) && !reqNorms.has(norm(t.name)));
   box.innerHTML='';
   const hd=document.createElement('div');
-  hd.style.cssText='margin-bottom:8px;font-size:12px;color:#3a4a5a;';
+  hd.style.cssText='margin-bottom:6px;font-size:12px;color:#3a4a5a;';
   hd.innerHTML='<b>Profile: '+htmlEsc(profile.label)+'.</b> '+htmlEsc(profile.why)+
-    ' &mdash; <b>'+required.length+'</b> required, <b>'+recommended.length+'</b> recommended.';
+    ' Required CA-PMF templates for this profile are shown below (anything already listed above is not repeated).';
   box.appendChild(hd);
-  const renderList=(list,kind)=>{
-    if(!list.length) return;
-    const wrap=document.createElement('div'); wrap.className='artgroup';
-    wrap.innerHTML='<div class="gh">'+(kind==='req'?'Required':'Recommended (optional)')+' &middot; '+list.length+'</div>';
+  // Shared row renderer
+  const renderRows=(parent,list,kindTag)=>{
     PHASES.forEach(ph=>{
       const items=list.filter(t=>t.phase===ph); if(!items.length) return;
       const sub=document.createElement('div'); sub.style.cssText='margin:6px 0 2px;font-size:11px;font-weight:bold;color:#7a8592;';
-      sub.textContent=phLabel(ph); wrap.appendChild(sub);
+      sub.textContent=phLabel(ph); parent.appendChild(sub);
       items.forEach(t=>{
         const row=document.createElement('div'); row.className='art';
         const owner = t.resp? '<span class="tag pmo">'+htmlEsc(t.resp)+'</span>' : '';
         const build = t.file? '' : '<span class="tag" style="background:#f6e9d8;color:#7a5230;border:1px solid #e3cba6;" title="EDD template to be created">to build</span>';
-        const kindTag = kind==='req'
-          ? '<span class="tag" style="background:#e2efe4;color:#2c623f;border:1px solid #bfe0c8;">required</span>'
-          : '<span class="tag" style="background:#eef2f7;color:#3a5a78;border:1px solid #d6dde6;">recommended</span>';
         const note = t.note? '<span class="tag" style="background:#f4f6f8;color:#5a6472;border:1px solid #e0e6ec;cursor:help;" title="'+htmlEsc(t.note)+'">note</span>':'';
         row.innerHTML='<span class="nm" title="'+htmlEsc(t.file||'(new EDD template)')+'">'+htmlEsc(t.name)+'</span>'+owner+build+kindTag+note;
-        wrap.appendChild(row);
+        parent.appendChild(row);
       });
     });
-    box.appendChild(wrap);
   };
-  renderList(required,'req'); renderList(recommended,'rec');
-  window.__TSHIRT = {profile, required, recommended};
+  // Required (deduped) — visible by default
+  const reqTag='<span class="tag" style="background:#e2efe4;color:#2c623f;border:1px solid #bfe0c8;">required</span>';
+  if(reqShown.length){
+    const g=document.createElement('div'); g.className='artgroup';
+    g.innerHTML='<div class="gh">Required for this profile &middot; '+reqShown.length+'</div>';
+    renderRows(g, reqShown, reqTag);
+    box.appendChild(g);
+  } else {
+    const none=document.createElement('div'); none.style.cssText='font-size:11px;color:#7a8592;font-style:italic;margin:2px 0;';
+    none.textContent='All required CA-PMF templates for this profile are already listed above.';
+    box.appendChild(none);
+  }
+  // Optional / recommended — collapsed dropdown (a deliberate click to reveal, per Tier/size)
+  const optTag='<span class="tag" style="background:#eef2f7;color:#3a5a78;border:1px solid #d6dde6;">optional</span>';
+  if(optShown.length){
+    const det=document.createElement('details'); det.className='tshirt-optional';
+    det.style.cssText='margin-top:8px;border:1px solid #e0e6ec;border-radius:8px;background:#fbfcfd;';
+    const sum=document.createElement('summary');
+    sum.style.cssText='cursor:pointer;padding:8px 12px;font-weight:bold;font-size:12px;color:#3a5a78;';
+    sum.textContent='Optional / recommended templates for '+profile.label+' ('+optShown.length+') — click to view';
+    det.appendChild(sum);
+    const inner=document.createElement('div'); inner.style.cssText='padding:0 12px 10px;';
+    renderRows(inner, optShown, optTag);
+    det.appendChild(inner); box.appendChild(det);
+  }
+  window.__TSHIRT = {profile, required, recommended, requiredShown:reqShown, optionalShown:optShown};
 }
 
 const state = {};

@@ -62,5 +62,21 @@ const EXP={pal:[23,25],hyb:[11,31],wl:[23,25],wm:[12,28],ws:[4,25]};
  ok('#tshirt panel populated', box && box.querySelectorAll('.art').length>0, box?box.querySelectorAll('.art').length:'no box');
  ok('profile tag set', dc.getElementById('tshirtProfileTag').textContent.includes('Waterfall'), dc.getElementById('tshirtProfileTag').textContent);
 }
+// dedup + required-visible / optional-collapsed behavior
+{const {w,dc}=setup({method:'waterfall',loe:'l'}); const d=w.__TSHIRT;
+ const norm=x=>String(x||'').toLowerCase().replace(/\(.*?\)/g,'').replace(/[^a-z0-9]/g,'');
+ const orig=new Set((w.__ARTIFACTS_FULL||[]).map(a=>norm(a.nm)));
+ ok('requiredShown deduped vs original panel', d.requiredShown.every(t=>!orig.has(norm(t.name))));
+ ok('optionalShown deduped vs original panel', d.optionalShown.every(t=>!orig.has(norm(t.name))));
+ ok('optionalShown excludes required', d.optionalShown.every(t=>!d.required.some(r=>norm(r.name)===norm(t.name))));
+ ok('requiredShown <= required (some may already be above)', d.requiredShown.length<=d.required.length);
+ // optional must be inside a <details> (collapsed) not directly visible
+ const det=dc.querySelector('#tshirt details.tshirt-optional');
+ ok('optional list is inside a <details> dropdown', !!det && !det.open, det?('open='+det.open):'no details');
+ ok('dropdown summary mentions optional count', det && /click to view/.test(det.querySelector('summary').textContent), det?det.querySelector('summary').textContent:'');
+ // required rows render OUTSIDE the details (default-visible)
+ const reqRows=[...dc.querySelectorAll('#tshirt > .artgroup .art')].length;
+ ok('required rows visible by default (outside dropdown)', reqRows===d.requiredShown.length, reqRows+'/'+d.requiredShown.length);
+}
 console.log('\n'+(fail.length? fail.length+' FAIL: '+fail.join(' | '):'ALL T-SHIRT CHECKS PASSED'));
 process.exit(fail.length?1:0);
