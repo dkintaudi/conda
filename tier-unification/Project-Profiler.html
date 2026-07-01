@@ -1144,7 +1144,7 @@ function compute(){
   (function(){
     const SIZE={s:'Small',m:'Medium',l:'Large',u:'Unsized'};
     const tp=document.getElementById('tierPill');
-    if(tp){ tp.textContent='Tier '+govTier; tp.style.background='#27506f'; tp.style.color='#fff'; }
+    if(tp){ tp.textContent = govTier===4 ? 'Tier 4 · PAL' : 'Tier '+govTier; tp.style.background = govTier===4 ? '#7a5230' : '#27506f'; tp.style.color='#fff'; }
     const sp=document.getElementById('sizePill');
     if(sp){ const sz=SIZE[state.loe]||'Unsized';
       sp.textContent=sz; sp.style.background='#6a5a2a'; sp.style.color='#fff';
@@ -1165,7 +1165,21 @@ function compute(){
     Standard: '<b>Standard.</b> Nothing in your answers pulls in a team beyond the PMO. You still go to TARC for the standard architecture review (everyone does), but the artifact set is the PMO core \u2014 charter, schedule, RAID, stakeholder register, and the like.',
     Extended: '<b>Extended.</b> Your answers pulled in work beyond the PMO \u2014 '+trig.length+' artifact'+(trig.length===1?'':'s')+' route to other teams (security/privacy, procurement, UX/CX &amp; translations, infrastructure, etc.). These come together at TARC so the right people are at the table. The PMO core still applies on top of these.'
   };
-  document.getElementById('gov').innerHTML = LEVEL_TEXT[lvl];
+  // State the PAL determination in the governance panel, as its own tier.
+  const _pal = determinePAL();
+  let palStmt='';
+  if(_pal.kind==='pal'){
+    palStmt = '<div style="margin-bottom:10px;padding:9px 12px;border-left:4px solid #7a5230;background:#fbf4ec;border-radius:6px;">'
+      +'<b style="color:#7a5230;">Tier 4 · PAL — '+htmlEsc(_pal.status)+'</b><br>'
+      +'A separate governance tier above Full: the complete artifact set <b>plus</b> the PAL Stage 1–4 gate package (CDT / SIMM 19). '
+      +'Deciding trigger'+(_pal.deciding.length>1?'s':'')+': '+_pal.deciding.map(htmlEsc).join(', ')+'. '+htmlEsc(_pal.disclaimer)+'</div>';
+  } else if(_pal.kind==='indeterminate'){
+    palStmt = '<div style="margin-bottom:10px;padding:9px 12px;border-left:4px solid #8a5a12;background:#fdf7e7;border-radius:6px;">'
+      +'<b style="color:#8a5a12;">PAL: Indeterminate</b> — triggers 2–5 are No, but the cost trigger is unresolved (set EDD’s Project Cost Delegation tier, SIMM 15A). Likely a Regular (Delegated) project; confirm at PAL Stage 1.</div>';
+  } else {
+    palStmt = '<div style="margin-bottom:10px;font-size:12px;color:#2c623f;"><b>PAL: Regular Project — Delegated</b> (not CDT-reportable). No PAL trigger fired; confirm at PAL Stage 1.</div>';
+  }
+  document.getElementById('gov').innerHTML = palStmt + LEVEL_TEXT[lvl];
 }
 
 const PMO_OWNED = new Set([
@@ -1635,6 +1649,8 @@ function buildSummaryHTML(){
        +'<tr><td style="'+td+'color:#555;">V\u2013C Read</td><td style="'+td+'font-weight:bold;color:#222;">'+band+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Value &times; Complexity Map</td><td style="'+td+'font-weight:bold;color:#222;">'+quad+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Project Level</td><td style="'+td+'font-weight:bold;color:#222;">'+(window.__LEVEL||'Standard')+'</td></tr>'
+       +'<tr><td style="'+td+'color:#555;">Governance Tier</td><td style="'+td+'font-weight:bold;color:'+((window.__GOV_TIER===4)?'#7a5230':'#222')+';">Tier '+(window.__GOV_TIER||3)+((window.__GOV_TIER===4)?' · PAL (anticipated)':'')+'</td></tr>'
+       +'<tr><td style="'+td+'color:#555;">PAL Determination</td><td style="'+td+'font-weight:bold;color:#222;">'+escHtml(determinePAL().status)+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Value Score</td><td style="'+td+'font-weight:bold;color:#222;">'+val+'</td></tr>'
 
        +'<tr><td style="'+td+'color:#555;">Criticality</td><td style="'+td+'font-weight:bold;color:#222;">'+crit+'</td></tr>'
@@ -1697,8 +1713,9 @@ function submitEmail(){
     'Technical Complexity: '+techCx,
     'Criticality: '+crit,
     'Project Level: '+(window.__LEVEL||'Standard'),
+    'Governance Tier: Tier '+(window.__GOV_TIER||3)+((window.__GOV_TIER===4)?' · PAL (anticipated)':''),
     'Level of Effort (T-shirt): '+LOE_TEXT(state.loe),
-    'PAL (Project Approval Lifecycle): '+PAL_TEXT(state.pal),
+    'PAL Determination (SAM 4819.37): '+determinePAL().status,
     'Artifacts \u2014 PMO assists/advises: '+pmoN+'  \u00B7  TARC assists/advises: '+tarcN,
     '',
     '\u2500\u2500 ASSESSMENT FEEDBACK \u2500\u2500',
@@ -1916,6 +1933,8 @@ function saveAsExcel(){
     [{v:'Average Complexity (of 4)',s:label},{v:+r.avgCx.toFixed(2),s:val}],
     [{v:'Criticality',s:label},{v:'Zone '+r.zone+' · '+r.crit,s:val}],
     [{v:'Project Level',s:label},{v:(window.__LEVEL||'Standard'),s:valNum}],
+    [{v:'Governance Tier',s:label},{v:'Tier '+r.govTier+(r.govTier===4?' · PAL (anticipated)':''),s:valNum}],
+    [{v:'PAL Determination',s:label},{v:determinePAL().status,s:valNum}],
     [{v:'Recommended Approach',s:label},{v:recommendMethod().recFull+(state.method&&state.method!=='tbd'?(' (selected: '+METHOD_LABEL[state.method]+')'):''),s:valNum}],
     [{v:'',s:val},{v:'',s:val}],
     [{v:'Triggered Drivers',s:section},{v:'',s:section}],
@@ -1926,7 +1945,7 @@ function saveAsExcel(){
   } else {
     P.push([{v:'(none)',s:val},{v:'',s:val}]);
   }
-  const driverHdrRow=15; // 0-indexed row of "Triggered Drivers" (shifted +1 by Recommended Approach row)
+  const driverHdrRow=17; // 0-indexed row of "Triggered Drivers" (shifted by Governance Tier + PAL + Recommended Approach rows)
   // Assessment feedback section
   P.push([{v:'',s:val},{v:'',s:val}]);
   const fbHdrRow=P.length;
