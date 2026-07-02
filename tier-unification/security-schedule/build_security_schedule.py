@@ -36,7 +36,7 @@ def child_range(t):
     while j<len(order) and byid[order[j]]['cat']==t['cat']: j+=1
     return (order[i+1],order[j-1]) if j-1>i else None
 
-R0=3  # header row; task id -> row = R0+id
+R0=6  # grid header row; task id -> row = R0+id. Rows 1-5 = stampable header block.
 def rowOf(tid): return R0+tid
 
 # ---------- 1) TEMPLATE output = the uploaded file, as-is ----------
@@ -60,15 +60,23 @@ cats=list(dict.fromkeys(t['cat'] for t in tasks))
 palette=["DCEBF7","E3F0E1","FBF0DA","EFE6F5","E1F0EF","FDE8E4","EAF2D8","F3E7D2","E7ECF3","F0E4EE","E0EFEA","EDEDED"]
 catcol={c:palette[i%len(palette)] for i,c in enumerate(cats)}
 
-# anchor
-ws["A1"]="Project Start (edit to re-base whole schedule) ▶"
-ws["A1"].font=Font(bold=True,color=TEAL,size=11)
+# --- Header block (rows 1-5) — the Autogenerator stamps into these fixed cells ---
+lblF=Font(bold=True,color=TEAL,size=10)
+ws["A1"]="Project Start (edit to re-base whole schedule) ▶"; ws["A1"].font=Font(bold=True,color=TEAL,size=11)
 ws["B1"]="=TODAY()"; ws["B1"].fill=anchFill; ws["B1"].font=anchFont; ws["B1"].number_format="ddd, mmm d, yyyy"
-ws["A2"]=("Dates are Excel formulas off B1 — change B1 and the whole schedule + Gantt re-base. "
-          "⚠ EXTERNAL tasks are anchored provisionally to the project start; wire them to your own project tasks. "
-          "Bars are conditional formatting (recompute automatically). ◆ = milestone.")
-ws["A2"].font=Font(italic=True,size=9,color="5A6472"); ws["A2"].alignment=Alignment(wrap_text=True,vertical="top")
-ws.merge_cells("A2:M2")
+# identity (stamp targets: B2 name, E2 PM)
+ws["A2"]="Project"; ws["A2"].font=lblF; ws["B2"]="(from intake)"
+ws["D2"]="PM"; ws["D2"].font=lblF; ws["E2"]="(from intake)"
+# determinations (stamp targets: B3 security review, E3 protected data, B4 fired-by-intake)
+ws["A3"]="Security review"; ws["A3"].font=lblF; ws["B3"]="(from intake)"
+ws["D3"]="Protected data"; ws["D3"].font=lblF; ws["E3"]="(from intake)"
+ws["A4"]="Fired by intake"; ws["A4"].font=lblF; ws["B4"]="(from intake)"
+ws.merge_cells("B2:C2"); ws.merge_cells("E2:F2"); ws.merge_cells("B3:C3"); ws.merge_cells("E3:F3"); ws.merge_cells("B4:F4")
+ws["A5"]=("Dates are Excel formulas off B1 — change B1 (or let the Autogenerator stamp the project start) and the whole "
+          "schedule + Gantt re-base. ⚠ EXTERNAL tasks are anchored provisionally to the project start; wire them to your own "
+          "project tasks. Bars are conditional formatting (recompute automatically). ◆ = milestone.")
+ws["A5"].font=Font(italic=True,size=9,color="5A6472"); ws["A5"].alignment=Alignment(wrap_text=True,vertical="top")
+ws.merge_cells("A5:M5")
 
 COLS=["Task ID","Category","System / Component","Task Name","Type","Duration (days)",
       "Predecessor IDs","Predecessor (plain English)","Successor IDs","Status","Start","Finish","Notes"]
@@ -134,7 +142,7 @@ w={1:7,2:20,3:20,4:38,5:9,6:8,7:16,8:30,9:12,10:26,11:11,12:11,13:34}
 for c,wd in w.items(): ws.column_dimensions[get_column_letter(c)].width=wd
 ws.freeze_panes="A"+str(R0+1)  # freeze header rows
 ws.auto_filter.ref="A{r}:M{last}".format(r=R0,last=R0+len(tasks))
-ws.row_dimensions[2].height=42
+ws.row_dimensions[5].height=42
 
 # ---- Conditional-formatting Gantt ----
 lastrow=R0+len(tasks); firstcol=get_column_letter(GC0); lastcol=get_column_letter(GC0+NWEEKS-1)
