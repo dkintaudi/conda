@@ -483,6 +483,7 @@ footer{border-top-color:#d8e1ec!important;color:#627589!important;}
       <label class="radio sel" id="inclSecurityLabel" style="display:inline-flex;margin-top:4px">
         <input type="checkbox" id="inclSecurity" checked> Also generate the security task files (.xlsx) — Security Tasks Template (no dates) + Security Schedule (formula dates + weekly Gantt)
       </label>
+      <div id="secGateCaption" style="display:none;font-size:11px;color:#b3541e;margin:2px 0 0 22px"></div>
       <div class="run-bar">
         <button class="run" id="runBtn" disabled>Generate drafts</button>
         <span class="run-note" id="runNote">Load the source file and required templates to begin.</span>
@@ -2947,6 +2948,7 @@ function ooxmlMimeFor(zip) {
       state.profileBuild = mergeSources(state.sources);
       state.selectedPhaseSet = null;   // fresh load: clear any prior phase filter
       state.profileBuildName = [state.sources.profilerName, state.sources.trtName].filter(Boolean).join(" + ");
+      try { reflectSecurityGate(); } catch (e) {}   // F3: reflect answer-driven security gate on the checkbox
 
       // BALK: a file was given but produced nothing usable. Don't fake success — tell the user
       // plainly that this isn't a file the Autogenerate knows how to read, and stop here.
@@ -3007,6 +3009,7 @@ function ooxmlMimeFor(zip) {
       state.profileBuild = mergeSources(state.sources);
       state.selectedPhaseSet = null;   // fresh load: clear any prior phase filter
       state.profileBuildName = [state.sources.profilerName, state.sources.trtName].filter(Boolean).join(" + ");
+      try { reflectSecurityGate(); } catch (e) {}   // F3: reflect answer-driven security gate on the checkbox
       var usableTemplates = (state.profileBuild.templates || []).length;
       var usableFields = (state.profileBuild.fields || []).length;
       if (usableTemplates === 0 && usableFields === 0) {
@@ -4598,15 +4601,26 @@ function ooxmlMimeFor(zip) {
     // ---- SECURITY TASK FILES: template + schedule, part of the same build/delivery ----
     // Two fixed .xlsx (security library + security schedule w/ Gantt). Ride `outputs` like the
     // schedule so they land in whatever destination the user picked. A failure never blocks drafts.
-    var wantSecurity = !$("inclSecurity") || $("inclSecurity").checked;
+    // F3 — determination-driven gating: the answers decide, not the checkbox. If intake fired
+    // security (sec ∈ {y,mb} OR protected data = Yes), both files ship regardless of the box; the
+    // box is only a manual INCLUDE for unfired projects, never an EXCLUDE for fired ones.
+    var secFired = securityFiredFrom(state.profileBuild);
+    var boxChecked = !$("inclSecurity") || $("inclSecurity").checked;   // absent box => default floor
+    var wantSecurity = secFired || boxChecked;
     if (wantSecurity) {
       try {
         var secT = buildSecurityTemplateOutput(); outputs.push({ name: secT.name, blob: secT.blob });
         var secS = buildSecurityScheduleOutput(); outputs.push({ name: secS.name, blob: secS.blob });
       } catch (secErr) {
-        msg("resultLog", "warn", "Couldn't build the security task files (.xlsx): "
-          + (secErr && secErr.message ? secErr.message : secErr) + " — other outputs are unaffected.");
+        var secMsg = "Couldn't build the security task files (.xlsx): " + (secErr && secErr.message ? secErr.message : secErr);
+        if (secFired) {
+          msg("resultLog", "err", "⚠ Security files are REQUIRED by this project’s intake answers and failed to build — do not treat this delivery as complete. " + secMsg);
+        } else {
+          msg("resultLog", "warn", secMsg + " — other outputs are unaffected.");
+        }
       }
+    } else {
+      msg("resultLog", "ok", "Security task files were declined (checkbox off) and are not answer-required for this project.");
     }
 
     if (errors.length) {
@@ -4967,6 +4981,39 @@ function renderValidationReport(need, checks) {
   function buildSecurityScheduleOutput() {
     return { name: "IDP_Security_Tasks_SCHEDULE.xlsx", blob: _xlsxBlobFromB64(SEC_SCHEDULE_B64) };
   }
+  // F3 — determination-driven gating helpers. securityFired = sec ∈ {y,mb} OR protected data = Yes,
+  // read from the handoff (Profiler emits security_fired plus raw ans_sec / ans_data).
+  var SECURITY_DEFAULT_INCLUDE = true;   // D1: unfired default stays checked; policy flip is one char
+  function securityFiredFrom(pb) {
+    if (!pb) return false;
+    var v = String(profileBuildField(pb, ["security_fired"]) || "").trim().toUpperCase();
+    if (v === "Y" || v === "YES" || v === "TRUE") return true;
+    var sec = String(profileBuildField(pb, ["ans_sec"]) || "").trim().toLowerCase();
+    var data = String(profileBuildField(pb, ["ans_data"]) || "").trim().toLowerCase();
+    return sec === "y" || sec === "mb" || data === "y";
+  }
+  function secStateLabels(pb) {
+    var sec = String(profileBuildField(pb, ["ans_sec"]) || "").trim().toLowerCase();
+    var data = String(profileBuildField(pb, ["ans_data"]) || "").trim().toLowerCase();
+    return { sec: ({ y: "Yes", mb: "Maybe", n: "No", ns: "Not sure" })[sec] || "(not answered)",
+             data: ({ y: "Yes", n: "No", m: "Not sure" })[data] || "(not answered)" };
+  }
+  function reflectSecurityGate() {
+    var cb = $("inclSecurity"), cap = $("secGateCaption"); if (!cb) return;
+    if (securityFiredFrom(state.profileBuild)) {
+      cb.checked = true; cb.disabled = true;
+      var st = secStateLabels(state.profileBuild);
+      if (cap) { cap.style.display = "block"; cap.textContent = "Required — fired by intake answers (security: " + st.sec + "; protected data: " + st.data + ")."; }
+    } else {
+      cb.disabled = false;
+      if (cap) { cap.style.display = "none"; cap.textContent = ""; }
+    }
+  }
+  // Test hook (read-only helpers + a way to set profileBuild) — mirrors the Profiler's exposure.
+  window.__F3TEST = {
+    fired: function (pb) { return securityFiredFrom(pb); },
+    reflect: function (pb) { state.profileBuild = pb; reflectSecurityGate(); }
+  };
   function buildScheduleOutput(profileBuild) {
     if (typeof window.PizZip !== "function") {
       throw new Error("PizZip unavailable — cannot assemble the schedule.");
