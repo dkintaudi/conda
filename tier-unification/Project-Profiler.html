@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.3</title>
+<title>ESPMO Project Profiler — v01.4</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -295,7 +295,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.3 · local browser tool · no upload";
+  content:"v01.4 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -636,7 +636,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 7;            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 8;            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1060,26 +1060,69 @@ function setCtx(id, val){
 // profile. This is deliberately data-driven: changing the workbook/rules block
 // changes the questions without hand-editing the form.
 // -----------------------------------------------------------------------------
+// v01.4 presentation layer: 32 questions -> 27 visible screens across 6 sections.
+// PRESENTATION ONLY — ESPMO_RULES, QUESTIONS, QNUM, scoring and the export writer are
+// untouched, so exports stay byte-identical for identical answer-code vectors. `name` is
+// captured on the intro as metadata (still stored/exported as `name`); the four PAL fields
+// share one 4x3 matrix screen; testing+support sit together under Sustainment. Every one of
+// the 31 answer fields is still a standalone control — nothing is hidden, gated, or defaulted.
+// Design criterion: judgment-scale inputs to the method advisory stand alone; factual flag
+// screens merge only where the option sets are identical (the PAL matrix).
+const SECTION_ORDER=['Project Identity','Value / Priority Drivers','Size & Delivery Footprint','PAL Determination','Technical / Business Complexity','Sustainment Planning'];
+const SECTION_LABEL={'Project Identity':'Project Identity','Value / Priority Drivers':'Value & Priority','Size & Delivery Footprint':'Size & Delivery Footprint','PAL Determination':'PAL Determination','Technical / Business Complexity':'Technical & Business Complexity','Sustainment Planning':'Sustainment Planning'};
+// One standard question card — SAME DOM contract as before (.opt[data-id][data-v], ctx textarea).
+function questionCardEl(q){
+  const d=document.createElement('div'); d.className='q'+(state[q.id]!==undefined&&state[q.id]!==''?' answered':'');
+  const qlabel = QNUM[q.id] ? ('Q'+String(QNUM[q.id]).padStart(2,'0')) : '—';
+  let inner='<div class="num">'+qlabel+'</div><div class="qt">'+q.t+'</div>';
+  if(q.h) inner+='<div class="qh">'+q.h+'</div>';
+  if(q.type==='text'){
+    inner+='<input class="txt" type="text" placeholder="'+htmlEsc(q.ph||'Project name…')+'" value="'+htmlEsc(state[q.id]||'')+'" data-id="'+q.id+'">';
+  } else {
+    inner+='<div class="opts">';
+    q.o.forEach(o=>{ const sel=state[q.id]===o.v; const heavy=sel&&o.f; inner+='<div class="opt'+(sel?' sel':'')+(heavy?' heavy':'')+'" data-id="'+q.id+'" data-v="'+htmlEsc(o.v)+'">'+htmlEsc(o.l)+'</div>'; });
+    inner+='</div>';
+    const ctx=getCtx(q.id);
+    inner+='<div class="qctx"><label class="qctx-label" for="ctx_'+htmlEsc(q.id)+'"><span>Additional Context</span><span>Optional · '+ctx.length+'/'+CONTEXT_LIMIT+'</span></label>'
+         +'<textarea class="ctx" id="ctx_'+htmlEsc(q.id)+'" data-id="'+htmlEsc(q.id)+'" maxlength="'+CONTEXT_LIMIT+'" placeholder="Add supporting rationale, assumptions, dependencies, or clarification for the selected response.">'+htmlEsc(ctx)+'</textarea></div>';
+  }
+  d.innerHTML=inner; return d;
+}
+// PAL matrix — 4 rows x 3 shared columns (No/Yes/Not sure). Still emits the same .opt elements
+// (data-id per field, data-v code), so clicks, state, and export are identical to four separate
+// questions; the merge exists only in the DOM. Per-row "Not sure" round-trips independently.
+function palMatrixEl(qs){
+  const d=document.createElement('div'); d.className='q';
+  const COLS=[['n','No'],['y','Yes'],['ns','Not sure']];
+  const colGrid='display:grid;grid-template-columns:repeat(3,minmax(66px,1fr));gap:7px;';
+  let h='<div class="num">PAL</div><div class="qt">PAL / CDT oversight triggers — answer each row.</div>'
+    +'<div class="qh">PAL triggers per SAM 4819.37. Any Yes anticipates a PAL / CDT-reportable project. Advisory — the tool flags anticipated PAL status; confirm at PAL Stage 1 (SIMM 19A.2). Does not change complexity or value.</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr auto;gap:9px 14px;align-items:center;margin-top:8px;">';
+  h+='<div></div><div style="'+colGrid+'text-align:center;font:600 10px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase;color:#7a8590;">'+COLS.map(c=>'<div>'+c[1]+'</div>').join('')+'</div>';
+  qs.forEach(q=>{
+    const ans=state[q.id];
+    h+='<div style="font-size:13px;color:#1f2a38;line-height:1.35;">'+htmlEsc(q.t)+'</div>';
+    h+='<div style="'+colGrid+'">';
+    COLS.forEach(c=>{ const sel=ans===c[0]; h+='<div class="opt'+(sel?' sel':'')+'" data-id="'+q.id+'" data-v="'+c[0]+'" style="text-align:center;">'+c[1]+'</div>'; });
+    h+='</div>';
+  });
+  h+='</div>';
+  d.innerHTML=h; return d;
+}
 function render(){
   const c = document.getElementById('questions'); c.innerHTML='';
-  let lastG=null;
-  QUESTIONS.forEach(q=>{
-    if(q.g!==lastG){ const gl=document.createElement('div'); gl.className='group-label'; gl.textContent=q.g; c.appendChild(gl); lastG=q.g; }
-    const d=document.createElement('div'); d.className='q'+(state[q.id]!==undefined&&state[q.id]!==''?' answered':'');
-    const qlabel = QNUM[q.id] ? ('Q'+String(QNUM[q.id]).padStart(2,'0')) : '\u2014';
-    let inner='<div class="num">'+qlabel+'</div><div class="qt">'+q.t+'</div>';
-    if(q.h) inner+='<div class="qh">'+q.h+'</div>';
-    if(q.type==='text'){
-      inner+='<input class="txt" type="text" placeholder="'+htmlEsc(q.ph||'Project name\u2026')+'" value="'+htmlEsc(state[q.id]||'')+'" data-id="'+q.id+'">';
-    } else {
-      inner+='<div class="opts">';
-      q.o.forEach(o=>{ const sel=state[q.id]===o.v; const heavy=sel&&o.f; inner+='<div class="opt'+(sel?' sel':'')+(heavy?' heavy':'')+'" data-id="'+q.id+'" data-v="'+htmlEsc(o.v)+'">'+htmlEsc(o.l)+'</div>'; });
-      inner+='</div>';
-      const ctx=getCtx(q.id);
-      inner+='<div class="qctx"><label class="qctx-label" for="ctx_'+htmlEsc(q.id)+'"><span>Additional Context</span><span>Optional · '+ctx.length+'/'+CONTEXT_LIMIT+'</span></label>'
-           +'<textarea class="ctx" id="ctx_'+htmlEsc(q.id)+'" data-id="'+htmlEsc(q.id)+'" maxlength="'+CONTEXT_LIMIT+'" placeholder="Add supporting rationale, assumptions, dependencies, or clarification for the selected response.">'+htmlEsc(ctx)+'</textarea></div>';
-    }
-    d.innerHTML=inner; c.appendChild(d);
+  // Intro screen — Project Name (metadata) + guidance. Not counted as a question.
+  const intro=document.createElement('div'); intro.className='q'+(state.name&&String(state.name).trim()?' answered':'');
+  intro.innerHTML='<div class="num">Start</div><div class="qt">Project name</div>'
+    +'<div class="qh">Estimated completion time: 5–10 minutes. “Not sure” is always a safe answer — it flags the item for follow-up instead of forcing a guess.</div>'
+    +'<input class="txt" type="text" placeholder="Project name…" value="'+htmlEsc(state.name||'')+'" data-id="name">';
+  c.appendChild(intro);
+  // 6 sections, in canonical order
+  SECTION_ORDER.forEach((g,gi)=>{
+    const gl=document.createElement('div'); gl.className='group-label'; gl.textContent='Section '+(gi+1)+' of 6 · '+SECTION_LABEL[g]; c.appendChild(gl);
+    const qs=QUESTIONS.filter(q=>q.g===g && q.id!=='name');
+    if(g==='PAL Determination') c.appendChild(palMatrixEl(qs));
+    else qs.forEach(q=>c.appendChild(questionCardEl(q)));
   });
   renderRelatedBlock(c);
   compute();
