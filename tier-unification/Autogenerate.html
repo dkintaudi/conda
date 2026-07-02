@@ -23,7 +23,21 @@
     in the single <script>
 <!--
 ===============================================================================
-SOURCE MAP — ESPMO Auto Generator (Asset Library) v01.06
+SOURCE MAP — ESPMO Auto Generator (Asset Library) v01.07  (toolset v01.3)
+
+v01.07 (toolset v01.3):
+  • Security task files (Template + Schedule) emitted as part of the build.
+  • F2 — determinations "click in": the security schedule is stamped with the
+    project start date (B1 formula -> date serial, style preserved; +1 formula
+    delta asserted, B1 only), project/PM, and the security/protected-data
+    determinations. No start date -> B1 stays the live =TODAY() formula.
+  • F3 — determination-driven gating: securityFired = sec in {y,mb} OR protected
+    data = Yes (from the handoff). Fired -> both files ship regardless of the
+    checkbox (checkbox reflects checked+disabled+caption); fired-and-failed ->
+    error banner, drafts still ship. SECURITY_DEFAULT_INCLUDE = true.
+  • F1 render tag {contradictions_block}: reads the export's hidden Contradictions
+    sheet and renders fired rules + ack state where a template includes the tag.
+
 Purpose
   Document-generation assistant. It reads the Profiler export workbook, resolves
   approved template mappings, fills Word templates, and packages review-ready
@@ -163,7 +177,7 @@ Read the code
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Autogenerate</title>
+<title>ESPMO Autogenerate — v01.3</title>
 <style>
   :root {
     --ink: #11151c;
@@ -357,7 +371,7 @@ body{background:linear-gradient(180deg,#f8fbfe,#eef4fa 48%,#e9f1f8)!important;co
 body::before{content:"";display:block;height:8px;background:linear-gradient(90deg,var(--edd-blue),var(--edd-teal) 62%,var(--edd-gold));}
 .wrap{max-width:1040px;padding:30px 24px 76px;}
 header{position:relative;overflow:hidden;border:0!important;border-radius:22px;margin-bottom:26px!important;padding:28px 32px!important;color:#fff;background:linear-gradient(135deg,var(--edd-blue),var(--edd-blue-2) 60%,var(--edd-teal));box-shadow:0 20px 48px rgba(11,63,115,.22)!important;}
-header::after{content:"v01.2 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
+header::after{content:"v01.3 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
 .brand{padding-right:340px;row-gap:10px;}
 .brand h1{font-size:26px;color:#fff;}
 .brand .tag{color:#ffe08a!important;border-color:rgba(255,224,138,.65)!important;background:rgba(0,0,0,.16);border-radius:999px;padding:5px 9px;margin-top:4px;}
