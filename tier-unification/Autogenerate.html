@@ -5083,7 +5083,7 @@ function renderValidationReport(need, checks) {
     fired: function (pb) { return securityFiredFrom(pb); },
     reflect: function (pb) { state.profileBuild = pb; reflectSecurityGate(); },
     build: function (pb) { return buildSecurityScheduleOutput(pb); },
-    parse: function (ab) { var pb = parseProfileBuild(ab); return { n: (pb.contradictions || []).length, block: contradictionsBlock(pb), firedSec: securityFiredFrom(pb) }; },
+    parse: function (ab) { var pb = parseProfileBuild(ab); return { n: (pb.contradictions || []).length, block: contradictionsBlock(pb), firedSec: securityFiredFrom(pb), templates: (pb.templates || []).length, needed: neededTemplates(pb).length }; },
     blockOf: function (pb) { return contradictionsBlock(pb); },
     schedXml: function (pb) {
       var zip = new window.PizZip(b64ToUint8(SEC_SCHEDULE_B64));
