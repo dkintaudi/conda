@@ -505,22 +505,20 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           <div class="sect">
             <h3>Value-to-Complexity map <span class="ct">value &times; complexity</span></h3>
             <svg class="quad" id="quadChart" viewBox="0 0 300 244" xmlns="http://www.w3.org/2000/svg">
-              <!-- Value-to-Complexity map. Top two bands are V–C diagonals (V–C = value − cxi/10);
-                   Mini is NOT a diagonal — it is the both-low CORNER (value<60 AND avgCx<2.5),
-                   drawn as a rectangle in the lower-left. Plot x:44–288 (cxi 0–100, avgCx 0–4),
-                   y:14–214 (value 100 top → 0 bottom). avgCx 2.5 = cxi 62.5 → x 196.5; value 60 → y 94. -->
-              <!-- Full: V–C >= 80 (diagonal band up to the top, absorbs the old Optimal zone) -->
-              <polygon points="44,54 288,34 288,14 44,14" class="q-tgt"/>
-              <!-- Standard (diagonal part): V–C 60–79 -->
-              <polygon points="44,94 288,74 288,34 44,54" class="q-std"/>
-              <!-- Standard (the rest below V–C 60 that is NOT the Mini corner) -->
-              <polygon points="44,214 288,214 288,74 44,94" class="q-std"/>
-              <!-- Mini: both-low CORNER rectangle (value<60 AND avgCx<2.5) overlaid lower-left -->
+              <!-- Value × Complexity map. Tier bands are HORIZONTAL by VALUE (y-axis); complexity
+                   (x-axis) is an indicator only and never changes the tier. Plot x:44–288 (cxi 0–100,
+                   avgCx 0–4), y:14–214 (value 100 top → 0 bottom). value 80 → y54; value 60 → y94;
+                   avgCx 2.5 = cxi 62.5 → x196.5. -->
+              <!-- Full: value >= 80 (top band, full width — regardless of complexity) -->
+              <rect x="44" y="14" width="244" height="40" class="q-tgt"/>
+              <!-- Standard: value 60–79 (full width) + value<60 with avgCx>=2.5 (lower-right) -->
+              <rect x="44" y="54" width="244" height="40" class="q-std"/>
+              <rect x="196.5" y="94" width="91.5" height="120" class="q-std"/>
+              <!-- Mini: value<60 AND avgCx<2.5 (lower-left corner) -->
               <rect x="44" y="94" width="152.5" height="120" class="q-min"/>
-              <line x1="44" y1="54" x2="288" y2="34" class="q-div"/>   <!-- V–C 80 -->
-              <line x1="44" y1="94" x2="288" y2="74" class="q-div"/>   <!-- V–C 60 -->
-              <line x1="196.5" y1="94" x2="196.5" y2="214" class="q-div"/>  <!-- Mini corner right edge (avgCx 2.5) -->
-              <line x1="44" y1="94" x2="196.5" y2="94" class="q-div"/>     <!-- Mini corner top edge (value 60) -->
+              <line x1="44" y1="54" x2="288" y2="54" class="q-div"/>   <!-- value 80 -->
+              <line x1="44" y1="94" x2="288" y2="94" class="q-div"/>   <!-- value 60 -->
+              <line x1="196.5" y1="94" x2="196.5" y2="214" class="q-div"/>  <!-- avgCx 2.5 (Mini corner right edge) -->
               <!-- light gridlines at 25/50/75 on both axes -->
               <line x1="105" y1="14" x2="105" y2="214" class="q-grid"/>
               <line x1="166" y1="14" x2="166" y2="214" class="q-grid"/>
@@ -547,7 +545,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
               <circle id="quadDot" cx="44" cy="214" r="7" class="q-dot"/>
             </svg>
             <div class="xcheck" id="quadCap" style="background:#f1f5fb;color:#243;"></div>
-            <div class="note" style="margin-top:6px;font-size:11px;color:#8a93a0;">Bands are diagonal: V&ndash;C = Value &minus; (Complexity penalty). A high-value project stays in a top band even at higher complexity &mdash; the value outweighs the penalty. Axes run 0&ndash;100 in steps of 25.</div>
+            <div class="note" style="margin-top:6px;font-size:11px;color:#8a93a0;">Tier bands are horizontal by <b>value</b>: Full = value &ge; 80, Standard = 60&ndash;79, Mini = value &lt; 60 <i>and</i> low complexity (avg &lt; 2.5). Complexity (x-axis) is an indicator of how hard the project is &mdash; it never lowers the tier. The V&ndash;C read is shown separately to compare projects. Axes run 0&ndash;100 in steps of 25.</div>
           </div>
           <div class="sect" id="contraSect" style="display:none">
             <h3>Intake consistency <span class="ct">contradiction checks</span></h3>
@@ -636,7 +634,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 8;            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 9;            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1257,7 +1255,10 @@ function compute(){
   // PAL overlays Tier 4 (Full docs + oversight) WITHOUT moving the map label — the
   // single intended divergence between the binder and the natural band.
   const highVal=value>=50, highCx=cxi>=(ZT*25);
-  const naturalTier = (flags.eddnext || vc >= 80) ? 3 : ((value < 60 && avgCx < 2.5) ? 1 : 2);
+  // Tier 3 (Full) is driven by VALUE (>= 80), not V-C: complexity is an indicator of how
+  // hard a project is, never a demotion. Mini stays the both-low corner (value < 60 AND
+  // avgCx < 2.5). EDD Next still floors to Tier 3. V-C remains a display-only indicator.
+  const naturalTier = (flags.eddnext || value >= 80) ? 3 : ((value < 60 && avgCx < 2.5) ? 1 : 2);
   const govTier = flags.pal ? 4 : naturalTier;
   window.__GOV_TIER = govTier;
   const quadName = naturalTier===3 ? 'Full' : (naturalTier===1 ? 'Mini' : 'Standard');
@@ -1366,10 +1367,10 @@ function compute(){
   const qy=14+(1-Math.max(0,Math.min(100,value))/100)*200;
   const dot=document.getElementById('quadDot'); dot.setAttribute('cx',qx.toFixed(1)); dot.setAttribute('cy',qy.toFixed(1)); dot.style.fill=quad.c;
   // caption: V–C band verdict + the V–C score
-  const qcap = '<b>'+bandInfo.t+'.</b> V\u2013C '+vc+' (Value '+value+' \u2212 complexity penalty). '+
-    (naturalTier===3 ? 'Full governance set \u2014 strong value against complexity (or EDD Next scope) earns the complete artifact set and oversight.'
-     : naturalTier===1 ? 'Low value and low complexity \u2014 a mini-template effort (Mini Charter / Mini PMP).'
-     : 'Standard documentation effort below the Full line \u2014 plan it deliberately as a standard project.');
+  const qcap = '<b>'+bandInfo.t+'.</b> Tier by value: <b>'+value+'</b>/100 (V\u2013C '+vc+' shown as a complexity indicator). '+
+    (naturalTier===3 ? 'Value \u2265 80 (or EDD Next) \u2014 Full governance set: the complete artifact set and oversight, regardless of complexity.'
+     : naturalTier===1 ? 'Value < 60 and low complexity (avg < 2.5) \u2014 a mini-template effort (Mini Charter / Mini PMP).'
+     : 'Value 60\u201379 (or below 60 with higher complexity) \u2014 a standard documentation effort; plan it deliberately as a standard project.');
   document.getElementById('quadCap').innerHTML=qcap;
 
   // The document set AND the oversight pill now read the SAME unified tier
@@ -2005,7 +2006,10 @@ function _recompute(){
   // so equal-V–C lines are diagonals. High value can keep a complex project in a top band.
   const vc=Math.round(value-(avgCx*2.5));
   // Unified governance tier — the SAME single ladder used in compute() (see there).
-  const naturalTier = (flags.eddnext || vc >= 80) ? 3 : ((value < 60 && avgCx < 2.5) ? 1 : 2);
+  // Tier 3 (Full) is driven by VALUE (>= 80), not V-C: complexity is an indicator of how
+  // hard a project is, never a demotion. Mini stays the both-low corner (value < 60 AND
+  // avgCx < 2.5). EDD Next still floors to Tier 3. V-C remains a display-only indicator.
+  const naturalTier = (flags.eddnext || value >= 80) ? 3 : ((value < 60 && avgCx < 2.5) ? 1 : 2);
   const govTier = flags.pal ? 4 : naturalTier;
   const band = naturalTier===3 ? 'Full' : (naturalTier===1 ? 'Mini' : 'Standard');
   const quad = band;  // map label follows the natural V–C band (single source of truth)
