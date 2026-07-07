@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.7</title>
+<title>ESPMO Project Profiler — v01.8</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -299,7 +299,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.7 · local browser tool · no upload";
+  content:"v01.8 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -668,7 +668,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 12;           // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 13;           // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2761,8 +2761,17 @@ function saveAsExcel(){
     const fileFor = nm => TEMPLATE_FILES[slug(nm)] || '';   // '' = no library file mapped yet
     const tplHdr = ['template_name','file','generate','document','owner','tier','timing','why','deliverable_id'];
     const tplRows = [tplHdr];
+    // Schedule-id reconciliation: the nine PMBOK subsidiary management plans (Risk, Quality,
+    // Communications, Change & Schedule, Scope, Requirements, Organization, Procurement, Cost)
+    // are distinct governance DOCUMENTS but have no distinct SCHEDULE row — they consolidate into
+    // the PMP task PLN-01 ("Consolidate Project Management Plan(s)"), per that row's own note. So
+    // their deliverable_id (the stable EM/Schedule id) points at PLN-01. Their RACI/EM display id
+    // (PLN-12…20) is unaffected; only the schedule mapping is reconciled.
+    const SCHED_ALIAS = {'PLN-12':'PLN-01','PLN-13':'PLN-01','PLN-14':'PLN-01','PLN-15':'PLN-01','PLN-16':'PLN-01','PLN-17':'PLN-01','PLN-18':'PLN-01','PLN-19':'PLN-01','PLN-20':'PLN-01'};
     fullH.forEach(a=>{
       const isPMO = String(a.owner||'').toUpperCase().indexOf('PMO')===0;
+      let did = slug(a.id);
+      if(SCHED_ALIAS[String(did).trim().toUpperCase()]) did = SCHED_ALIAS[String(did).trim().toUpperCase()];
       tplRows.push([
         slug(a.nm),                    // template_name — canonical, human-readable doc name
         fileFor(a.nm),                 // file — actual .docx filename in the library (match key)
@@ -2772,7 +2781,7 @@ function saveAsExcel(){
         slug(a.tier),                  // tier — '', T2, T3
         slug(a.timing),                // timing — This phase / Ongoing / <phase>
         slug(a.whyText||a.trigger),    // why — the question-number audit trail
-        slug(a.id)                     // deliverable_id — stable EM/Schedule id (CON-01…); '' if no schedule row
+        did                            // deliverable_id — stable EM/Schedule id (CON-01…); subsidiary PM plans → PLN-01
       ]);
     });
 
