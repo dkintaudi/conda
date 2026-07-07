@@ -336,7 +336,13 @@ Read the code
   .pastebox[open] > summary::before { content: "▾ "; }
   .pastebox-body { padding: 0 14px 14px; }
   .pastebox-body textarea { width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; border: 1px solid var(--line-soft); border-radius: 6px; background: #fff; resize: vertical; }
-  .pastebox-actions { margin-top: 8px; display: flex; gap: 8px; }
+  .pastebox-actions { margin-top: 8px; display: flex; gap: 8px; align-items: center; }
+  .paste-status { font-size: 12px; font-weight: 600; margin-left: 2px; }
+  .paste-status.unread { color: #b26a00; }
+  .paste-status.read { color: #1a7f4b; }
+  .paste-primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .paste-primary.needs-read { animation: pasteNudge 1.1s ease-in-out infinite; }
+  @keyframes pasteNudge { 0%,100% { box-shadow: 0 0 0 0 rgba(18,80,76,0); } 50% { box-shadow: 0 0 0 4px rgba(18,80,76,.22); } }
   a.link { color: var(--blue); text-decoration: none; } a.link:hover { text-decoration: underline; }
 
   /* missing-slot "did you mean?" box */
@@ -426,11 +432,12 @@ footer{border-top-color:#d8e1ec!important;color:#627589!important;}
       <details class="pastebox" id="trtPasteBox">
         <summary>Or paste a TRT Recommendation as text</summary>
         <div class="pastebox-body">
-          <div class="hint">Paste the TRT Recommendation in text format below. Clear headings and body text help the Auto Generator prefill the appropriate templates.</div>
+          <div class="hint">Paste the TRT Recommendation text below — it loads automatically the moment you paste. Clear headings and body text help the Auto Generator prefill the appropriate templates.</div>
           <textarea id="trtPasteText" rows="12" placeholder="IT Work Intake — ITW0000000 — Project Name&#10;&#10;RECOMMENDATION&#10;...&#10;&#10;BUSINESS PROBLEM&#10;...&#10;&#10;BENEFITS&#10;...&#10;&#10;IMPACT IF THIS EFFORT IS NOT COMPLETED&#10;...&#10;&#10;IMPACTED SYSTEMS&#10;...&#10;&#10;IT Sponsor: ...&#10;Project Manager: ...&#10;Business Sponsor: ...&#10;IT Lead: ...&#10;System Owner: ...&#10;Business Owner: ..."></textarea>
           <div class="pastebox-actions">
-            <button type="button" id="trtPasteRead">Read pasted text</button>
+            <button type="button" id="trtPasteRead" class="paste-primary">Load pasted text</button>
             <button type="button" id="trtPasteClear">Clear</button>
+            <span id="trtPasteStatus" class="paste-status" aria-live="polite"></span>
           </div>
         </div>
       </details>
@@ -3018,13 +3025,28 @@ function ooxmlMimeFor(zip) {
   // through parseTRTLines (identical to .docx/.pptx), merged as the TRT source, then the profileBuild
   // is built and the BALK check applies exactly as it does for a dropped file.
   (function wireTrtPaste() {
-    var readBtn = $("trtPasteRead"), clearBtn = $("trtPasteClear"), ta = $("trtPasteText");
+    var readBtn = $("trtPasteRead"), clearBtn = $("trtPasteClear"), ta = $("trtPasteText"), statusEl = $("trtPasteStatus");
     if (!readBtn || !ta) return;
-    clearBtn && clearBtn.addEventListener("click", function () { ta.value = ""; });
-    readBtn.addEventListener("click", function () {
+    var lastRead = null;   // the textarea value most recently ingested
+
+    // Live status: shows whether what's in the box has actually been loaded.
+    function setStatus(kind, text) {
+      if (statusEl) { statusEl.className = "paste-status" + (kind ? " " + kind : ""); statusEl.textContent = text || ""; }
+      if (kind === "unread") readBtn.classList.add("needs-read");
+      else readBtn.classList.remove("needs-read");
+    }
+    function refreshStatus() {
+      var v = (ta.value || "").trim();
+      if (!v) { setStatus("", ""); }
+      else if (v === (lastRead || "").trim()) { setStatus("read", "✓ Loaded"); }
+      else { setStatus("unread", "Not loaded yet — click “Load pasted text”"); }
+    }
+
+    // The actual ingest — identical engine to the .docx/.pptx file path.
+    function doReadPaste() {
       var raw = (ta.value || "").replace(/\r\n/g, "\n");
       var lines = raw.split("\n").map(function (s) { return s.replace(/\s+/g, " ").trim(); });
-      if (!raw.trim()) { clearLog("profileBuildLog"); msg("profileBuildLog", "err", "Paste the TRT Recommendation text first."); return; }
+      if (!raw.trim()) { clearLog("profileBuildLog"); msg("profileBuildLog", "err", "Paste the TRT Recommendation text first."); setStatus("", ""); return; }
       state.sources = state.sources || {};
       state.profileBuildWarnings = [];
       try {
@@ -3033,6 +3055,7 @@ function ooxmlMimeFor(zip) {
       } catch (e) {
         clearLog("profileBuildLog");
         msg("profileBuildLog", "err", "I read the pasted text, but it does not look like a TRT Recommendation. " + e.message);
+        setStatus("unread", "Could not read — check the format");
         return;
       }
       state.profileBuild = mergeSources(state.sources);
@@ -3051,10 +3074,21 @@ function ooxmlMimeFor(zip) {
         refreshTemplateMatch && refreshTemplateMatch();
         updateRun && updateRun();
         revealFolderUI && revealFolderUI();
+        setStatus("unread", "No usable content found — check the format");
         return;
       }
+      lastRead = ta.value;
+      setStatus("read", "✓ Loaded");
       renderProfileBuildStatus({ name: state.profileBuildName, size: raw.length });
-    });
+    }
+
+    clearBtn && clearBtn.addEventListener("click", function () { ta.value = ""; lastRead = null; setStatus("", ""); });
+    readBtn.addEventListener("click", doReadPaste);
+    // Make it intuitive: ingest automatically the moment text is pasted in (no hidden second step).
+    ta.addEventListener("paste", function () { setTimeout(doReadPaste, 0); });
+    // Keep the status honest while the box is edited by hand.
+    ta.addEventListener("input", refreshStatus);
+    refreshStatus();
   })();
 
   // ---------------------------------------------------------------------------------------------

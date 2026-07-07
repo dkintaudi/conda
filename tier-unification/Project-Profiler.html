@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.4</title>
+<title>ESPMO Project Profiler — v01.5</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -133,7 +133,11 @@
   textarea.ctx{width:100%;min-height:42px;max-height:220px;box-sizing:border-box;font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;font-size:13px;line-height:1.35;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fbf9f3;color:var(--ink);resize:vertical;}
   textarea.ctx:focus{outline:none;border-color:var(--accent);}
   .reltable{margin-top:10px;display:flex;flex-direction:column;gap:7px;}
-  .reltable-row{display:grid;grid-template-columns:1fr 1fr 1fr 28px;gap:7px;align-items:center;}
+  .reltable-row{display:grid;grid-template-columns:1.25fr .95fr .9fr 1.1fr 26px;gap:7px;align-items:center;}
+  .rel-count{margin:8px 0 2px;font-size:12px;color:var(--ink-soft);padding:7px 10px;border-radius:9px;background:#f2f7fc;border:1px solid #d8e4f0;}
+  .rel-count b{color:var(--edd-blue);}
+  .rel-count.rel-mismatch{background:#fdf4e7;border-color:#eccfa0;}
+  .rel-count.rel-mismatch b{color:#8a5a1a;}
   .reltable-head{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;}
   .reltable-head span{padding:0 2px;}
   .rel-cell{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fbf9f3;color:var(--ink);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;font-size:13px;}
@@ -295,7 +299,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.4 · local browser tool · no upload";
+  content:"v01.5 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -315,12 +319,13 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 .rcol{position:sticky;top:18px;}
 .q{border-radius:16px;padding:17px 18px;margin-bottom:13px;}
 .q:hover{border-color:#9bb8d2!important;box-shadow:0 16px 36px rgba(11,63,115,.12)!important;}
-.q.answered{border-left:5px solid var(--edd-teal)!important;}
+.q.answered{border-left:5px solid var(--edd-blue)!important;}
 .q .num{color:var(--edd-blue-2);letter-spacing:.08em;}
 .q .qt{font-size:15.5px;}
 .opt{border-radius:12px;border-color:#d8e1ec;background:#fbfdff;}
 .opt:hover{border-color:#7aa6c7;background:#f4fbff;}
-.opt.sel{background:#edf8f6;border-color:var(--edd-teal);box-shadow:inset 0 0 0 1px rgba(15,118,110,.16);}
+.opt.sel{background:var(--edd-blue)!important;border-color:var(--edd-blue)!important;color:#fff!important;box-shadow:0 2px 8px rgba(11,63,115,.30)!important;}
+.opt.sel.heavy{background:#0a2f56!important;border-color:#0a2f56!important;}
 input,textarea,select{border-radius:12px!important;border-color:#cbd7e4!important;background:#fff!important;color:var(--edd-ink)!important;}
 input:focus,textarea:focus,select:focus{outline:3px solid rgba(7,89,133,.18)!important;border-color:var(--edd-blue-2)!important;}
 button,.btn-save,.btn-submit,.pill{border-radius:999px!important;font-weight:800!important;letter-spacing:.01em;}
@@ -383,6 +388,34 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
       <span>A project <b>has value</b></span>
       <span>Complexity is a <b>lens</b></span>
     </div>
+    <details class="acro" style="max-width:1180px;margin:14px auto 0;border:1px solid var(--line,#dfe3e8);border-radius:12px;background:var(--bg2,#f7f9fc);overflow:hidden;">
+      <summary style="cursor:pointer;padding:11px 16px;font-weight:700;font-size:12.5px;letter-spacing:.02em;color:var(--edd-blue,#0b3f73);list-style:none;">&#9432; Acronyms &amp; terms — spelled out</summary>
+      <div style="padding:2px 16px 14px;font-size:12px;line-height:1.55;color:#3a4552;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 20px;">
+          <div><b>EDD</b> — Employment Development Department</div>
+          <div><b>ESPMO</b> — Enterprise Services Project Management Office</div>
+          <div><b>CDT</b> — California Department of Technology</div>
+          <div><b>SIMM</b> — Statewide Information Management Manual</div>
+          <div><b>SAM</b> — State Administrative Manual</div>
+          <div><b>PAL</b> — Project Approval Lifecycle</div>
+          <div><b>CA-PMF</b> — California Project Management Framework</div>
+          <div><b>ISRP</b> — Information Security &amp; Risk Plan</div>
+          <div><b>C&amp;A</b> — Certification &amp; Accreditation</div>
+          <div><b>SIEM</b> — Security Information &amp; Event Management</div>
+          <div><b>PII</b> — Personally Identifiable Information</div>
+          <div><b>SDLC</b> — Software Development Life Cycle</div>
+          <div><b>SOW</b> — Statement of Work</div>
+          <div><b>M&amp;O</b> — Maintenance &amp; Operations</div>
+          <div><b>RAID</b> — Risks, Assumptions, Issues, Dependencies</div>
+          <div><b>TARC</b> — Technical Architecture Review Committee</div>
+          <div><b>PMO</b> — Project Management Office</div>
+          <div><b>PM</b> — Project Manager</div>
+          <div><b>Jira</b> — Atlassian issue &amp; project-tracking system</div>
+          <div><b>Appendix C</b> — SIMM 45 Complexity Assessment</div>
+        </div>
+        <div style="margin-top:9px;font-size:11px;font-style:italic;color:#8a93a0;">If any EDD-specific expansion above is off (e.g. ESPMO, ISRP, TARC), tell me the correct wording and I'll update it.</div>
+      </div>
+    </details>
   </div>
 
   <div class="importbar" style="max-width:1180px;margin:0 auto 18px;padding:14px 18px;border:1px solid var(--line,#dfe3e8);border-radius:12px;background:var(--bg2,#f7f9fc);">
@@ -501,6 +534,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
             <div id="palTriggers" style="margin-top:8px;"></div>
             <div class="note" id="palNote" style="margin-top:6px;font-size:11px;"></div>
             <div class="note" style="margin-top:4px;font-size:11px;color:#8a93a0;">Anticipated / preliminary &mdash; the tool <b>flags</b>, it does not issue a binding ruling. Confirm at PAL Stage 1 (SIMM 19A.2). Any one trigger &rarr; PAL (Non-Delegated / CDT-reportable); triggers 2&ndash;5 decide now, cost decides only if all others are No.</div>
+            <div class="note" style="margin-top:6px;font-size:11px;"><a href="https://cdt.ca.gov/policy/project-approval-lifecycle-pal/" target="_blank" rel="noopener noreferrer" style="color:var(--edd-blue-2);font-weight:700;text-decoration:underline;">Open the CDT Project Approval Lifecycle (PAL) website &rarr;</a></div>
           </div>
           <div class="sect">
             <h3>Value-to-Complexity map <span class="ct">value &times; complexity</span></h3>
@@ -634,7 +668,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 9;            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 10;           // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1132,30 +1166,69 @@ function render(){
 // reviewer resolves real keys and codes the relationship before import (no auto-linking).
 const REL_OPTS = [['','— choose —'],['parent','Parent of my project'],['child','Child of my project'],
   ['related','Related'],['depends','My project depends on it'],['blocks','My project blocks it'],['unsure','Not sure']];
+// Per-row information flow (item: Downstream / Upstream / Both ways). Informational only —
+// captured with the related application, it does not change value or complexity scoring.
+const FLOW_OPTS = [['','— flow —'],['down','Downstream (we send to it)'],['up','Upstream (we receive from it)'],
+  ['both','Both ways'],['none','No data flow'],['unsure','Not sure']];
+// Expected count bucket for the dependencies answer, so the Related Applications count can be
+// reconciled against Q "deps". Returns {lo, hi, label} or null when deps is unanswered/Not sure.
+function depsExpectedCount(){
+  switch(state.deps){
+    case 'n':   return {lo:0, hi:1,        label:'Standalone or minimal dependencies'};
+    case 'f':   return {lo:2, hi:4,        label:'A few dependencies (2–4)'};
+    case 'sev': return {lo:5, hi:9,        label:'Several dependencies (5–9)'};
+    case 'm':   return {lo:10, hi:Infinity,label:'Many or critical dependencies (10+)'};
+    default:    return null;   // 'ns' (Not sure) or unanswered
+  }
+}
 function renderRelatedBlock(c){
   if(!Array.isArray(state.__related)) state.__related = [];
   const rows = state.__related;
-  if(!rows.length) rows.push({name:'',rel:'',note:''});   // always show one empty row
-  const gl=document.createElement('div'); gl.className='group-label'; gl.textContent='Related Projects'; c.appendChild(gl);
-  const answered = rows.some(r=>r && String(r.name||'').trim()!=='');
+  if(!rows.length) rows.push({name:'',rel:'',flow:'',note:''});   // always show one empty row
+  const gl=document.createElement('div'); gl.className='group-label'; gl.textContent='Related Applications & Dependencies'; c.appendChild(gl);
+  const named = rows.filter(r=>r && String(r.name||'').trim()!=='');
+  const answered = named.length>0;
   const d=document.createElement('div'); d.className='q'+(answered?' answered':'');
-  let html='<div class="num">—</div><div class="qt">Related projects (optional)</div>'
-    +'<div class="qh">List any related projects — add as many as you like. Type them however you know them '
-    +'(e.g. “the contact center thing”); nothing here is auto-linked. On Jira export this produces a '
-    +'coding worksheet so a Jira-literate reviewer can look each up, fill the real ID, and code the relationship before import.</div>'
-    +'<div class="reltable">'
-    +'<div class="reltable-row reltable-head"><span>Related project (as you know it)</span><span>Relationship</span><span>Note (optional)</span><span></span></div>';
+  let html='<div class="num">—</div><div class="qt">Related applications &amp; dependencies (optional)</div>'
+    +'<div class="qh">List the systems, applications, or projects this work touches — add as many as you like. '
+    +'For each, capture the <b>relationship</b> and the <b>information flow</b> (Downstream = we send data to it, '
+    +'Upstream = we receive data from it, Both ways). Type names however you know them '
+    +'(e.g. “the contact center thing”); nothing here is auto-linked. On Jira (Java Issue &amp; Reporting Platform) '
+    +'export this produces a coding worksheet so a reviewer can resolve each real ID and code the relationship before import.</div>';
+  // Live count + reconciliation against the dependencies answer.
+  const exp = depsExpectedCount();
+  const n = named.length;
+  const plural = n===1 ? 'system' : 'systems';
+  if(exp){
+    const inRange = n>=exp.lo && n<=exp.hi;
+    const range = exp.hi===Infinity ? (exp.lo+'+') : (exp.lo+'–'+exp.hi);
+    html+='<div class="rel-count'+(inRange?'':' rel-mismatch')+'">'
+       +'You listed <b>'+n+'</b> related '+plural+'. The dependencies question says <b>'+htmlEsc(exp.label)+'</b> '
+       +'(about '+range+'). '
+       +(inRange ? 'These agree.' : (n<exp.lo
+            ? 'Consider listing the remaining ones here so the relationship and flow are captured.'
+            : 'That is more than the range selected — you may want to revisit the dependencies answer.'))
+       +'</div>';
+  } else if(n>0){
+    html+='<div class="rel-count">You listed <b>'+n+'</b> related '+plural+'. '
+       +'Answer the dependencies question to reconcile this count against the selected range.</div>';
+  }
+  html+='<div class="reltable">'
+    +'<div class="reltable-row reltable-head"><span>Application / system (as you know it)</span><span>Relationship</span><span>Information flow</span><span>Note (optional)</span><span></span></div>';
   rows.forEach((r,i)=>{
     html+='<div class="reltable-row">'
       +'<input class="rel-cell rel-name" maxlength="100" data-row="'+i+'" data-f="name" value="'+htmlEsc(r.name||'')+'" placeholder="e.g. DMS Modernization">'
       +'<select class="rel-cell rel-sel" data-row="'+i+'" data-f="rel">'
       +REL_OPTS.map(o=>'<option value="'+o[0]+'"'+(String(r.rel||'')===o[0]?' selected':'')+'>'+htmlEsc(o[1])+'</option>').join('')
       +'</select>'
+      +'<select class="rel-cell rel-flow" data-row="'+i+'" data-f="flow">'
+      +FLOW_OPTS.map(o=>'<option value="'+o[0]+'"'+(String(r.flow||'')===o[0]?' selected':'')+'>'+htmlEsc(o[1])+'</option>').join('')
+      +'</select>'
       +'<input class="rel-cell rel-note" maxlength="100" data-row="'+i+'" data-f="note" value="'+htmlEsc(r.note||'')+'" placeholder="why / hint for lookup">'
       +'<button type="button" class="rel-del" data-row="'+i+'" title="Remove">✕</button>'
       +'</div>';
   });
-  html+='<button type="button" class="rel-add">+ Add related project</button></div>';
+  html+='<button type="button" class="rel-add">+ Add related application</button></div>';
   d.innerHTML=html; c.appendChild(d);
 }
 function getOpt(id){ const q=QUESTIONS.find(x=>x.id===id); if(!q||!q.o)return null; return q.o.find(o=>o.v===state[id]); }
@@ -1234,6 +1307,10 @@ function compute(){
   const flags={};
   QUESTIONS.forEach(q=>{ const o=getOpt(q.id); if(o&&o.f)flags[o.f]=true; });
   if(determinePAL().anticipated) flags.pal=true; // anticipated PAL (SAM 4819.37) -> Tier 4 + PAL gate package
+  // ISRP / security-review flag also fires from protected data, external/public exposure, cloud
+  // hosting, or vendor delivery — a security review is warranted on any of these, not just the
+  // access-control question. Governance decision; does NOT affect value or complexity scoring.
+  if(flags.pii || flags.public || flags.cloud || flags.vendor) flags.security=true;
 
   const bizCx=axisComplexity(SIMM_BIZ), techCx=axisComplexity(SIMM_TECH);
   const cxi=Math.round((bizCx+techCx)/2*25);
@@ -1604,17 +1681,19 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('click', e=>{ if(e.target&&e.target.id==='revealBtn'){ window.__revealed=true; compute(); } });
 // ---- Related Projects table: add / remove / edit (state.__related) ----
-function relEnsure(i){ if(!Array.isArray(state.__related)) state.__related=[]; if(!state.__related[i]) state.__related[i]={name:'',rel:'',note:''}; return state.__related[i]; }
+function relEnsure(i){ if(!Array.isArray(state.__related)) state.__related=[]; if(!state.__related[i]) state.__related[i]={name:'',rel:'',flow:'',note:''}; return state.__related[i]; }
 document.addEventListener('click', e=>{
   const t=e.target; if(!t||!t.classList) return;
-  if(t.classList.contains('rel-add')){ if(!Array.isArray(state.__related)) state.__related=[]; state.__related.push({name:'',rel:'',note:''}); render(); }
+  if(t.classList.contains('rel-add')){ if(!Array.isArray(state.__related)) state.__related=[]; state.__related.push({name:'',rel:'',flow:'',note:''}); render(); }
   else if(t.classList.contains('rel-del')){ const i=+t.dataset.row; if(Array.isArray(state.__related)){ state.__related.splice(i,1); render(); } }
 });
 document.addEventListener('input', e=>{
   const t=e.target; if(t&&t.classList&&(t.classList.contains('rel-name')||t.classList.contains('rel-note'))){ relEnsure(+t.dataset.row)[t.dataset.f]=t.value; }
 });
 document.addEventListener('change', e=>{
-  const t=e.target; if(t&&t.classList&&t.classList.contains('rel-sel')){ relEnsure(+t.dataset.row).rel=t.value; }
+  const t=e.target; if(!t||!t.classList) return;
+  if(t.classList.contains('rel-sel')){ relEnsure(+t.dataset.row).rel=t.value; }
+  else if(t.classList.contains('rel-flow')){ relEnsure(+t.dataset.row).flow=t.value; }
 });
 document.getElementById('reset').addEventListener('click', ()=>{ for(const k in state)delete state[k]; window.__revealed=false; render(); });
 
@@ -1995,6 +2074,10 @@ function _recompute(){
   const flags={};
   QUESTIONS.forEach(q=>{ const o=getOpt(q.id); if(o&&o.f)flags[o.f]=true; });
   if(determinePAL().anticipated) flags.pal=true; // anticipated PAL (SAM 4819.37) -> Tier 4 + PAL gate package
+  // ISRP / security-review flag also fires from protected data, external/public exposure, cloud
+  // hosting, or vendor delivery — a security review is warranted on any of these, not just the
+  // access-control question. Governance decision; does NOT affect value or complexity scoring.
+  if(flags.pii || flags.public || flags.cloud || flags.vendor) flags.security=true;
   const bizCx=axisComplexity(SIMM_BIZ), techCx=axisComplexity(SIMM_TECH);
   const cxi=Math.round((bizCx+techCx)/2*25);
   const bizHigh=bizCx>=ZT, techHigh=techCx>=ZT;
@@ -5087,10 +5170,14 @@ function jiraLinkWorksheets(snap, relatedRows){
                     depends:'My project depends on it', blocks:'My project blocks it', unsure:'Not sure', '':'' };
   var LINK_TYPE = { related:'relates to', depends:'is blocked by', blocks:'blocks', unsure:'', '':'' };
 
+  var FLOW_LABEL = { down:'Downstream (we send)', up:'Upstream (we receive)', both:'Both ways', none:'No data flow', unsure:'Flow not sure', '':'' };
   var items = (relatedRows||[]).filter(function(r){ return r && String(r.name||'').trim(); })
     .map(function(r, i){
+      var flow = FLOW_LABEL[String(r.flow||'').trim().toLowerCase()] || '';
+      var note = String(r.note||'').trim();
+      if(flow) note = note ? (note + ' — ' + flow) : flow;   // fold info-flow into the coded note
       return { extId: pid + '-LNK-' + (i+1), name: String(r.name||'').trim(),
-               rel: String(r.rel||'').trim().toLowerCase(), note: String(r.note||'').trim() };
+               rel: String(r.rel||'').trim().toLowerCase(), note: note };
     });
   var parentItems = items.filter(function(it){ return it.rel==='parent' || it.rel==='child'; });
   // related / depends / blocks / unsure default to the (safer, non-parenting) links sheet.
