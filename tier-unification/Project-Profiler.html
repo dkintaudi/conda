@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.5</title>
+<title>ESPMO Project Profiler — v01.6</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -299,7 +299,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.5 · local browser tool · no upload";
+  content:"v01.6 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -668,7 +668,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 10;           // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 11;           // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1137,6 +1137,15 @@ function palMatrixEl(qs){
     h+='<div style="'+colGrid+'">';
     COLS.forEach(c=>{ const sel=ans===c[0]; h+='<div class="opt'+(sel?' sel':'')+'" data-id="'+q.id+'" data-v="'+c[0]+'" style="text-align:center;">'+c[1]+'</div>'; });
     h+='</div>';
+    // Show the captured rationale one-to-one when there is any (e.g. from an import);
+    // spans the full width under its row. Kept out of the way when empty so the matrix
+    // stays compact. Same .ctx contract as a standard question, so it edits + exports.
+    const ctx=getCtx(q.id);
+    if(ctx){
+      h+='<div class="qctx" style="grid-column:1 / -1;margin:0 0 6px;">'
+        +'<label class="qctx-label" for="ctx_'+htmlEsc(q.id)+'"><span>Context</span><span>Optional · '+ctx.length+'/'+CONTEXT_LIMIT+'</span></label>'
+        +'<textarea class="ctx" id="ctx_'+htmlEsc(q.id)+'" data-id="'+htmlEsc(q.id)+'" maxlength="'+CONTEXT_LIMIT+'" placeholder="Optional rationale.">'+htmlEsc(ctx)+'</textarea></div>';
+    }
   });
   h+='</div>';
   d.innerHTML=h; return d;
@@ -3505,6 +3514,44 @@ function extractPairs(lines, labelIndex){
   return pairs;
 }
 
+// ---- numbered-intake blocks -----------------------------------------------
+// The layout PMs paste from an intake email/worksheet:
+//     Q01 – Project delivery approach
+//     Traditional / Hybrid - the charter notes methodology selection is pending...
+// i.e. a numbered/titled question line, then one or more answer + rationale lines
+// (often long, sometimes with mid-sentence colons). The generic pair parser caps
+// value lines and trips on those colons, so we read these blocks directly: the
+// header is a line like "Q<n> <sep> <title>" and the block body is every non-blank
+// line up to the next header. head = first body line (the actual answer); body =
+// the whole thing (what belongs in the context box).
+function extractNumberedBlocks(lines){
+  var HDR=/^\s*Q\s*0*(\d{1,2})\s*[.):–—-]\s*(.+?)\s*$/i;  // "Q01 – Title", "Q14) Title", "Q3. Title"
+  var out=[], cur=null;
+  for(var i=0;i<lines.length;i++){
+    var t=(lines[i]&&lines[i].text!=null)?String(lines[i].text):String(lines[i]||'');
+    var s=t.trim();
+    var m=s.match(HDR);
+    if(m && m[2] && /[a-z]/i.test(m[2]) && m[2].length>=3){
+      if(cur) out.push(cur);
+      cur={num:+m[1], title:m[2].trim(), bodyLines:[]};
+    } else if(cur && s){
+      cur.bodyLines.push(s);
+    }
+  }
+  if(cur) out.push(cur);
+  out.forEach(function(b){
+    b.body=b.bodyLines.join(' ').trim();
+    b.head=b.bodyLines.length?b.bodyLines[0]:'';
+    // lead = the answer itself, before the " - rationale". Splitting on a SPACED dash
+    // or "colon-space" keeps the option phrase ("Concept / Planning", "Over $1M") and
+    // drops the explanation ("...in progress", "...over 10,000 hours") so the option
+    // maps off the answer, not stray words in the rationale. Spaces required around the
+    // dash so hyphenated answers ("In-house", "Part-time") stay intact.
+    b.lead=String(b.head).split(/\s[–—-]\s|:\s/)[0].trim();
+  });
+  return out.filter(function(b){ return b.body; });
+}
+
 // ---- main: detect answers from labeled fields -----------------------------
 function detectLabeled(lines, questions){
   var labelIndex = buildLabelIndex(questions);
@@ -3513,8 +3560,40 @@ function detectLabeled(lines, questions){
   var pairs = extractPairs(lines, labelIndex);
   var answers = {};      // qid -> value (scored questions only)
   var texts   = {};      // qid -> captured text (free-text questions)
+  var contexts= {};      // qid -> the PM's own answer wording, for the context text box
   var hits = [];         // {id,v,why,label,value}
   var notices = [];      // {id, kind, label, value, message} for the UI to surface
+
+  // FIRST PASS — numbered-intake blocks. Resolve each block to a question by its
+  // title (or, failing that, by Q-number position), drop the FULL answer prose into
+  // that question's context box (one-to-one, no length cap), and map the answer to
+  // an option code (the invisible machinery). Runs before the generic pair logic so
+  // long rationales and mid-sentence colons don't derail the mapping.
+  var numMap = {}; var _nq=0; questions.forEach(function(q){ if(q.id!=='name') numMap[++_nq]=q.id; });
+  extractNumberedBlocks(lines).forEach(function(b){
+    // Number wins for a numbered paste — its position is the canonical key and never
+    // collides (a title like "Legislative mandate" would otherwise substring-match the
+    // Q08 "mandate" question). Title resolution is only the fallback for un-numbered rows.
+    var qid = numMap[b.num] || resolveLabel(b.title, labelIndex);
+    if(!qid) return;
+    var q = byId[qid]; if(!q) return;
+    if(contexts[qid]===undefined && b.body) contexts[qid]=b.body;
+    if(!q.o){
+      if(texts[qid]===undefined && b.body){ texts[qid]=b.body; if(qid==='name') answers.name=b.body; }
+      return;
+    }
+    if(answers[qid]!==undefined) return;
+    var v = resolveValue(qid, b.lead, optIndex);         // map off the answer, not the rationale
+    if(v===null) v = resolveValue(qid, b.head, optIndex);
+    if(v===null) v = resolveValue(qid, b.body, optIndex);
+    if(v!==null){
+      answers[qid]=v;
+      hits.push({id:qid, v:v, why:'numbered intake', label:('Q'+b.num+' '+b.title).trim(), value:b.head});
+    } else {
+      notices.push({id:qid, kind:'unreadable', label:('Q'+b.num+' '+b.title).trim(), value:b.head,
+        message:'Read "'+q.t+'" and kept your wording in the box, but couldn’t match it to a preset option — please pick one.'});
+    }
+  });
 
   pairs.forEach(function(p){
     var qid = resolveLabel(p.label, labelIndex);
@@ -3539,7 +3618,11 @@ function detectLabeled(lines, questions){
       return;
     }
 
-    // Optioned question: resolve the value to one of its options.
+    // Optioned question: keep the PM's own wording as context (it maps one-to-one
+    // into the question's text box) BEFORE resolving the phrase to an option code —
+    // the code is the invisible machinery that drives scoring; the prose is what the
+    // person reads back. Capture the wording whether or not it resolves to an option.
+    if(contexts[qid]===undefined && p.value && norm(p.value).length>0){ contexts[qid]=String(p.value).trim(); }
     var v = resolveValue(qid, p.value, optIndex);
     if(v===null){
       // We recognized the field but couldn't read its answer — tell the user.
@@ -3555,7 +3638,7 @@ function detectLabeled(lines, questions){
     }
   });
 
-  return { answers: answers, texts: texts, hits: hits, notices: notices };
+  return { answers: answers, texts: texts, contexts: contexts, hits: hits, notices: notices };
 }
 
 // ---- merge deterministic + keyword, recording conflicts -------------------
@@ -3593,7 +3676,7 @@ function mergeDetections(fieldRes, keywordRes){
   });
 
   return { answers: answers, hits: hits, conflicts: conflicts,
-           texts: fieldRes.texts||{}, notices: fieldRes.notices||[] };
+           texts: fieldRes.texts||{}, contexts: fieldRes.contexts||{}, notices: fieldRes.notices||[] };
 }
 
 // ---- pool field results from MULTIPLE documents ---------------------------
@@ -3603,7 +3686,7 @@ function mergeDetections(fieldRes, keywordRes){
 // dropped). Returns a single {answers, hits, conflicts} in the same shape as a
 // detectLabeled result, so it drops straight into mergeDetections afterward.
 function mergeFieldSources(sources){
-  var answers={}, hits=[], conflicts=[], origin={}, texts={}, notices=[]; // origin[id] = winning source name
+  var answers={}, hits=[], conflicts=[], origin={}, texts={}, contexts={}, notices=[]; // origin[id] = winning source name
   (sources||[]).forEach(function(s){
     var name = s.name || 'document';
     var res  = s.res || {answers:{},hits:[]};
@@ -3627,10 +3710,14 @@ function mergeFieldSources(sources){
     Object.keys(res.texts||{}).forEach(function(id){
       if(texts[id]===undefined){ texts[id]=res.texts[id]; }
     });
+    // pool the per-answer wording that feeds the context boxes (first source wins)
+    Object.keys(res.contexts||{}).forEach(function(id){
+      if(contexts[id]===undefined){ contexts[id]=res.contexts[id]; }
+    });
     // carry notices through, tagged with their source
     (res.notices||[]).forEach(function(nt){ notices.push(Object.assign({source:name}, nt)); });
   });
-  return { answers: answers, texts: texts, hits: hits, conflicts: conflicts, notices: notices };
+  return { answers: answers, texts: texts, contexts: contexts, hits: hits, conflicts: conflicts, notices: notices };
 }
 
 var API = {
@@ -4694,6 +4781,23 @@ function renderReview(merged, sourceNames){
           if(t) state.name = t.text.replace(/^(IT WORK INTAKE|CHANGE PROPOSAL)\s*[\u2013-]\s*/i,'').trim();
         }
       }
+
+      // One-to-one: the PM's own answer wording flows into each question's context
+      // text box, so what they wrote appears right under the question it belongs to
+      // (the option code stays behind the scenes doing the scoring). Never clobber
+      // context the PM already typed this session.
+      (function fillContextBoxes(){
+        if(!state.__context) state.__context = {};
+        var LIM = (typeof CONTEXT_LIMIT==='number') ? CONTEXT_LIMIT : 500;
+        var put = function(id, val){
+          if(!id || id==='name') return;
+          val = String(val||'').trim(); if(!val) return;
+          var cur = state.__context[id]; if(cur && String(cur).trim()) return; // keep PM's own text
+          state.__context[id] = val.slice(0, LIM);
+        };
+        var cx = merged.contexts || {}; Object.keys(cx).forEach(function(id){ put(id, cx[id]); });
+        var tx = merged.texts    || {}; Object.keys(tx).forEach(function(id){ put(id, tx[id]); });
+      })();
 
       window.__revealed = true;
       render();
