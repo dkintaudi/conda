@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.9</title>
+<title>ESPMO Project Profiler — v01.10</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -299,7 +299,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.9 · local browser tool · no upload";
+  content:"v01.10 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -668,7 +668,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 14;           // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 15;           // v01.15 (Profiler v01.10): numbered-intake import now resolves each answer to its question by MEANING (word-overlap title match with stem-prefix + synonyms), immune to numbering offsets AND skipped/gapped question numbers; number is only a fallback. Fixes mis-mapping when a file numbers the Project Name as Q01 or omits some questions. Import only — scoring byte-identical. // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -3561,6 +3561,27 @@ function extractNumberedBlocks(lines){
   return out.filter(function(b){ return b.body; });
 }
 
+// Resolve a numbered block's TITLE to a question by MEANING — word overlap against the
+// question text + synonyms, with stem-prefix matching so inflected forms still match
+// (migration/migrated, dedication/dedicated). This is offset- AND gap-immune: it does not
+// rely on the file's numbering lining up with the Profiler's order, so a file that numbers
+// the Project Name as Q01 or skips question numbers still maps each answer to the right box.
+// Returns a qid only on a clear win, else null (callers fall back to number/label).
+var _TITLE_STOP={is:1,the:1,a:1,an:1,of:1,to:1,for:1,and:1,or:1,in:1,on:1,by:1,'with':1,what:1,how:1,does:1,'do':1,are:1,will:1,'this':1,'project':1,any:1,its:1,be:1,other:1,set:1,once:1,expected:1,involve:1,involved:1,require:1,required:1};
+function _titleWords(s){ return norm(s).split(' ').filter(function(x){ return x&&x.length>2&&!_TITLE_STOP[x]; }); }
+function _wmatch(x,h){ if(h===x)return 1; if(x.length>=5&&h.length>=5&&h.slice(0,5)===x.slice(0,5))return 0.85; if(x.length>=4&&(h.indexOf(x)===0||x.indexOf(h)===0))return 0.7; return 0; }
+function bestQuestionByTitle(title, questions){
+  var tw=_titleWords(title); if(!tw.length) return null;
+  var bID=null,bS=0,sec=0;
+  questions.forEach(function(q){ if(q.id==='name') return;
+    var hw=_titleWords((q.t||'')+' '+((LABEL_SYNONYMS[q.id]||[]).join(' '))+' '+q.id);
+    var sc=0; tw.forEach(function(x){ var m=0; hw.forEach(function(h){ var v=_wmatch(x,h); if(v>m)m=v; }); sc+=m; });
+    var s=sc+sc/tw.length;
+    if(s>bS){ sec=bS; bS=s; bID=q.id; } else if(s>sec){ sec=s; }
+  });
+  return (bS>=1 && bS-sec>=0.34) ? bID : null;
+}
+
 // ---- main: detect answers from labeled fields -----------------------------
 function detectLabeled(lines, questions){
   var labelIndex = buildLabelIndex(questions);
@@ -3598,10 +3619,11 @@ function detectLabeled(lines, questions){
     return (bestO!==0 && bestN>=3 && bestN>total/2) ? bestO : 0;
   })();
   _blocks.forEach(function(b){
-    // Number (offset-corrected) wins for a numbered paste — its position is the canonical key
-    // and never collides (a title like "Legislative mandate" would otherwise substring-match
-    // the Q08 "mandate" question). Title resolution is the fallback for un-numbered rows.
-    var qid = numMap[b.num + _off] || resolveLabel(b.title, labelIndex) || numMap[b.num];
+    // Resolve by MEANING first (offset- and gap-proof), then fall back to the offset-corrected
+    // number, then a looser label match, then the raw number. Matching the title by meaning is
+    // what makes a file that numbers the Project Name as Q01 — or skips question numbers — still
+    // land every answer in the right box.
+    var qid = bestQuestionByTitle(b.title, questions) || numMap[b.num + _off] || resolveLabel(b.title, labelIndex) || numMap[b.num];
     if(!qid) return;
     var q = byId[qid]; if(!q) return;
     if(contexts[qid]===undefined && b.body) contexts[qid]=b.body;
