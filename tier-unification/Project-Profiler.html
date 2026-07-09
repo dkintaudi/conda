@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.10</title>
+<title>ESPMO Project Profiler — v01.11</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -299,7 +299,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.10 · local browser tool · no upload";
+  content:"v01.11 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -412,6 +412,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           <div><b>PM</b> — Project Manager</div>
           <div><b>Jira</b> — Atlassian issue &amp; project-tracking system</div>
           <div><b>Appendix C</b> — SIMM 45 Complexity Assessment</div>
+          <div><b>T&#8209;shirt Size</b> — PMO project-size scale (Small / Medium / Large / Extra Large); maps to governance Tiers 1 / 2 / 3 / PAL</div>
         </div>
         <div style="margin-top:9px;font-size:11px;font-style:italic;color:#8a93a0;">If any EDD-specific expansion above is off (e.g. ESPMO, ISRP, TARC), tell me the correct wording and I'll update it.</div>
       </div>
@@ -474,8 +475,10 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
           <div id="intakeNotice" style="display:none;"></div>
           <div class="tierhead" id="tierhead">
             <div class="lab" id="roName">Project</div>
+            <div class="lab" id="sizeLab" style="margin-top:10px;color:var(--edd-blue,#0b3f73);">T&#8209;shirt Size</div>
             <div class="tier"><span id="prioBig"></span><span class="pill" id="bandPill"></span><span class="pill" id="tierPill"></span><span class="pill" id="sizePill"></span><span class="pill" id="eddnextPill"></span><span class="pill" id="palPill"></span></div>
             <div class="score" id="quadLine"></div>
+            <div class="tsizeNote" id="tsizeNote" style="margin-top:9px;font-size:11.5px;line-height:1.55;color:#5a6472;border-top:1px dashed var(--line);padding-top:9px;"></div>
             <div class="drivers" id="drivers"></div>
           </div>
           <div class="sect">
@@ -668,7 +671,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 15;           // v01.15 (Profiler v01.10): numbered-intake import now resolves each answer to its question by MEANING (word-overlap title match with stem-prefix + synonyms), immune to numbering offsets AND skipped/gapped question numbers; number is only a fallback. Fixes mis-mapping when a file numbers the Project Name as Q01 or omits some questions. Import only — scoring byte-identical. // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 16;           // v01.16 (Profiler v01.11): governance designation now DISPLAYED as T-shirt Size (Small=Tier 1 def, Medium=Tier 2, Large=Tier 3/Large, Extra Large=PAL/Tier 4) with a "T-shirt Size" label above the pins and a PMO/Scrum-Master/PMP note (internal scale, not industry standard; std-dev split; Large ~ >10,000 hrs LOE); glossary entry added. Presentation only — the internal tier, scoring, gating, and exports are byte-identical. // v01.15 (Profiler v01.10): numbered-intake import now resolves each answer to its question by MEANING (word-overlap title match with stem-prefix + synonyms), immune to numbering offsets AND skipped/gapped question numbers; number is only a fallback. Fixes mis-mapping when a file numbers the Project Name as Q01 or omits some questions. Import only — scoring byte-identical. // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1355,12 +1358,18 @@ function compute(){
     Mini:{t:"Mini",s:"Mini",c:"#27506f", bg:"#eaeff4"}
   };
   const bandInfo = BANDINFO[quadName];
+  // T-shirt Size — the PMO's project-size scale, mapped 1:1 onto the governance tier
+  // (Small=Tier 1 def, Medium=Tier 2 def, Large=Large/Tier 3 def, Extra Large=PAL/Tier 4 def).
+  // Presentation only: govTier still drives the document set and gating unchanged.
+  const TSHIRT = {1:'Small', 2:'Medium', 3:'Large', 4:'Extra Large'};
+  const TSHIRT_C = {1:'#27506f', 2:'#4a7fa5', 3:'#1c6fb0', 4:'#7a5230'};
+  const tshirt = TSHIRT[govTier] || '—';
 
   // header
   const nm=(state.name||'').trim();
   document.getElementById('roName').textContent = nm || 'Project';
   document.getElementById('prioBig').textContent = priority;
-  const pill=document.getElementById('bandPill'); pill.textContent=bandInfo.s; pill.style.background=bandInfo.c; pill.style.color='#fff';
+  const pill=document.getElementById('bandPill'); pill.textContent=tshirt+(govTier===4?' (PAL)':''); pill.style.background=TSHIRT_C[govTier]||bandInfo.c; pill.style.color='#fff';
   document.getElementById('tierhead').style.background=bandInfo.bg;
   document.getElementById('quadLine').innerHTML='Total Value <b>'+value+'</b> \u00B7 Avg Complexity <b>'+avgCx.toFixed(1)+'</b>/4 \u00B7 V\u2013C <b>'+vc+'</b>';
 
@@ -1453,7 +1462,7 @@ function compute(){
   const qy=14+(1-Math.max(0,Math.min(100,value))/100)*200;
   const dot=document.getElementById('quadDot'); dot.setAttribute('cx',qx.toFixed(1)); dot.setAttribute('cy',qy.toFixed(1)); dot.style.fill=quad.c;
   // caption: V–C band verdict + the V–C score
-  const qcap = '<b>'+bandInfo.t+'.</b> Tier by value: <b>'+value+'</b>/100 (V\u2013C '+vc+' shown as a complexity indicator). '+
+  const qcap = '<b>'+tshirt+((govTier===4)?' (PAL)':'')+'.</b> T\u2011shirt Size by value: <b>'+value+'</b>/100 (V\u2013C '+vc+' shown as a complexity indicator). '+
     (naturalTier===3 ? 'Value \u2265 80 (or EDD Next) \u2014 Full governance set: the complete artifact set and oversight, regardless of complexity.'
      : naturalTier===1 ? 'Value < 60 and low complexity (avg < 2.5) \u2014 a mini-template effort (Mini Charter / Mini PMP).'
      : 'Value 60\u201379 (or below 60 with higher complexity) \u2014 a standard documentation effort; plan it deliberately as a standard project.');
@@ -1463,15 +1472,29 @@ function compute(){
   // (naturalTier / govTier) computed above. The old complexity-only artTier and the
   // separate V–C govTier ladder (t1Max 50/60 split, PII/cx floors) were removed.
 
-  // Tier + Size + program pills next to the score — same .pill style as bandPill.
+  // Size + program pills next to the score. The governance tier is now DISPLAYED as the
+  // T-shirt Size (bandPill above); the numeric "Tier" is folded into the note for PMP/Scrum
+  // clarity, so the old Tier pill is hidden.
   (function(){
     const SIZE={s:'Small',m:'Medium',l:'Large',u:'Unsized'};
     const tp=document.getElementById('tierPill');
-    if(tp){ tp.textContent = govTier===4 ? 'Tier 4 · PAL' : 'Tier '+govTier; tp.style.background = govTier===4 ? '#7a5230' : '#27506f'; tp.style.color='#fff'; }
+    if(tp){ tp.style.display='none'; }
     const sp=document.getElementById('sizePill');
     if(sp){ const sz=SIZE[state.loe]||'Unsized';
-      sp.textContent=sz; sp.style.background='#6a5a2a'; sp.style.color='#fff';
+      sp.textContent='Effort: '+sz; sp.style.background='#6a5a2a'; sp.style.color='#fff';
       sp.style.display = state.loe ? '' : 'none'; }
+    // T-shirt Size note — how the PMO sizes every project, and the Tier mapping for the
+    // benefit of a certified Scrum Master or PMP (this scale is internal, not industry-standard).
+    const note=document.getElementById('tsizeNote');
+    if(note){
+      const map=[['Small','Tier 1 definition'],['Medium','Tier 2 definition'],['Large','Large (Tier 3) definition'],['Extra Large','PAL (Tier 4) definition']];
+      note.innerHTML='<b>Portfolio Management &amp; Oversight (PMO)</b> sizes every project — regardless of methodology '
+        +'(Waterfall, Agile, or Hybrid) — on this <b>T‑shirt Size</b> scale: Small, Medium, Large, or Extra Large (PAL). '
+        +'It is an internal scale, <b>not an industry standard</b>; for a certified Scrum Master or PMP the mapping '
+        +'(typically a standard‑deviation split of the value score) is: '
+        +map.map(function(m){ const on=(m[0]===tshirt); return (on?'<b>':'')+m[0]+' = '+m[1]+(on?'</b>':''); }).join(' · ')
+        +'. A <b>Large</b> size corresponds to a Large level of effort (<b>&gt; 10,000 hours</b>).';
+    }
     const ep=document.getElementById('eddnextPill');
     if(ep){ ep.textContent='EDD Next'; ep.style.background='#3a5a78'; ep.style.color='#fff';
       ep.style.display = flags.eddnext ? '' : 'none'; }
