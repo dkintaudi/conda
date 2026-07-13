@@ -177,7 +177,7 @@ Read the code
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Autogenerate — v01.3</title>
+<title>ESPMO Autogenerate — v01.4</title>
 <style>
   :root {
     --ink: #11151c;
@@ -377,7 +377,7 @@ body{background:linear-gradient(180deg,#f8fbfe,#eef4fa 48%,#e9f1f8)!important;co
 body::before{content:"";display:block;height:8px;background:linear-gradient(90deg,var(--edd-blue),var(--edd-teal) 62%,var(--edd-gold));}
 .wrap{max-width:1040px;padding:30px 24px 76px;}
 header{position:relative;overflow:hidden;border:0!important;border-radius:22px;margin-bottom:26px!important;padding:28px 32px!important;color:#fff;background:linear-gradient(135deg,var(--edd-blue),var(--edd-blue-2) 60%,var(--edd-teal));box-shadow:0 20px 48px rgba(11,63,115,.22)!important;}
-header::after{content:"v01.3 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
+header::after{content:"v01.4 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
 .brand{padding-right:340px;row-gap:10px;}
 .brand h1{font-size:26px;color:#fff;}
 .brand .tag{color:#ffe08a!important;border-color:rgba(255,224,138,.65)!important;background:rgba(0,0,0,.16);border-radius:999px;padding:5px 9px;margin-top:4px;}
@@ -1018,7 +1018,7 @@ function buildGapReport(tf, data, MARK) {
             if (k === "document") di.name = ci;
             if (/assist/.test(k)) di.assist = ci;
             if (/timing|phase/.test(k)) di.phase = ci;
-            if (k === "tier") di.tier = ci;
+            if (k === "tier" || k === "applies at" || k === "t-shirt size") di.tier = ci;
             if (/why included/.test(k)) di.why = ci;
           });
           if (di.name != null) dh = ri;
@@ -1042,7 +1042,7 @@ function buildGapReport(tf, data, MARK) {
             if (k === "artifact") ai.name = ci;
             if (/assist|advise/.test(k)) ai.assist = ci;
             if (/timing|phase/.test(k)) ai.phase = ci;
-            if (k === "tier") ai.tier = ci;
+            if (k === "tier" || k === "applies at" || k === "t-shirt size") ai.tier = ci;
             if (/trigger|why included/.test(k)) ai.why = ci;
           });
           if (ai.name != null && ai.assist != null) ah = ri;
@@ -1131,7 +1131,15 @@ function buildGapReport(tf, data, MARK) {
     // Autogenerate's band filters in lock-step with the tier the Profiler actually emitted,
     // so an EDD-Next/PAL project that is Tier 3 by force (but low value/complexity) is treated
     // as Full here too. Falls back to value/complexity only for older exports lacking it.
-    var gtRaw = get("governance_tier") || get("artifact_tier");
+    var gtRaw = get("tshirt_size_level") || get("governance_tier") || get("artifact_tier");
+    if (gtRaw === "") {
+      // Newer Profiler exports carry the T-shirt Size WORD instead of a tier number.
+      var sw = get("tshirt_size").toLowerCase();
+      if (/extra\s*large|x-?large|\bxl\b|pal/.test(sw)) gtRaw = "4";
+      else if (/large/.test(sw))  gtRaw = "3";
+      else if (/medium/.test(sw)) gtRaw = "2";
+      else if (/small/.test(sw))  gtRaw = "1";
+    }
     if (gtRaw !== "" && !isNaN(parseFloat(gtRaw))) return { known: true, full: parseFloat(gtRaw) >= 2 };
 
     var VALUE_HIGH = 60;     // value_score >= 60 is "high value" (aligned to the T1->T2 cut)
@@ -2233,6 +2241,12 @@ function buildData(profileBuild, templateKey, templateBuf) {
           if (!v) return "";
           var m = /(?:tier|t)\s*([1-4])/i.exec(v) || /^([1-4])$/.exec(v);
           if (m) return "Tier " + m[1];
+          // Newer Profiler exports carry the T-shirt Size word instead of a tier number.
+          var s = String(v).toLowerCase();
+          if (/extra\s*large|x-?large|\bxl\b/.test(s)) return "Tier 4";
+          if (/\blarge\b/.test(s))  return "Tier 3";
+          if (/\bmedium\b/.test(s)) return "Tier 2";
+          if (/\bsmall\b/.test(s))  return "Tier 1";
           return v;
         }
         function bandToTier(v) {
@@ -2244,7 +2258,7 @@ function buildData(profileBuild, templateKey, templateBuf) {
           return "";
         }
         if (!hasText(data.artifact_tier)) {
-          data.artifact_tier = normTier(firstText(data.artifact_tier, data.tier, data.project_tier,
+          data.artifact_tier = normTier(firstText(data.tshirt_size_level, data.tshirt_size, data.artifact_tier, data.tier, data.project_tier,
             data.governance_tier, data.artifactTier, data.artifact_level, data.project_level,
             data.trt_tier, data.recommended_tier, data.priority_tier)) || bandToTier(data.vc_read || data.governance_band || data.band);
         }
@@ -3522,6 +3536,7 @@ function ooxmlMimeFor(zip) {
     var gov = [
       [/Project Level\s*[:|]?\s*([A-Za-z]+\s*\d*)/i, "project_level"],
       [/Complexity Tier\s*[:|]?\s*(Tier\s*\d|T\d)/i, "artifact_tier"],
+      [/T-?shirt Size\s*[:|]?\s*(Extra Large|X-?Large|Small|Medium|Large)/i, "artifact_tier"],
       [/Complexity Zone\s*[:|]?\s*(?:Zone\s*)?([IVX]+)/i, "complexity_zone"],
       [/Criticality\s*[:|]?\s*([A-Za-z]+)/i, "criticality"],
       [/Value[- ]to[- ]Complexity\s*[:|]?\s*(\d+)/i, "vc_score"]

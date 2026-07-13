@@ -62,7 +62,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Project Profiler — v01.18</title>
+<title>ESPMO Project Profiler — v01.19</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -302,7 +302,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.18 · local browser tool · no upload";
+  content:"v01.19 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -677,7 +677,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 23;           // v01.23 (Profiler v01.18): EDD Next is now a MARKER ONLY — it no longer floors the governance tier / T-shirt Size. An EDD Next project can be any size (even Small); size is determined solely by value (>=80 -> Large) and the value+complexity mini corner, exactly like every other project. Removed the `flags.eddnext ||` term from naturalTier (both the render and scoring paths), dropped govTier.eddnextFloor, reworded the EDD Next question help and the Full-governance caption. The EDD Next pill, export marker, and import detection are unchanged. Scoring change is confined to EDD Next cases only (verified: all 8,345 changed sig lines carry the eddnext flag; 0 non-EDD-Next cases changed). Signature re-baselined 704086f2 -> 06cd4287. // v01.22 (Profiler v01.17): PAL cost input reworked per feedback — the free-text dollar field (pal_cost) is REMOVED; instead Q14 "estimated project cost or funding range" (spend) is moved into the PAL Determination section and revised to five choices: Under $250K, $250K–$1M, $1M–$2M, Over $2M, Not applicable. "Over $2M" is the PAL cost trigger (anticipates PAL). Financial-Risk complexity rating is preserved per bucket (Under $250K→1, $250K–$1M→2.5, $1M–$2M & Over $2M→4 as the old "Over $1M", N/A→2.5 as the old "Unknown"); value/complexity/naturalTier for a given answer are unchanged — govTier legitimately becomes 4 (PAL) when Over $2M is chosen. Scoring signature re-baselined to 704086f2 (was f36b19f) solely due to the new option + the intended Over-$2M→PAL elevation. // v01.21 (Profiler v01.16): PAL section reworked — (a) third PAL trigger reworded from "Governor's Budget decisions" to "Does project initiation depend on approval of a Budget Action such as a Budget Change Proposal or Budget Revision?"; (b) new dollar-cost field (pal_cost, free text) in the PAL Determination section; (c) the project's entered cost and the $2,000,000 PAL threshold are shown in the PAL read-out, and cost at/above $2M now anticipates PAL (cost trigger driven by the entered figure vs the threshold; blank cost stays Unknown/Indeterminate as before). Scoring byte-identical (cost field is non-scoring text). // v01.20 (Profiler v01.15): numbered-intake import now ALWAYS skips the first box when it is the project name — deterministic name-skip. When a file starts at box 1 and that box is not a scored question (it is the Project Name), every later block shifts by -1 so answers no longer land one question too high on the number-fallback path. Meaning-match still runs first (unchanged); only files whose titles fall through to numbering are affected. Verified: name-first + generic titles 9/31 -> 31/31; real-title name-first and scored-first unchanged at 31/31; scoring byte-identical. // v01.19 (Profiler v01.14): the T-shirt Size explanatory note is now HIDDEN by default — collapsed inside a <details> behind a faint "about this scale" toggle. Still present and discoverable (click to expand), just not shown up front. Markup/CSS only; note text, scoring, gating, and exports byte-identical. // v01.18 (Profiler v01.13): T-shirt Size note sharpened — states that T-shirt sizing is an Agile relative-estimation technique for individual backlog items (stories/features/epics), NOT for an entire project, so sizing a whole project this way is non-standard under any methodology (a PMO convention applied uniformly so every project reads on one scale). Note text only; scoring/gating/exports byte-identical. // v01.17 (Profiler v01.12): T-shirt Size relabel extended to the remaining on-screen governance references (Large (Tier 3) — Full governance; PAL (Extra Large) = everything in a Large project + gates; EDD Next help), and the T-shirt Size note now states plainly that T-shirt sizing is an Agile relative-estimation technique — so calling a Waterfall or Hybrid project a T-shirt Size is a PMO convention, not standard practice. Presentation only — internal tier, scoring, gating, and exports byte-identical. // v01.16 (Profiler v01.11): governance designation now DISPLAYED as T-shirt Size (Small=Tier 1 def, Medium=Tier 2, Large=Tier 3/Large, Extra Large=PAL/Tier 4) with a "T-shirt Size" label above the pins and a PMO/Scrum-Master/PMP note (internal scale, not industry standard; std-dev split; Large ~ >10,000 hrs LOE); glossary entry added. Presentation only — the internal tier, scoring, gating, and exports are byte-identical. // v01.15 (Profiler v01.10): numbered-intake import now resolves each answer to its question by MEANING (word-overlap title match with stem-prefix + synonyms), immune to numbering offsets AND skipped/gapped question numbers; number is only a fallback. Fixes mis-mapping when a file numbers the Project Name as Q01 or omits some questions. Import only — scoring byte-identical. // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
+const VER_MINOR = 24;           // v01.24 (Profiler v01.19): EXPORTS de-Tiered — every export column/key/label that carried the governance "Tier" now reads "T-shirt Size" with the size WORD (Small/Medium/Large/Extra Large): the machine Fields keys governance_tier/artifact_tier become tshirt_size (word) + tshirt_size_level (number); the HTML/clipboard/Excel summary rows, the Jira CSV/JSON/text + Advanced-Roadmaps CSV, and the analytics CSVs all say T-shirt Size; the per-document step-up column "Tier"/"T3" becomes "Applies at"/"Large+"; the artifact Trigger value "Tier" becomes "Complexity". Autogenerate.html updated in lock-step to read the new keys (word->level map) and match the new headers; round-trip verified. KEPT (per scope): the Jira hierarchy "Tier" (Epic/Feature) and the PMP/Scrum-Master definition bridge ("Small = Tier 1 definition ..."). Scoring byte-identical (06cd4287). // v01.23 (Profiler v01.18): EDD Next is now a MARKER ONLY — it no longer floors the governance tier / T-shirt Size. An EDD Next project can be any size (even Small); size is determined solely by value (>=80 -> Large) and the value+complexity mini corner, exactly like every other project. Removed the `flags.eddnext ||` term from naturalTier (both the render and scoring paths), dropped govTier.eddnextFloor, reworded the EDD Next question help and the Full-governance caption. The EDD Next pill, export marker, and import detection are unchanged. Scoring change is confined to EDD Next cases only (verified: all 8,345 changed sig lines carry the eddnext flag; 0 non-EDD-Next cases changed). Signature re-baselined 704086f2 -> 06cd4287. // v01.22 (Profiler v01.17): PAL cost input reworked per feedback — the free-text dollar field (pal_cost) is REMOVED; instead Q14 "estimated project cost or funding range" (spend) is moved into the PAL Determination section and revised to five choices: Under $250K, $250K–$1M, $1M–$2M, Over $2M, Not applicable. "Over $2M" is the PAL cost trigger (anticipates PAL). Financial-Risk complexity rating is preserved per bucket (Under $250K→1, $250K–$1M→2.5, $1M–$2M & Over $2M→4 as the old "Over $1M", N/A→2.5 as the old "Unknown"); value/complexity/naturalTier for a given answer are unchanged — govTier legitimately becomes 4 (PAL) when Over $2M is chosen. Scoring signature re-baselined to 704086f2 (was f36b19f) solely due to the new option + the intended Over-$2M→PAL elevation. // v01.21 (Profiler v01.16): PAL section reworked — (a) third PAL trigger reworded from "Governor's Budget decisions" to "Does project initiation depend on approval of a Budget Action such as a Budget Change Proposal or Budget Revision?"; (b) new dollar-cost field (pal_cost, free text) in the PAL Determination section; (c) the project's entered cost and the $2,000,000 PAL threshold are shown in the PAL read-out, and cost at/above $2M now anticipates PAL (cost trigger driven by the entered figure vs the threshold; blank cost stays Unknown/Indeterminate as before). Scoring byte-identical (cost field is non-scoring text). // v01.20 (Profiler v01.15): numbered-intake import now ALWAYS skips the first box when it is the project name — deterministic name-skip. When a file starts at box 1 and that box is not a scored question (it is the Project Name), every later block shifts by -1 so answers no longer land one question too high on the number-fallback path. Meaning-match still runs first (unchanged); only files whose titles fall through to numbering are affected. Verified: name-first + generic titles 9/31 -> 31/31; real-title name-first and scored-first unchanged at 31/31; scoring byte-identical. // v01.19 (Profiler v01.14): the T-shirt Size explanatory note is now HIDDEN by default — collapsed inside a <details> behind a faint "about this scale" toggle. Still present and discoverable (click to expand), just not shown up front. Markup/CSS only; note text, scoring, gating, and exports byte-identical. // v01.18 (Profiler v01.13): T-shirt Size note sharpened — states that T-shirt sizing is an Agile relative-estimation technique for individual backlog items (stories/features/epics), NOT for an entire project, so sizing a whole project this way is non-standard under any methodology (a PMO convention applied uniformly so every project reads on one scale). Note text only; scoring/gating/exports byte-identical. // v01.17 (Profiler v01.12): T-shirt Size relabel extended to the remaining on-screen governance references (Large (Tier 3) — Full governance; PAL (Extra Large) = everything in a Large project + gates; EDD Next help), and the T-shirt Size note now states plainly that T-shirt sizing is an Agile relative-estimation technique — so calling a Waterfall or Hybrid project a T-shirt Size is a PMO convention, not standard practice. Presentation only — internal tier, scoring, gating, and exports byte-identical. // v01.16 (Profiler v01.11): governance designation now DISPLAYED as T-shirt Size (Small=Tier 1 def, Medium=Tier 2, Large=Tier 3/Large, Extra Large=PAL/Tier 4) with a "T-shirt Size" label above the pins and a PMO/Scrum-Master/PMP note (internal scale, not industry standard; std-dev split; Large ~ >10,000 hrs LOE); glossary entry added. Presentation only — the internal tier, scoring, gating, and exports are byte-identical. // v01.15 (Profiler v01.10): numbered-intake import now resolves each answer to its question by MEANING (word-overlap title match with stem-prefix + synonyms), immune to numbering offsets AND skipped/gapped question numbers; number is only a fallback. Fixes mis-mapping when a file numbers the Project Name as Q01 or omits some questions. Import only — scoring byte-identical. // v01.14 (Profiler v01.9): import auto-detects a uniform Q-number offset — a file that numbers the Project Name as Q01 (shifting every scored answer by one) is now corrected automatically; blocks whose titles resolve vote on the shift and it only applies when it clearly dominates, so no-name files are unaffected. Import only — scoring byte-identical. // v01.13 (Profiler v01.8): deliverable-id reconciliation — the 9 PMBOK subsidiary management plans (Risk/Quality/Comms/Change/Scope/Requirements/Org/Procurement/Cost, RACI ids PLN-12..20) now emit deliverable_id PLN-01, the "Consolidate PMP" schedule row they roll up into (per PLN-01's own note), so the schedule handoff has no unmatched ids. Export mapping only — scoring/flags byte-identical.            // v01.12 (Profiler v01.7): security document names spelled out in the rules bucket / Documents sheet — Certification & Accreditation (C&A) Package, Information System Recovery Plan (ISRP), Security Information & Event Management (SIEM) / Logging Kickoff; glossary ISRP corrected to "Information System Recovery Plan" to match the RACI and the security schedule (#51). Display names only — scoring/flags byte-identical to v01.6.            // v01.11 (Profiler v01.6): import now maps a numbered intake paste one-to-one — each answer's full prose lands in that question's context text box (the option code stays the invisible scoring machinery); dedicated numbered-block parser (keyed by Q-number, option read from the answer lead not the rationale); PAL matrix rows show captured context. Presentation/import only — scoring + flags byte-identical to v01.5.            // v01.10 (Profiler v01.5): feedback round — selected-answer highlight now header dark blue (was light mint); Related Applications & Dependencies section adds per-row information flow (Downstream/Upstream/Both) + live count reconciled against the dependencies answer; PAL website link; acronym glossary; ISRP/security-review flag now also fires from protected data, external/public exposure, cloud hosting, or vendor delivery (governance decision — does NOT affect value/complexity scoring; verified 0 scoring-core diff over 40k cases).            // v01.09 (Profiler v01.4): tier gating fix — Tier 3 (Full) is driven by VALUE (>= 80), not V-C; complexity is an indicator only and never demotes a project. Mini unchanged (value < 60 AND avgCx < 2.5). Map redrawn as horizontal value bands. Deliberate scoring/tier change vs the prior frozen baseline.            // v01.08 (Profiler v01.4): presentation-only 27-screen layout (name -> intro metadata; PAL 4-field matrix; testing+support one screen; 6 sections). ESPMO_RULES byte-identical to v01.3; exports byte-identical for identical answer vectors.            // v01.07 (toolset v01.3): F1 — non-scoring intake contradiction checks (ESPMO_RULES.contradictions; hard/soft; hard gates export via ack-with-initials) + Contradictions/ans_sec/ans_data handoff for security gating. Scoring/tier/flags/docs baseline-identical (0 diff over 50,114 cases).
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -911,6 +911,9 @@ const TSHIRT = ESPMO_RULES.tshirt || {templates:[]};
 // "Waterfall · Large Tier", "Agile · Standard Tier", "Hybrid · Mini Tier", "Agile · PAL Tier".
 const TSHIRT_TIER = {s:'Small', m:'Medium', l:'Large', u:'Medium'};  // T-shirt Size labels (display)
 const SIZE_WORD   = {s:'Small', m:'Medium', l:'Large'};
+// T-shirt Size word by governance level (1–4). Used in EXPORTS so the hand-off reads as
+// T-shirt Size, not Tier. Autogenerate maps these words back to a level for its own logic.
+const TSIZE_BY_TIER = {1:'Small', 2:'Medium', 3:'Large', 4:'Extra Large'};
 function tshirtProfile(flags){
   // Delivery method (selected, else recommended).
   let m=state.method, src='selected';
@@ -1682,7 +1685,7 @@ function buildArtifacts(tier, flags){
     let tier='';
     if(a.origin==='tier') tier = 'T3';   // tier2 empty; all tier-gated docs are Tier-3 step-ups
     const timing = recurring ? 'Ongoing' : ((phase && a.ph===phase) ? 'This phase' : a.ph);
-    const trigger = (a.origin==='base')?'Baseline':(a.origin==='tier')?'Tier':a.origin;
+    const trigger = (a.origin==='base')?'Baseline':(a.origin==='tier')?'Complexity':a.origin;
     // "Why included" = the actual question number(s) that caused this document — the culprits.
     // The PM can trace any document straight back to the answers that pulled it in.
     const culprits = window.__TIER_CULPRITS || [];
@@ -2011,7 +2014,7 @@ function buildSummaryHTML(){
        +'<tr><td style="'+td+'color:#555;">V\u2013C Read</td><td style="'+td+'font-weight:bold;color:#222;">'+band+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Value &times; Complexity Map</td><td style="'+td+'font-weight:bold;color:#222;">'+quad+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Project Level</td><td style="'+td+'font-weight:bold;color:#222;">'+(window.__LEVEL||'Standard')+'</td></tr>'
-       +'<tr><td style="'+td+'color:#555;">Governance Tier</td><td style="'+td+'font-weight:bold;color:'+((window.__GOV_TIER===4)?'#7a5230':'#222')+';">Tier '+(window.__GOV_TIER||3)+((window.__GOV_TIER===4)?' · PAL (anticipated)':'')+'</td></tr>'
+       +'<tr><td style="'+td+'color:#555;">T‑shirt Size</td><td style="'+td+'font-weight:bold;color:'+((window.__GOV_TIER===4)?'#7a5230':'#222')+';">'+(TSIZE_BY_TIER[window.__GOV_TIER||3]||'—')+((window.__GOV_TIER===4)?' (PAL, anticipated)':'')+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">PAL Determination</td><td style="'+td+'font-weight:bold;color:#222;">'+escHtml(determinePAL().status)+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Value Score</td><td style="'+td+'font-weight:bold;color:#222;">'+val+'</td></tr>'
 
@@ -2075,7 +2078,7 @@ function submitEmail(){
     'Technical Complexity: '+techCx,
     'Criticality: '+crit,
     'Project Level: '+(window.__LEVEL||'Standard'),
-    'Governance Tier: Tier '+(window.__GOV_TIER||3)+((window.__GOV_TIER===4)?' · PAL (anticipated)':''),
+    'T-shirt Size: '+(TSIZE_BY_TIER[window.__GOV_TIER||3]||'—')+((window.__GOV_TIER===4)?' (PAL, anticipated)':''),
     'Level of Effort (T-shirt): '+LOE_TEXT(state.loe),
     'PAL Determination (SAM 4819.37): '+determinePAL().status,
     'Artifacts \u2014 PMO assists/advises: '+pmoN+'  \u00B7  TARC assists/advises: '+tarcN,
@@ -2143,7 +2146,7 @@ function _recompute(){
   const quad = band;  // map label follows the natural V–C band (single source of truth)
   const highVal=value>=50, highCx=cxi>=(ZT*25);
   // artTier is retained ONLY as an alias of the unified tier so existing export
-  // columns (artifact_tier / "Artifact Tier") keep emitting; column-naming cleanup
+  // columns (now exported as the "T-shirt Size" word); internal alias kept for scoring
   // is deferred per the tier-unification spec.
   const artTier = govTier;
   const bizRows=SIMM_BIZ.map(e=>[e.a, +attrRating(e).toFixed(2), e.src]);
@@ -2303,7 +2306,7 @@ function saveAsExcel(){
     [{v:'Average Complexity (of 4)',s:label},{v:+r.avgCx.toFixed(2),s:val}],
     [{v:'Criticality',s:label},{v:'Zone '+r.zone+' · '+r.crit,s:val}],
     [{v:'Project Level',s:label},{v:(window.__LEVEL||'Standard'),s:valNum}],
-    [{v:'Governance Tier',s:label},{v:'Tier '+r.govTier+(r.govTier===4?' · PAL (anticipated)':''),s:valNum}],
+    [{v:'T-shirt Size',s:label},{v:(TSIZE_BY_TIER[r.govTier]||'—')+(r.govTier===4?' (PAL, anticipated)':''),s:valNum}],
     [{v:'PAL Determination',s:label},{v:determinePAL().status,s:valNum}],
     [{v:'Recommended Approach',s:label},{v:recommendMethod().recFull+(state.method&&state.method!=='tbd'?(' (selected: '+METHOD_LABEL[state.method]+')'):''),s:valNum}],
     [{v:'',s:val},{v:'',s:val}],
@@ -2442,7 +2445,7 @@ function saveAsExcel(){
   const noteRow   = {font:{name:F,italic:true,sz:8,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}};
   const T=[
     [{v:'Only the documents triggered for this project. The "Why included" column names the question number(s) that pulled each one in \u2014 your audit trail back to the answers.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
-    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Tier',s:colhdr},{v:'Why included (which question)',s:colhdr}]
+    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr}]
   ];
   const cats=["Initiation & Baseline","Planning","Security & Risk","Release & Production","Quality & Sustainment","Closeout & Governance"];
   cats.forEach(cat=>{
@@ -2456,7 +2459,7 @@ function saveAsExcel(){
         {v:a.nm,s:z?cellZ:cell},
         {v:a.owner,s:own},
         {v:a.timing||'',s:base},
-        {v:a.tier||'',s:z?numCZ:numC},
+        {v:(a.tier==='T3'?'Large+':(a.tier||'')),s:z?numCZ:numC},
         {v:a.whyText||a.trigger||'',s:base},
       ]);
     });
@@ -2835,8 +2838,8 @@ function saveAsExcel(){
       ['criticality',   String(r.crit)],
       ['vc_score',      String(r.vc)],
       ['vc_band',       String(r.band)],
-      ['artifact_tier', String(r.artTier)],
-      ['governance_tier', String(r.govTier)],
+      ['tshirt_size', TSIZE_BY_TIER[r.govTier]||''],
+      ['tshirt_size_level', String(r.govTier)],
       ['size',          ({s:'Small',m:'Medium',l:'Large',u:'Unsized'})[state.loe]||'Unsized'],
       ['edd_next',      r.flags.eddnext?'Yes':'No'],
       ['pal_applies',   r.flags.pal?'Yes':'No'],
@@ -3121,8 +3124,8 @@ function saveAsPptx(){
   fields.push('score.band = '+r.band);
   fields.push('score.zone = '+r.zone);
   fields.push('score.criticality = '+r.crit);
-  fields.push('governance.tier = '+govTier);
-  fields.push('governance.artifact_tier = '+(r.artTier||''));
+  fields.push('governance.tshirt_size = '+(TSIZE_BY_TIER[govTier]||''));
+  fields.push('governance.tshirt_size_level = '+govTier);
   fields.push('governance.level = '+level);
   fields.push('flags = '+(Object.keys(r.flags||{}).join('; ') || '(none)'));
   QUESTIONS.forEach(q=>{
@@ -3138,7 +3141,7 @@ function saveAsPptx(){
     : ['(Run/reveal the profile to populate the triggered deliverable set.)'];
 
   const recommendation =
-    'Profiler draft recommendation: route this effort as Governance Tier '+govTier+' / '+level+' with Artifact Tier '+(r.artTier||'TBD')+'. '
+    'Profiler draft recommendation: route this effort as T-shirt Size '+(TSIZE_BY_TIER[govTier]||'TBD')+' / '+level+'. '
     + 'V–C score '+r.vc+' ('+r.band+'), Value '+r.value+'/100, average complexity '+r.avgCx.toFixed(1)+'/4. '
     + 'Review with TRT/DCT before treating this as an approved recommendation.';
 
@@ -5085,14 +5088,14 @@ function projectCsv(snap){
   var headers = [
     'Profile ID','Generated At','Tool Build','Project Name','Method','Phase',
     'Value Score','Business Complexity','Technical Complexity','Avg Complexity',
-    'Complexity Index','Value-to-Complexity','Band','Zone','Criticality','Artifact Tier',
+    'Complexity Index','Value-to-Complexity','Band','Zone','Criticality','T-shirt Size',
     'Governance Level','PII Floor','PMO Documents','TARC Documents','Total Documents',
     'Answered Count','Drivers','TARC Triggered'
   ];
   var row = [
     snap.profileId, snap.generatedAt, snap.toolBuild, p.name, p.method||'', p.phase||'',
     s.valueScore, s.businessComplexity, s.technicalComplexity, s.avgComplexity,
-    s.complexityIndex, s.valueToComplexity, s.band, s.zone, s.criticality, s.artifactTier,
+    s.complexityIndex, s.valueToComplexity, s.band, s.zone, s.criticality, (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier),
     g.level, g.piiFloor?'Yes':'No', g.pmoDocumentCount, g.tarcDocumentCount,
     snap.documents.length, snap.answeredCount,
     snap.drivers.join('; '), (g.tarcTriggered||[]).join('; ')
@@ -5102,10 +5105,10 @@ function projectCsv(snap){
 
 // LONG table — one row per triggered document, project key on every row.
 function documentsCsv(snap){
-  var headers = ['Profile ID','Project Name','Generated At','Document','Category','Owner','Owner Group','Timing','Tier','Trigger','Why Included'];
+  var headers = ['Profile ID','Project Name','Generated At','Document','Category','Owner','Owner Group','Timing','Applies at','Trigger','Why Included'];
   var rows = snap.documents.map(function(d){
     return [ snap.profileId, snap.project.name, snap.generatedAt,
-             d.document, d.category, d.owner, d.ownerGroup, d.timing, d.tier, d.trigger, d.whyIncluded ];
+             d.document, d.category, d.owner, d.ownerGroup, d.timing, (d.tier==='T3'?'Large+':(d.tier||'')), d.trigger, d.whyIncluded ];
   });
   return csvTable(headers, rows);
 }
@@ -5244,7 +5247,7 @@ function epicDescription(snap){
   L.push('  Technical Complexity: ' + s.technicalComplexity + '/4');
   L.push('  Value-to-Complexity (V-C): ' + s.valueToComplexity + '  (band: ' + s.band + ')');
   L.push('  Complexity Zone: ' + s.zone + '  ·  Criticality: ' + s.criticality);
-  L.push('  Artifact Tier: ' + s.artifactTier);
+  L.push('  T-shirt Size: ' + (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier));
   L.push('');
   L.push('GOVERNANCE');
   L.push('  Level: ' + g.level + (g.piiFloor ? '  (PII floor applied)' : ''));
@@ -5275,11 +5278,11 @@ function docDescription(d, snap){
   L.push('Why included: ' + d.whyIncluded);
   L.push('Owner: ' + d.ownerGroup + (d.owner && d.owner!==d.ownerGroup ? ' (' + d.owner + ')' : ''));
   if(d.timing) L.push('Timing: ' + d.timing);
-  if(d.tier) L.push('Tier marker: ' + d.tier);
+  if(d.tier) L.push('Applies at: ' + (d.tier==='T3'?'Large+':d.tier));
   L.push('Category: ' + d.category);
   L.push('');
   L.push('PROJECT GOVERNANCE CONTEXT');
-  L.push('  Tier ' + s.artifactTier + '  ·  Zone ' + s.zone + '  ·  Criticality ' + s.criticality + '  ·  Band ' + s.band);
+  L.push('  T-shirt Size ' + (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier) + '  ·  Zone ' + s.zone + '  ·  Criticality ' + s.criticality + '  ·  Band ' + s.band);
   L.push('');
   L.push('This is decision-support scaffolding, not a binding compliance ruling. A governance reviewer confirms the final set.');
   return L.join('\n');
@@ -5289,7 +5292,7 @@ function docDescription(d, snap){
 function jiraLabel(s){ return String(s).trim().replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
 
 function jiraLabels(snap){
-  var out = ['ESPMO-Profiler', 'Tier-' + snap.scores.artifactTier, 'Band-' + jiraLabel(snap.scores.band),
+  var out = ['ESPMO-Profiler', 'Size-' + String(TSIZE_BY_TIER[snap.scores.artifactTier]||snap.scores.artifactTier).replace(/\s+/g,''), 'Band-' + jiraLabel(snap.scores.band),
              'Zone-' + snap.scores.zone, 'Gov-' + jiraLabel(snap.governance.level)];
   if(snap.governance.piiFloor) out.push('PII-Floor');
   (snap.drivers||[]).forEach(function(d){ out.push('driver-' + jiraLabel(d)); });
@@ -5318,7 +5321,7 @@ function jiraCsv(snap, docType){
   var headers = [
     'Issue Type','Summary','Description','Labels','Epic Name','Epic Link',
     'Value Score','Business Complexity','Technical Complexity','Value-to-Complexity',
-    'Band','Zone','Criticality','Artifact Tier','Governance Level','PII Floor',
+    'Band','Zone','Criticality','T-shirt Size','Governance Level','PII Floor',
     'PMO Documents','TARC Documents','Total Documents','Profile ID'
   ];
   var rows = [];
@@ -5331,7 +5334,7 @@ function jiraCsv(snap, docType){
     epicName,                                // Epic Name — required for Epic issuetype on many instances
     '',                                      // Epic Link — blank on the Epic itself
     s.valueScore, s.businessComplexity, s.technicalComplexity, s.valueToComplexity,
-    s.band, s.zone, s.criticality, s.artifactTier, g.level, g.piiFloor?'Yes':'No',
+    s.band, s.zone, s.criticality, (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier), g.level, g.piiFloor?'Yes':'No',
     g.pmoDocumentCount, g.tarcDocumentCount, snap.documents.length, snap.profileId
   ]);
   // Rows 2..n — one per triggered document, each linked back to the Epic.
@@ -5433,7 +5436,7 @@ function jiraJson(snap){
       { fieldName: 'Band', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.band },
       { fieldName: 'Complexity Zone', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.zone },
       { fieldName: 'Criticality', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.criticality },
-      { fieldName: 'Artifact Tier', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.artifactTier },
+      { fieldName: 'T-shirt Size', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier) },
       { fieldName: 'Governance Level', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: g.level }
     ]
   };
@@ -5503,7 +5506,7 @@ function epicDesc(snap){
   var PJ = global.ProfilerJira;
   if(PJ && typeof PJ.epicDescription==='function') return PJ.epicDescription(snap);
   var s=snap.scores,g=snap.governance;
-  return 'ESPMO Project Profile '+snap.profileId+'\nTier '+s.artifactTier+' / Zone '+s.zone+
+  return 'ESPMO Project Profile '+snap.profileId+'\nT-shirt Size '+(TSIZE_BY_TIER[s.artifactTier]||s.artifactTier)+' / Zone '+s.zone+
          ' / Crit '+s.criticality+' / Band '+s.band+'\nGovernance: '+g.level+
          ' ('+g.pmoDocumentCount+' PMO / '+g.tarcDocumentCount+' TARC).';
 }
@@ -5512,12 +5515,12 @@ function docDesc(d, snap){
   return 'Governance document for '+snap.project.name+' ('+snap.profileId+').\n'+
          'Why included: '+d.whyIncluded+'\nOwner: '+d.ownerGroup+
          (d.timing?('\nTiming: '+d.timing):'')+
-         '\nProject context: Tier '+s.artifactTier+' / Zone '+s.zone+
+         '\nProject context: T-shirt Size '+(TSIZE_BY_TIER[s.artifactTier]||s.artifactTier)+' / Zone '+s.zone+
          ' / Crit '+s.criticality+' / Band '+s.band+'.';
 }
 function alignLabels(snap){
   var s=snap.scores,g=snap.governance;
-  var out=['ESPMO-Profiler','Tier-'+s.artifactTier,'Band-'+alignLabel(s.band),
+  var out=['ESPMO-Profiler','Size-'+String(TSIZE_BY_TIER[s.artifactTier]||s.artifactTier).replace(/\s+/g,''),'Band-'+alignLabel(s.band),
            'Zone-'+s.zone,'Gov-'+alignLabel(g.level)];
   if(g.piiFloor) out.push('PII-Floor');
   (snap.drivers||[]).forEach(function(d){ out.push('driver-'+alignLabel(d)); });
@@ -5573,7 +5576,7 @@ function alignCsv(snap, opts){
     'External ID','Parent ID','Tier','Work Type','Title','Description','Labels',
     'Linked IDs','Link Type',
     'Value Score','Business Complexity','Technical Complexity','Value-to-Complexity',
-    'Band','Zone','Criticality','Artifact Tier','Governance Level','PII Floor',
+    'Band','Zone','Criticality','T-shirt Size','Governance Level','PII Floor',
     'PMO Documents','TARC Documents','Total Documents','Profile ID'
   ];
   var rows = [];
@@ -5584,7 +5587,7 @@ function alignCsv(snap, opts){
     alignLabels(snap).join(' '),
     linkedIds, linkTypes,
     s.valueScore, s.businessComplexity, s.technicalComplexity, s.valueToComplexity,
-    s.band, s.zone, s.criticality, s.artifactTier, g.level, g.piiFloor?'Yes':'No',
+    s.band, s.zone, s.criticality, (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier), g.level, g.piiFloor?'Yes':'No',
     g.pmoDocumentCount, g.tarcDocumentCount, snap.documents.length, snap.profileId
   ]);
   // Governance-document Features — parented to THIS profile's epic/child-epic
