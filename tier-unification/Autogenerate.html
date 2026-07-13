@@ -177,7 +177,7 @@ Read the code
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Autogenerate — v01.4</title>
+<title>ESPMO Autogenerate — v01.5</title>
 <style>
   :root {
     --ink: #11151c;
@@ -377,7 +377,7 @@ body{background:linear-gradient(180deg,#f8fbfe,#eef4fa 48%,#e9f1f8)!important;co
 body::before{content:"";display:block;height:8px;background:linear-gradient(90deg,var(--edd-blue),var(--edd-teal) 62%,var(--edd-gold));}
 .wrap{max-width:1040px;padding:30px 24px 76px;}
 header{position:relative;overflow:hidden;border:0!important;border-radius:22px;margin-bottom:26px!important;padding:28px 32px!important;color:#fff;background:linear-gradient(135deg,var(--edd-blue),var(--edd-blue-2) 60%,var(--edd-teal));box-shadow:0 20px 48px rgba(11,63,115,.22)!important;}
-header::after{content:"v01.4 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
+header::after{content:"v01.5 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
 .brand{padding-right:340px;row-gap:10px;}
 .brand h1{font-size:26px;color:#fff;}
 .brand .tag{color:#ffe08a!important;border-color:rgba(255,224,138,.65)!important;background:rgba(0,0,0,.16);border-radius:999px;padding:5px 9px;margin-top:4px;}
@@ -1613,7 +1613,7 @@ function buildGapReport(tf, data, MARK) {
     "eddnext": {
       "y": {
         "tag": "eddnext_text",
-        "text": "This is an EDD Next program project, placing it at a minimum of Tier 3 governance."
+        "text": "This is an EDD Next program project."
       },
       "n": {
         "tag": "eddnext_text",
@@ -2262,6 +2262,19 @@ function buildData(profileBuild, templateKey, templateBuf) {
             data.governance_tier, data.artifactTier, data.artifact_level, data.project_level,
             data.trt_tier, data.recommended_tier, data.priority_tier)) || bandToTier(data.vc_read || data.governance_band || data.band);
         }
+        // Generated documents show the T-shirt Size WORD, not a Tier number. Keep a numeric
+        // level (tshirt_size_level) for internal governance logic; set artifact_tier to the word.
+        (function () {
+          var n = parseInt(String(data.tshirt_size_level || data.artifact_tier || "").replace(/[^0-9]/g, ""), 10);
+          if (!(n >= 1 && n <= 4)) {
+            var w = String(data.tshirt_size || data.artifact_tier || "").toLowerCase();
+            n = /extra\s*large|x-?large|\bxl\b|pal/.test(w) ? 4 : /large/.test(w) ? 3 : /medium/.test(w) ? 2 : /small/.test(w) ? 1 : 0;
+          }
+          if (n >= 1 && n <= 4) {
+            if (!hasText(data.tshirt_size_level)) data.tshirt_size_level = String(n);
+            data.artifact_tier = ({ 1: "Small", 2: "Medium", 3: "Large", 4: "Extra Large" })[n];
+          }
+        })();
         if (!hasText(data.est_total_cost)) {
           data.est_total_cost = firstText(data.spend, data.budget, data.rom_estimate, data.estimated_budget,
             data.estimated_cost, data.total_budget, data.cost_estimate);
@@ -2558,8 +2571,9 @@ function buildData(profileBuild, templateKey, templateBuf) {
         // Governance Management Plan template only.
         (function fillGovernancePlan(){
           if (!/Governance[_ ]?Management[_ ]?Plan/i.test(String(templateKey || ""))) return;
-          var tier = parseInt(String(data.artifact_tier || data.governance_tier || "2").replace(/[^0-9]/g, ""), 10);
+          var tier = parseInt(String(data.tshirt_size_level || data.governance_tier || "2").replace(/[^0-9]/g, ""), 10);
           if (!(tier >= 1 && tier <= 4)) tier = 2;
+          var SZW = { 1: "Small", 2: "Medium", 3: "Large", 4: "Extra Large" }; var sz = SZW[tier] || "Medium";
           var R = "[REVIEW] ";
           var yes = function (v) { return /^\s*yes\b/i.test(String(v == null ? "" : v)); };
           var J = function () { return Array.prototype.slice.call(arguments).filter(function (s) { return s && String(s).trim(); }).join(" "); };
@@ -2569,17 +2583,17 @@ function buildData(profileBuild, templateKey, templateBuf) {
             1: "Light governance: the project manager runs delivery with regular status reporting and the sponsor kept informed — no Steering Committee and no formal gates.",
             2: "Standard governance: a governance plan with a stakeholder/RACI view, periodic checkpoints, and the sponsor kept in the loop at milestones.",
             3: "Full-rigor governance: a Project Steering Committee, the sponsor informed at each gate, risk acceptance on the record, and ESPMO/portfolio oversight.",
-            4: "PAL governance: full-rigor Tier-3 oversight plus the CDT Project Approval Lifecycle Stage 1–4 gate package (SIMM §19)."
+            4: "PAL governance: full-rigor Large-project oversight plus the CDT Project Approval Lifecycle Stage 1–4 gate package (SIMM §19)."
           };
           // --- narrative blocks (tier model + answer-text fragments) ---
-          set("gov_introduction", J(R + "This Governance Management Plan defines how", (data.project_name || "the project"), "will be governed as a Governance Tier " + tier + " effort.", data.method_text, data.phase_text));
+          set("gov_introduction", J(R + "This Governance Management Plan defines how", (data.project_name || "the project"), "will be governed as a T-shirt Size " + sz + " effort.", data.method_text, data.phase_text));
           set("gov_approach", J(R + GOVTXT[tier], data.impact_text, data.coord_text, (yes(data.eddnext) ? data.eddnext_text : ""), (yes(data.pal) ? data.pal_text : "")));
           set("gov_structure", R + (tier >= 3
-              ? "Oversight is exercised through a Project Steering Committee, the Technical Architecture Review Committee (TARC), and ESPMO/portfolio oversight, with the sponsor informed at each gate. The standard Tier-" + tier + " governing bodies are listed below — confirm membership."
+              ? "Oversight is exercised through a Project Steering Committee, the Technical Architecture Review Committee (TARC), and ESPMO/portfolio oversight, with the sponsor informed at each gate. The standard " + sz + " governing bodies are listed below — confirm membership."
               : tier === 2
               ? "Oversight is exercised through periodic sponsor checkpoints and a stakeholder/RACI structure; TARC reviews architecture. Confirm membership below."
               : "The project manager runs delivery with regular status reporting to the sponsor; no Steering Committee or formal gates."));
-          set("gov_processes_intro", R + "The following governance processes apply at Governance Tier " + tier + ":");
+          set("gov_processes_intro", R + "The following governance processes apply at T-shirt Size " + sz + ":");
           set("gov_monitoring", R + (tier >= 3
               ? "Progress is monitored through regular status reporting, Steering Committee checkpoints, risk acceptance on the record, and ESPMO/portfolio oversight reporting."
               : tier === 2
