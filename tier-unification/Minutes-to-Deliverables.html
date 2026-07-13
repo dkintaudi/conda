@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.1</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.2</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -35,14 +35,19 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.1 · local · offline · no CDN</div>
+  <div class="badge">v01.2 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
   <div class="card">
     <h2><span class="step">1</span>Upload or paste the TRT minutes</h2>
     <p class="hint">Drop the minutes Word file (or paste the text), then it auto-extracts into the editable form. Everything happens in your browser &mdash; nothing is uploaded and no internet is used.</p>
-    <div id="drop" class="drop">&#11014;&#65039; Drop the minutes <b>.docx</b> here, or <label class="link">browse<input type="file" id="file" accept=".docx" style="display:none"></label> &mdash; or paste the text below.</div>
+    <div id="drop" class="drop">
+      &#11014;&#65039; Drop the minutes <b>.docx</b> here, or
+      <button type="button" class="btn sec" id="browseBtn" style="padding:5px 14px;margin:0 2px;">Choose .docx&hellip;</button>
+      <input type="file" id="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none">
+      <div class="mini" style="margin-top:7px;">Tip: open this page in a real browser (Chrome/Edge/Safari), not a preview pane &mdash; or just paste the text below, which always works.</div>
+    </div>
     <textarea id="raw" style="min-height:150px;" placeholder="…or paste the full TRT minutes here (Title, ITW #, Overview, Business, discussion topics, TRT Outcome, Level of Effort, Participating teams, Refer to DCT …)"></textarea>
     <div class="btnrow">
       <button class="btn sec" id="extractBtn">Extract fields ▸</button>
@@ -155,14 +160,28 @@ function _fixed(lt,dt){var i;for(i=0;i<7;++i)lt.table[i]=0;lt.table[7]=24;lt.tab
 function _btree(t,lens,off,num){var offs=new Uint16Array(16),i,sum;for(i=0;i<16;++i)t.table[i]=0;for(i=0;i<num;++i)t.table[lens[off+i]]++;t.table[0]=0;for(sum=0,i=0;i<16;++i){offs[i]=sum;sum+=t.table[i];}for(i=0;i<num;++i)if(lens[off+i])t.trans[offs[lens[off+i]]++]=i;}
 function _getbit(d){if(!d.bitcount--){d.tag=d.s[d.i++];d.bitcount=7;}var b=d.tag&1;d.tag>>>=1;return b;}
 function _rbits(d,num,base){if(!num)return base;while(d.bitcount<24){d.tag|=d.s[d.i++]<<d.bitcount;d.bitcount+=8;}var val=d.tag&(0xffff>>>(16-num));d.tag>>>=num;d.bitcount-=num;return val+base;}
-function _dsym(d,t){while(d.bitcount<24){d.tag|=d.s[d.i++]<<d.bitcount;d.bitcount+=8;}var sum=0,cur=0,len=0,tag=d.tag;do{cur=2*cur+(tag&1);tag>>>=1;++len;sum+=t.table[len];cur-=t.table[len];}while(cur>=0);d.tag=tag;d.bitcount-=len;return t.trans[sum+cur];}
+function _dsym(d,t){while(d.bitcount<24){d.tag|=d.s[d.i++]<<d.bitcount;d.bitcount+=8;}var sum=0,cur=0,len=0,tag=d.tag;do{cur=2*cur+(tag&1);tag>>>=1;++len;if(len>15)throw new Error("corrupt DEFLATE stream");sum+=t.table[len];cur-=t.table[len];}while(cur>=0);d.tag=tag;d.bitcount-=len;return t.trans[sum+cur];}
 function _dtrees(d,lt,dt){var hlit=_rbits(d,5,257),hdist=_rbits(d,5,1),hclen=_rbits(d,4,4),i,num,len;for(i=0;i<19;++i)_lens[i]=0;for(i=0;i<hclen;++i)_lens[_clc[i]]=_rbits(d,3,0);_btree(_codeTree,_lens,0,19);for(num=0;num<hlit+hdist;){var sym=_dsym(d,_codeTree);if(sym===16){var prev=_lens[num-1];for(len=_rbits(d,2,3);len;--len)_lens[num++]=prev;}else if(sym===17){for(len=_rbits(d,3,3);len;--len)_lens[num++]=0;}else if(sym===18){for(len=_rbits(d,7,11);len;--len)_lens[num++]=0;}else _lens[num++]=sym;}_btree(lt,_lens,0,hlit);_btree(dt,_lens,hlit,hdist);}
-function _iblock(d,lt,dt){for(;;){var sym=_dsym(d,lt);if(sym===256)return;if(sym<256){d.dest.push(sym);d.destLen++;}else{sym-=257;var length=_rbits(d,_lbits[sym],_lbase[sym]);var dist=_dsym(d,dt);var offs=d.destLen-_rbits(d,_dbits[dist],_dbase[dist]);for(var k=0;k<length;++k){d.dest.push(d.dest[offs+k]);d.destLen++;}}}}
+function _iblock(d,lt,dt){for(;;){if(d.destLen>67108864||d.i>d.s.length+8)throw new Error("DEFLATE overrun");var sym=_dsym(d,lt);if(sym===256)return;if(sym<256){d.dest.push(sym);d.destLen++;}else{sym-=257;var length=_rbits(d,_lbits[sym],_lbase[sym]);var dist=_dsym(d,dt);var offs=d.destLen-_rbits(d,_dbits[dist],_dbase[dist]);if(offs<0)throw new Error("bad back-reference");for(var k=0;k<length;++k){d.dest.push(d.dest[offs+k]);d.destLen++;}}}}
 function _iuncomp(d){while(d.bitcount>8){d.i--;d.bitcount-=8;}var length=d.s[d.i+1]*256+d.s[d.i];d.i+=4;for(var k=length;k;--k){d.dest.push(d.s[d.i++]);d.destLen++;}d.bitcount=0;}
 _bbase(_lbits,_lbase,4,3);_bbase(_dbits,_dbase,2,1);_lbits[28]=0;_lbase[28]=258;_fixed(_sltree,_sdtree);
 function inflateRaw(src){var d=new IData(src),bfinal,btype;do{bfinal=_getbit(d);btype=_rbits(d,2,0);if(btype===0)_iuncomp(d);else if(btype===1)_iblock(d,_sltree,_sdtree);else if(btype===2){_dtrees(d,d.lt,d.dt);_iblock(d,d.lt,d.dt);}else throw new Error("bad DEFLATE block");}while(!bfinal);return new Uint8Array(d.dest);}
-function unzipAny(bytes){var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),map={};var p=bytes.length-22;while(p>=0&&dv.getUint32(p,true)!==0x06054b50)p--;if(p<0)throw new Error("not a valid .docx (no zip directory)");var count=dv.getUint16(p+10,true),o=dv.getUint32(p+16,true);for(var n=0;n<count;n++){if(dv.getUint32(o,true)!==0x02014b50)break;var method=dv.getUint16(o+10,true),csize=dv.getUint32(o+20,true),nlen=dv.getUint16(o+28,true),elen=dv.getUint16(o+30,true),clen=dv.getUint16(o+32,true),lho=dv.getUint32(o+42,true);var name=new TextDecoder().decode(bytes.subarray(o+46,o+46+nlen));var lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),dstart=lho+30+lnlen+lelen,comp=bytes.subarray(dstart,dstart+csize);map[name]=method===0?comp:inflateRaw(comp);o+=46+nlen+elen+clen;}return map;}
-function docxToText(bytes){var files=unzipAny(bytes);var xml=files['word/document.xml'];if(!xml)throw new Error("no word/document.xml in file");return new TextDecoder().decode(xml).replace(/<w:tab\/>/g,' ').replace(/<\/w:p>/g,'\n').replace(/<\/w:tc>/g,'\t').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&');}
+// Decompress ONLY word/document.xml (skips images/fonts/other parts entirely).
+function docxDocumentXml(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var p=bytes.length-22;while(p>=0&&dv.getUint32(p,true)!==0x06054b50)p--;
+  if(p<0)throw new Error("not a valid .docx (no zip directory)");
+  var count=dv.getUint16(p+10,true),o=dv.getUint32(p+16,true);
+  for(var n=0;n<count;n++){
+    if(dv.getUint32(o,true)!==0x02014b50)break;
+    var method=dv.getUint16(o+10,true),csize=dv.getUint32(o+20,true),nlen=dv.getUint16(o+28,true),elen=dv.getUint16(o+30,true),clen=dv.getUint16(o+32,true),lho=dv.getUint32(o+42,true);
+    var name=new TextDecoder().decode(bytes.subarray(o+46,o+46+nlen));
+    if(name==='word/document.xml'){var lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),dstart=lho+30+lnlen+lelen,comp=bytes.subarray(dstart,dstart+csize);return method===0?comp:inflateRaw(comp);}
+    o+=46+nlen+elen+clen;
+  }
+  return null;
+}
+function docxToText(bytes){var xml=docxDocumentXml(bytes);if(!xml)throw new Error("no word/document.xml in file");return new TextDecoder().decode(xml).replace(/<w:tab\/>/g,' ').replace(/<\/w:p>/g,'\n').replace(/<\/w:tc>/g,'\t').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&');}
 
 /* ---- PPTX ---- */
 var A='http://schemas.openxmlformats.org/drawingml/2006/main',
@@ -344,22 +363,26 @@ document.getElementById('extractBtn').onclick=function(){
 };
 function loadDocxFile(file){
   var msg=document.getElementById('extractMsg');
-  if(!file)return;
-  if(!/\.docx$/i.test(file.name)){msg.textContent='Please choose a .docx file (or paste the text).';return;}
+  if(!file){msg.textContent='No file received — try the paste box below.';return;}
+  if(!/\.docx$/i.test(file.name)){msg.textContent='Please choose a .docx file (not .doc/.pdf) — or paste the text below.';return;}
+  msg.textContent='Reading '+file.name+'…';
   var rd=new FileReader();
-  rd.onload=function(){try{
-    document.getElementById('raw').value=docxToText(new Uint8Array(rd.result));
+  rd.onload=function(){ setTimeout(function(){ try{
+    var text=docxToText(new Uint8Array(rd.result));
+    document.getElementById('raw').value=text;
     document.getElementById('extractBtn').click();
-    msg.innerHTML='<span class="ok">Read '+file.name+'.</span> '+msg.innerHTML;
-  }catch(e){msg.textContent='Could not read that file: '+e.message;}};
-  rd.onerror=function(){msg.textContent='Could not read the file.';};
-  rd.readAsArrayBuffer(file);
+    var m=document.getElementById('extractMsg');
+    m.innerHTML='<span class="ok">Read '+file.name+' ('+text.length+' chars).</span> '+m.innerHTML;
+  }catch(e){document.getElementById('extractMsg').textContent='Couldn’t read that .docx ('+e.message+'). Paste the text below instead.';} },15); };
+  rd.onerror=function(){msg.textContent='The browser blocked reading the file. Open this page directly in a browser, or paste the text below.';};
+  try{ rd.readAsArrayBuffer(file); }catch(e){ msg.textContent='File reading isn’t available here — paste the text below instead.'; }
 }
-(function(){var fi=document.getElementById('file'),drop=document.getElementById('drop');
-  if(fi)fi.onchange=function(){loadDocxFile(fi.files[0]);};
-  if(drop){['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('hover');});});
-    ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hover');});});
-    drop.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])loadDocxFile(e.dataTransfer.files[0]);});
+(function(){var fi=document.getElementById('file'),drop=document.getElementById('drop'),bb=document.getElementById('browseBtn');
+  if(bb&&fi)bb.onclick=function(){fi.value='';fi.click();};
+  if(fi)fi.onchange=function(){loadDocxFile(fi.files&&fi.files[0]);};
+  if(drop){['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();drop.classList.add('hover');});});
+    ['dragleave','dragend'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hover');});});
+    drop.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();drop.classList.remove('hover');var dt=e.dataTransfer;if(dt&&dt.files&&dt.files[0])loadDocxFile(dt.files[0]);else document.getElementById('extractMsg').textContent='No file in the drop — try the Choose button, or paste the text.';});
   }})();
 document.getElementById('docBtn').onclick=function(){
   try{download(buildDocx(recItems()),baseName()+'TRT_Recommendation.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document');
