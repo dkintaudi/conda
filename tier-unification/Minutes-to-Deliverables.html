@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.0</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.1</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -27,19 +27,23 @@
   fieldset{border:1px solid var(--line);border-radius:8px;padding:10px 14px 14px;margin:0 0 14px;}
   legend{font-size:12px;font-weight:700;color:var(--edd-blue);padding:0 6px;}
   .note{font-size:12px;color:var(--muted);}
+  .drop{border:2px dashed var(--edd-blue-2);border-radius:8px;padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px;background:#f8fbff;transition:background .12s;}
+  .drop.hover{background:#eaf2fb;border-color:var(--edd-blue);color:var(--ink);}
+  .drop .link{color:var(--edd-blue);font-weight:700;cursor:pointer;text-decoration:underline;}
 </style>
 
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.0 · local · no upload · no CDN</div>
+  <div class="badge">v01.1 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
   <div class="card">
-    <h2><span class="step">1</span>Paste the TRT minutes</h2>
-    <p class="hint">Copy the minutes text out of Word and paste below, then click Extract. Everything lands in the editable form &mdash; nothing is uploaded and no internet is used.</p>
-    <textarea id="raw" style="min-height:150px;" placeholder="Paste the full TRT minutes here (Title, ITW #, Overview, Business, discussion topics, TRT Outcome, Level of Effort, Participating teams, Refer to DCT …)"></textarea>
+    <h2><span class="step">1</span>Upload or paste the TRT minutes</h2>
+    <p class="hint">Drop the minutes Word file (or paste the text), then it auto-extracts into the editable form. Everything happens in your browser &mdash; nothing is uploaded and no internet is used.</p>
+    <div id="drop" class="drop">&#11014;&#65039; Drop the minutes <b>.docx</b> here, or <label class="link">browse<input type="file" id="file" accept=".docx" style="display:none"></label> &mdash; or paste the text below.</div>
+    <textarea id="raw" style="min-height:150px;" placeholder="…or paste the full TRT minutes here (Title, ITW #, Overview, Business, discussion topics, TRT Outcome, Level of Effort, Participating teams, Refer to DCT …)"></textarea>
     <div class="btnrow">
       <button class="btn sec" id="extractBtn">Extract fields ▸</button>
       <span class="mini" id="extractMsg"></span>
@@ -138,6 +142,27 @@ function unzipStore(bytes){var map={},i=0,dv=new DataView(bytes.buffer,bytes.byt
   return map;}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function b64ToU8(b64){var bin=atob(b64),n=bin.length,a=new Uint8Array(n);for(var i=0;i<n;i++)a[i]=bin.charCodeAt(i);return a;}
+
+/* ---- raw-DEFLATE inflate (tiny-inflate algorithm) + zip reader, for reading uploaded .docx ---- */
+function Tree(){this.table=new Uint16Array(16);this.trans=new Uint16Array(288);}
+function IData(src){this.s=src;this.i=0;this.tag=0;this.bitcount=0;this.dest=[];this.destLen=0;this.lt=new Tree();this.dt=new Tree();}
+var _sltree=new Tree(),_sdtree=new Tree();
+var _lbits=new Uint8Array(30),_lbase=new Uint16Array(30),_dbits=new Uint8Array(30),_dbase=new Uint16Array(30);
+var _clc=new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]);
+var _codeTree=new Tree(),_lens=new Uint8Array(320);
+function _bbase(bits,base,delta,first){var i,sum;for(i=0;i<delta;++i)bits[i]=0;for(i=0;i<30-delta;++i)bits[i+delta]=(i/delta)|0;for(sum=first,i=0;i<30;++i){base[i]=sum;sum+=1<<bits[i];}}
+function _fixed(lt,dt){var i;for(i=0;i<7;++i)lt.table[i]=0;lt.table[7]=24;lt.table[8]=152;lt.table[9]=112;for(i=0;i<24;++i)lt.trans[i]=256+i;for(i=0;i<144;++i)lt.trans[24+i]=i;for(i=0;i<8;++i)lt.trans[24+144+i]=280+i;for(i=0;i<112;++i)lt.trans[24+144+8+i]=144+i;for(i=0;i<5;++i)dt.table[i]=0;dt.table[5]=32;for(i=0;i<32;++i)dt.trans[i]=i;}
+function _btree(t,lens,off,num){var offs=new Uint16Array(16),i,sum;for(i=0;i<16;++i)t.table[i]=0;for(i=0;i<num;++i)t.table[lens[off+i]]++;t.table[0]=0;for(sum=0,i=0;i<16;++i){offs[i]=sum;sum+=t.table[i];}for(i=0;i<num;++i)if(lens[off+i])t.trans[offs[lens[off+i]]++]=i;}
+function _getbit(d){if(!d.bitcount--){d.tag=d.s[d.i++];d.bitcount=7;}var b=d.tag&1;d.tag>>>=1;return b;}
+function _rbits(d,num,base){if(!num)return base;while(d.bitcount<24){d.tag|=d.s[d.i++]<<d.bitcount;d.bitcount+=8;}var val=d.tag&(0xffff>>>(16-num));d.tag>>>=num;d.bitcount-=num;return val+base;}
+function _dsym(d,t){while(d.bitcount<24){d.tag|=d.s[d.i++]<<d.bitcount;d.bitcount+=8;}var sum=0,cur=0,len=0,tag=d.tag;do{cur=2*cur+(tag&1);tag>>>=1;++len;sum+=t.table[len];cur-=t.table[len];}while(cur>=0);d.tag=tag;d.bitcount-=len;return t.trans[sum+cur];}
+function _dtrees(d,lt,dt){var hlit=_rbits(d,5,257),hdist=_rbits(d,5,1),hclen=_rbits(d,4,4),i,num,len;for(i=0;i<19;++i)_lens[i]=0;for(i=0;i<hclen;++i)_lens[_clc[i]]=_rbits(d,3,0);_btree(_codeTree,_lens,0,19);for(num=0;num<hlit+hdist;){var sym=_dsym(d,_codeTree);if(sym===16){var prev=_lens[num-1];for(len=_rbits(d,2,3);len;--len)_lens[num++]=prev;}else if(sym===17){for(len=_rbits(d,3,3);len;--len)_lens[num++]=0;}else if(sym===18){for(len=_rbits(d,7,11);len;--len)_lens[num++]=0;}else _lens[num++]=sym;}_btree(lt,_lens,0,hlit);_btree(dt,_lens,hlit,hdist);}
+function _iblock(d,lt,dt){for(;;){var sym=_dsym(d,lt);if(sym===256)return;if(sym<256){d.dest.push(sym);d.destLen++;}else{sym-=257;var length=_rbits(d,_lbits[sym],_lbase[sym]);var dist=_dsym(d,dt);var offs=d.destLen-_rbits(d,_dbits[dist],_dbase[dist]);for(var k=0;k<length;++k){d.dest.push(d.dest[offs+k]);d.destLen++;}}}}
+function _iuncomp(d){while(d.bitcount>8){d.i--;d.bitcount-=8;}var length=d.s[d.i+1]*256+d.s[d.i];d.i+=4;for(var k=length;k;--k){d.dest.push(d.s[d.i++]);d.destLen++;}d.bitcount=0;}
+_bbase(_lbits,_lbase,4,3);_bbase(_dbits,_dbase,2,1);_lbits[28]=0;_lbase[28]=258;_fixed(_sltree,_sdtree);
+function inflateRaw(src){var d=new IData(src),bfinal,btype;do{bfinal=_getbit(d);btype=_rbits(d,2,0);if(btype===0)_iuncomp(d);else if(btype===1)_iblock(d,_sltree,_sdtree);else if(btype===2){_dtrees(d,d.lt,d.dt);_iblock(d,d.lt,d.dt);}else throw new Error("bad DEFLATE block");}while(!bfinal);return new Uint8Array(d.dest);}
+function unzipAny(bytes){var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),map={};var p=bytes.length-22;while(p>=0&&dv.getUint32(p,true)!==0x06054b50)p--;if(p<0)throw new Error("not a valid .docx (no zip directory)");var count=dv.getUint16(p+10,true),o=dv.getUint32(p+16,true);for(var n=0;n<count;n++){if(dv.getUint32(o,true)!==0x02014b50)break;var method=dv.getUint16(o+10,true),csize=dv.getUint32(o+20,true),nlen=dv.getUint16(o+28,true),elen=dv.getUint16(o+30,true),clen=dv.getUint16(o+32,true),lho=dv.getUint32(o+42,true);var name=new TextDecoder().decode(bytes.subarray(o+46,o+46+nlen));var lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),dstart=lho+30+lnlen+lelen,comp=bytes.subarray(dstart,dstart+csize);map[name]=method===0?comp:inflateRaw(comp);o+=46+nlen+elen+clen;}return map;}
+function docxToText(bytes){var files=unzipAny(bytes);var xml=files['word/document.xml'];if(!xml)throw new Error("no word/document.xml in file");return new TextDecoder().decode(xml).replace(/<w:tab\/>/g,' ').replace(/<\/w:p>/g,'\n').replace(/<\/w:tc>/g,'\t').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&');}
 
 /* ---- PPTX ---- */
 var A='http://schemas.openxmlformats.org/drawingml/2006/main',
@@ -317,6 +342,25 @@ document.getElementById('extractBtn').onclick=function(){
   var got=Object.keys(f).filter(function(k){return f[k];}).length;
   document.getElementById('extractMsg').innerHTML='<span class="ok">Extracted '+got+' field(s).</span> Review &amp; complete the rest below.';
 };
+function loadDocxFile(file){
+  var msg=document.getElementById('extractMsg');
+  if(!file)return;
+  if(!/\.docx$/i.test(file.name)){msg.textContent='Please choose a .docx file (or paste the text).';return;}
+  var rd=new FileReader();
+  rd.onload=function(){try{
+    document.getElementById('raw').value=docxToText(new Uint8Array(rd.result));
+    document.getElementById('extractBtn').click();
+    msg.innerHTML='<span class="ok">Read '+file.name+'.</span> '+msg.innerHTML;
+  }catch(e){msg.textContent='Could not read that file: '+e.message;}};
+  rd.onerror=function(){msg.textContent='Could not read the file.';};
+  rd.readAsArrayBuffer(file);
+}
+(function(){var fi=document.getElementById('file'),drop=document.getElementById('drop');
+  if(fi)fi.onchange=function(){loadDocxFile(fi.files[0]);};
+  if(drop){['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('hover');});});
+    ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hover');});});
+    drop.addEventListener('drop',function(e){if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])loadDocxFile(e.dataTransfer.files[0]);});
+  }})();
 document.getElementById('docBtn').onclick=function(){
   try{download(buildDocx(recItems()),baseName()+'TRT_Recommendation.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       document.getElementById('genMsg').innerHTML='<span class="ok">Recommendation generated.</span>';}
