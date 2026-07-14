@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.3</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.4</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -30,12 +30,16 @@
   .drop{border:2px dashed var(--edd-blue-2);border-radius:8px;padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px;background:#f8fbff;transition:background .12s;}
   .drop.hover{background:#eaf2fb;border-color:var(--edd-blue);color:var(--ink);}
   .drop .link{color:var(--edd-blue);font-weight:700;cursor:pointer;text-decoration:underline;}
+  #docList{margin:8px 0 4px;}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:#eef4fa;border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 11px;margin:3px 5px 0 0;font-size:12px;color:var(--ink);}
+  .chip .x{cursor:pointer;color:#b3541e;font-weight:700;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;}
+  .chip .x:hover{background:#f6d6c6;}
 </style>
 
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.3 · local · offline · no CDN</div>
+  <div class="badge">v01.4 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -44,10 +48,11 @@
     <p class="hint">Drop the minutes Word file (or paste the text), then it auto-extracts into the editable form. Everything happens in your browser &mdash; nothing is uploaded and no internet is used.</p>
     <div id="drop" class="drop">
       &#11014;&#65039; Drop the minutes <b>.docx</b> or <b>.odt</b> here, or
-      <button type="button" class="btn sec" id="browseBtn" style="padding:5px 14px;margin:0 2px;">Choose file&hellip;</button>
-      <input type="file" id="file" accept=".docx,.odt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text" style="display:none">
-      <div class="mini" style="margin-top:7px;">Tip: open this page in a real browser (Chrome/Edge/Safari), not a preview pane &mdash; or just paste the text below, which always works.</div>
+      <button type="button" class="btn sec" id="browseBtn" style="padding:5px 14px;margin:0 2px;">Choose file(s)&hellip;</button>
+      <input type="file" id="file" accept=".docx,.odt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text" multiple style="display:none">
+      <div class="mini" style="margin-top:7px;">Add one or more minutes files (.docx / .odt). Open this page in a real browser (Chrome/Edge/Safari), not a preview pane &mdash; or paste the text below, which always works.</div>
     </div>
+    <div id="docList" style="display:none"></div>
     <textarea id="raw" style="min-height:150px;" placeholder="…or paste the full TRT minutes here (Title, ITW #, Overview, Business, discussion topics, TRT Outcome, Level of Effort, Participating teams, Refer to DCT …)"></textarea>
     <div class="btnrow">
       <button class="btn sec" id="extractBtn">Extract fields ▸</button>
@@ -375,35 +380,51 @@ function baseName(){return (V('itw')||'ITW')+'_';}
 
 document.getElementById('extractBtn').onclick=function(){
   var raw=V('raw');if(!raw){document.getElementById('extractMsg').textContent='Paste the minutes first.';return;}
-  var f=extract(raw);var set=function(id,v){if(v){var el=document.getElementById(id);if(el&&!el.value.trim())el.value=v;}};
+  var f=extract(raw);var set=function(id,v){if(v){var el=document.getElementById(id);if(el)el.value=v;}};
   set('itw',f.itw);set('title',f.title);set('presenter',f.presenter);set('trtDate',f.trtDate);set('dctDate',f.dctDate);
   set('business',f.business);set('solution',f.solution);set('timeline',f.timeline);set('systems',f.systems);set('teams',f.teams);set('funding',f.funding);set('success',f.success);set('discussion',f.discussion);
   if(f.loe)document.getElementById('loe').value=f.loe;
   var got=Object.keys(f).filter(function(k){return f[k];}).length;
   document.getElementById('extractMsg').innerHTML='<span class="ok">Extracted '+got+' field(s).</span> Review &amp; complete the rest below.';
 };
-function loadDocxFile(file){
-  var msg=document.getElementById('extractMsg');
-  if(!file){msg.textContent='No file received — try the paste box below.';return;}
-  if(!/\.(docx|odt)$/i.test(file.name)){msg.textContent='Please choose a .docx or .odt file (not .doc/.pdf) — or paste the text below.';return;}
-  msg.textContent='Reading '+file.name+'…';
-  var rd=new FileReader();
-  rd.onload=function(){ setTimeout(function(){ try{
-    var text=fileToText(new Uint8Array(rd.result));
-    document.getElementById('raw').value=text;
-    document.getElementById('extractBtn').click();
-    var m=document.getElementById('extractMsg');
-    m.innerHTML='<span class="ok">Read '+file.name+' ('+text.length+' chars).</span> '+m.innerHTML;
-  }catch(e){document.getElementById('extractMsg').textContent='Couldn’t read that .docx ('+e.message+'). Paste the text below instead.';} },15); };
-  rd.onerror=function(){msg.textContent='The browser blocked reading the file. Open this page directly in a browser, or paste the text below.';};
-  try{ rd.readAsArrayBuffer(file); }catch(e){ msg.textContent='File reading isn’t available here — paste the text below instead.'; }
+/* ---- multi-file: add several minutes docs, show the list, combine for extraction ---- */
+var loadedDocs=[]; // [{name, text}]
+function _msg(t,html){var m=document.getElementById('extractMsg');if(!m)return;if(html)m.innerHTML=t;else m.textContent=t;}
+function renderDocList(){
+  var el=document.getElementById('docList');if(!el)return;
+  if(!loadedDocs.length){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='block';
+  el.innerHTML='<span class="mini" style="margin-right:4px;">Added document'+(loadedDocs.length>1?'s':'')+' ('+loadedDocs.length+'):</span>'+
+    loadedDocs.map(function(d,i){return '<span class="chip">'+esc(d.name)+'<b class="x" data-i="'+i+'" title="remove">&times;</b></span>';}).join('');
+  [].forEach.call(el.querySelectorAll('.x'),function(b){b.onclick=function(){loadedDocs.splice(+b.getAttribute('data-i'),1);renderDocList();rebuildRaw();};});
+}
+function rebuildRaw(){
+  document.getElementById('raw').value=loadedDocs.map(function(d){return d.text;}).join('\n\n────────\n\n');
+  if(loadedDocs.length)document.getElementById('extractBtn').click();
+}
+function addFiles(fileList){
+  var arr=[].slice.call(fileList||[]);if(!arr.length)return;
+  var pending=arr.length,added=0,skipped=[];
+  _msg('Reading '+arr.length+' file'+(arr.length>1?'s':'')+'…');
+  function done(){ if(--pending>0)return; renderDocList(); rebuildRaw();
+    var m='';if(added)m+='<span class="ok">Added '+added+' document'+(added>1?'s':'')+'.</span> ';
+    if(skipped.length)m+='Skipped: '+esc(skipped.join(', '))+' (need .docx/.odt). ';
+    _msg(m||'No documents added.',true); }
+  arr.forEach(function(file){
+    if(!/\.(docx|odt)$/i.test(file.name)){skipped.push(file.name);return done();}
+    if(loadedDocs.some(function(d){return d.name===file.name;})){skipped.push(file.name+' (already added)');return done();}
+    var rd=new FileReader();
+    rd.onload=function(){ setTimeout(function(){ try{loadedDocs.push({name:file.name,text:fileToText(new Uint8Array(rd.result))});added++;}catch(e){skipped.push(file.name+' — '+e.message);} done(); },0); };
+    rd.onerror=function(){skipped.push(file.name+' (unreadable)');done();};
+    try{rd.readAsArrayBuffer(file);}catch(e){skipped.push(file.name+' (blocked)');done();}
+  });
 }
 (function(){var fi=document.getElementById('file'),drop=document.getElementById('drop'),bb=document.getElementById('browseBtn');
   if(bb&&fi)bb.onclick=function(){fi.value='';fi.click();};
-  if(fi)fi.onchange=function(){loadDocxFile(fi.files&&fi.files[0]);};
+  if(fi)fi.onchange=function(){addFiles(fi.files);};
   if(drop){['dragover','dragenter'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();drop.classList.add('hover');});});
     ['dragleave','dragend'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hover');});});
-    drop.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();drop.classList.remove('hover');var dt=e.dataTransfer;if(dt&&dt.files&&dt.files[0])loadDocxFile(dt.files[0]);else document.getElementById('extractMsg').textContent='No file in the drop — try the Choose button, or paste the text.';});
+    drop.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();drop.classList.remove('hover');var dt=e.dataTransfer;if(dt&&dt.files&&dt.files.length)addFiles(dt.files);else _msg('No file in the drop — try the Choose button, or paste the text.');});
   }})();
 document.getElementById('docBtn').onclick=function(){
   try{download(buildDocx(recItems()),baseName()+'TRT_Recommendation.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document');
