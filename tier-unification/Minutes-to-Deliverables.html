@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.5</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.6</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -42,7 +42,7 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.5 · local · offline · no CDN</div>
+  <div class="badge">v01.6 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -288,18 +288,26 @@ function extract(text){
   f.funding=/no funding|is accurate|None/i.test(segs['Funding']||'')?'None identified':(segs['Funding']||'');
   return f;
 }
-// Split combined minutes into one segment per work intake (each "Title: … ITW #" block).
-// Adjacent blocks with the SAME ITW# are merged; a single intake stays one segment.
+// Split combined minutes into one segment per work intake. Tries progressively looser
+// project-header patterns and uses the first that finds 2+ DISTINCT ITW numbers, splitting
+// at the FIRST occurrence of each distinct ITW# (so repeated mentions never over-split).
+// A single intake — or minutes with no clear header — stays one segment.
 function splitProjects(text){
-  var re=/Title\s*[:\-–][\s\S]{0,160}?ITW\s*#/gi, idxs=[], m;
-  while(m=re.exec(text)){ idxs.push(m.index); }
-  if(idxs.length<=1) return [text];
-  var segs=[];
-  for(var i=0;i<idxs.length;i++) segs.push(text.slice(idxs[i], i+1<idxs.length?idxs[i+1]:text.length));
-  var out=[], last=null;
-  segs.forEach(function(s){ var mm=s.match(/ITW[\s#:]*?(\d{6,7})/i), itw=mm?mm[1]:null;
-    if(itw&&itw===last) out[out.length-1]+=' '+s; else { out.push(s); last=itw; } });
-  return out.length?out:[text];
+  var patterns=[
+    /Title\s*[:\-–][\s\S]{0,160}?ITW\s*#?\s*:?\s*(?:ITW)?\s*(\d{6,7})/gi, // "Title: … ITW #: n"
+    /ITW\s*#\s*:?\s*(?:ITW)?\s*(\d{6,7})/gi                              // "ITW #: n"
+  ];
+  for(var r=0;r<patterns.length;r++){
+    var re=patterns[r]; re.lastIndex=0; var m, seen={}, list=[];
+    while(m=re.exec(text)){ var itw=m[1]; if(!seen[itw]){ seen[itw]=1; list.push({pos:m.index,itw:itw}); } }
+    if(list.length>=2){
+      list.sort(function(a,b){return a.pos-b.pos;});
+      var segs=[];
+      for(var i=0;i<list.length;i++) segs.push(text.slice(list[i].pos, i+1<list.length?list[i+1].pos:text.length));
+      return segs;
+    }
+  }
+  return [text];
 }
 
 /* ============================ field <-> deliverable mapping ============================ */
