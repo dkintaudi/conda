@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.7</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.8</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -42,7 +42,7 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.7 · local · offline · no CDN</div>
+  <div class="badge">v01.8 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -201,10 +201,12 @@ function paras(lines){return lines.map(function(l){
   var pPr=(l.lvl!=null||l.sz)?('<a:pPr'+(l.lvl!=null?' lvl="'+l.lvl+'"':'')+'/>'):'';
   var rPr=l.sz?('<a:rPr lang="en-US" sz="'+l.sz+'" dirty="0"/>'):'<a:rPr lang="en-US" dirty="0"/>';
   return '<a:p>'+pPr+'<a:r>'+rPr+'<a:t>'+esc(l.t)+'</a:t></a:r></a:p>';}).join('');}
-function sp(id,name,ph,body){return '<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="'+esc(name)+'"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>'+ph+'</p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/>'+body+'</p:txBody></p:sp>';}
+function sp(id,name,ph,body,spPr){return '<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="'+esc(name)+'"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>'+ph+'</p:nvPr></p:nvSpPr>'+(spPr||'<p:spPr/>')+'<p:txBody><a:bodyPr/><a:lstStyle/>'+body+'</p:txBody></p:sp>';}
 function slideDoc(shapes){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<p:sld xmlns:a="'+A+'" xmlns:r="'+RR+'" xmlns:p="'+PP+'"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>'+shapes+'</p:spTree></p:cSld></p:sld>';}
+// Match the source deck's title box (wide, top-aligned) so the two-line title never overflows into the body.
+var TITLE_XFRM='<p:spPr><a:xfrm><a:off x="83371" y="222300"/><a:ext cx="11905654" cy="1645920"/></a:xfrm></p:spPr>';
 function titleSlide(t,s){return slideDoc(sp(2,'Title 1','<p:ph type="ctrTitle"/>',paras(t))+sp(3,'Subtitle 2','<p:ph type="subTitle" idx="1"/>',paras(s)));}
-function contentSlide(t,b){return slideDoc(sp(2,'Title 1','<p:ph type="title"/>',paras(t))+sp(3,'Content Placeholder 2','<p:ph idx="1"/>',paras(b)));}
+function contentSlide(t,b){return slideDoc(sp(2,'Title 1','<p:ph type="title"/>',paras(t),TITLE_XFRM)+sp(3,'Content Placeholder 2','<p:ph idx="1"/>',paras(b)));}
 function slideRels(layout){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/'+layout+'"/></Relationships>';}
 function buildPptx(tmpl,slides){var map=unzipStore(tmpl);
   var pres=new TextDecoder().decode(map['ppt/presentation.xml']);
@@ -358,7 +360,7 @@ function pptSlides(){
   var bg=[{t:'Background:',lvl:0}];
   (V('business')?[V('business')]:[]).concat(lines('background')).forEach(function(l){bg.push({t:l,lvl:1});});
   bg.push({t:'Request:',lvl:0});bg.push({t:V('solution')||'Run a proof of concept (POC).',lvl:1});
-  S.push({layout:'content',title:[{t:PROJ},{t:'Background and Request',sz:1800}],body:bg});
+  S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'Background and Request',sz:1800}],body:bg});
   // POC Details
   var d=[{t:'Proof of Concept (POC) Details:',lvl:0}];
   if(V('scope')){d.push({t:'Scope:',lvl:1});d.push({t:V('scope'),lvl:2});}
@@ -367,7 +369,7 @@ function pptSlides(){
   d.push({t:'Level of Effort: '+V('loe')+(V('loe')==='Medium'?' (≥500 and ≤10,000 hours)':''),lvl:1});
   if(V('timeline'))d.push({t:'Timeline: '+V('timeline'),lvl:1});
   d.push({t:'Funding: '+(V('funding')||'None'),lvl:1});
-  S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:d});
+  S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'TRT Discussion',sz:1800}],body:d});
   // TRT Concerns — the review concerns (impact, ELT, POC approach, production data, scope, …),
   // matching the DCT deck plan. Logistics topics (timeline, lead team, PM, approval) live in
   // the POC Details / Teams / DCT Outcome slides and the recommendation doc, not here.
@@ -380,14 +382,14 @@ function pptSlides(){
   for(var ci=0;ci<shown.length;ci+=6){
     var body=[{t:'TRT Concerns'+(shown.length>6?(' ('+(ci/6+1)+' of '+Math.ceil(shown.length/6)+')'):'')+':',lvl:0}];
     shown.slice(ci,ci+6).forEach(function(d){body.push({t:d.h+': '+d.b,lvl:1});});
-    S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:body});
+    S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'TRT Discussion',sz:1800}],body:body});
   }
   // Impacted Systems, Participating ITB Teams & Roles — its own slide
   if(lines('teams').length||V('systems')){
     var tb=[];
     if(V('systems'))tb.push({t:'Impacted Systems: '+V('systems'),lvl:0});
     if(lines('teams').length){tb.push({t:'Participating ITB Teams & Roles:',lvl:0});lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});}
-    S.push({layout:'content',title:[{t:PROJ},{t:'Impacted Systems, Participating Teams & Roles',sz:1600}],body:tb});
+    S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'Impacted Systems, Participating Teams & Roles',sz:1600}],body:tb});
   }
   // DCT Outcome
   var o=[{t:'TRT recommends the IT Work Intake as a Proof of Concept, '+V('loe').toLowerCase()+' level of effort',lvl:0},
@@ -396,7 +398,7 @@ function pptSlides(){
   o.push({t:'ITB Project Sponsor:  '+(V('itbSponsor')||'__________'),lvl:2});
   o.push({t:'Project Manager (PM):  '+(V('pmOwner')||'__________'),lvl:2});
   o.push({t:'Project Priority Number (if applicable):  __________',lvl:1});
-  S.push({layout:'content',title:[{t:PROJ},{t:'DCT Outcome',sz:1800}],body:o});
+  S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'DCT Outcome',sz:1800}],body:o});
   return S;
 }
 
