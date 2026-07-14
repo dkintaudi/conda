@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.4</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.5</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -34,12 +34,15 @@
   .chip{display:inline-flex;align-items:center;gap:7px;background:#eef4fa;border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 11px;margin:3px 5px 0 0;font-size:12px;color:var(--ink);}
   .chip .x{cursor:pointer;color:#b3541e;font-weight:700;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;}
   .chip .x:hover{background:#f6d6c6;}
+  #projTabs{margin:0 0 12px;}
+  .ptab{font:inherit;font-size:12px;padding:6px 11px;margin:4px 6px 0 0;border:1px solid var(--edd-blue-2);border-radius:7px;background:#fff;color:var(--edd-blue);cursor:pointer;}
+  .ptab.on{background:var(--edd-blue);color:#fff;border-color:var(--edd-blue);}
 </style>
 
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.4 · local · offline · no CDN</div>
+  <div class="badge">v01.5 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -62,7 +65,8 @@
 
   <div class="card">
     <h2><span class="step">2</span>Review &amp; edit</h2>
-    <p class="hint">The extractor fills what it can from the minutes; edit anything before generating. Blank fields are simply omitted.</p>
+    <p class="hint">The extractor fills what it can from the minutes; edit anything before generating. Blank fields are simply omitted. If several work intakes are detected, pick each below &mdash; every project gets its own recommendation and deck.</p>
+    <div id="projTabs" style="display:none"></div>
 
     <fieldset><legend>Identity</legend>
       <div class="row3">
@@ -284,6 +288,19 @@ function extract(text){
   f.funding=/no funding|is accurate|None/i.test(segs['Funding']||'')?'None identified':(segs['Funding']||'');
   return f;
 }
+// Split combined minutes into one segment per work intake (each "Title: … ITW #" block).
+// Adjacent blocks with the SAME ITW# are merged; a single intake stays one segment.
+function splitProjects(text){
+  var re=/Title\s*[:\-–][\s\S]{0,160}?ITW\s*#/gi, idxs=[], m;
+  while(m=re.exec(text)){ idxs.push(m.index); }
+  if(idxs.length<=1) return [text];
+  var segs=[];
+  for(var i=0;i<idxs.length;i++) segs.push(text.slice(idxs[i], i+1<idxs.length?idxs[i+1]:text.length));
+  var out=[], last=null;
+  segs.forEach(function(s){ var mm=s.match(/ITW[\s#:]*?(\d{6,7})/i), itw=mm?mm[1]:null;
+    if(itw&&itw===last) out[out.length-1]+=' '+s; else { out.push(s); last=itw; } });
+  return out.length?out:[text];
+}
 
 /* ============================ field <-> deliverable mapping ============================ */
 function V(id){var el=document.getElementById(id);return el?el.value.trim():'';}
@@ -378,14 +395,32 @@ function download(bytes,name,mime){
 }
 function baseName(){return (V('itw')||'ITW')+'_';}
 
+/* ---- multi-project state: one recommendation + deck per detected work intake ---- */
+var projects=[], curProj=0;
+var FIELD_IDS=['itw','title','presenter','trtDate','dctDate','loe','typeWork','priority','funding','business','solution','background','scope','systems','timeline','success','discussion','teams','bizSponsor','itbSponsor','pmOwner'];
+var EX_IDS=['itw','title','presenter','trtDate','dctDate','business','solution','timeline','systems','teams','funding','success','discussion'];
+function _set(id,v){var el=document.getElementById(id);if(el)el.value=(v==null?'':v);}
+function clearForm(){FIELD_IDS.forEach(function(id){_set(id,'');});_set('typeWork','Feasibility / Analysis (POC)');_set('priority','New Initiative');document.getElementById('loe').value='Medium';}
+function fillForm(f){clearForm();EX_IDS.forEach(function(id){if(f[id])_set(id,f[id]);});if(f.loe)document.getElementById('loe').value=f.loe;}
+function snapshot(){var s={};FIELD_IDS.forEach(function(id){var el=document.getElementById(id);if(el)s[id]=el.value;});return s;}
+function restore(s){FIELD_IDS.forEach(function(id){if(s[id]!==undefined)_set(id,s[id]);});}
+function saveCurrent(){if(projects[curProj])projects[curProj].saved=snapshot();}
+function loadProject(i){curProj=i;if(projects[i].saved)restore(projects[i].saved);else fillForm(projects[i].f);renderProjectTabs();}
+function renderProjectTabs(){
+  var el=document.getElementById('projTabs');if(!el)return;
+  if(projects.length<=1){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='block';
+  el.innerHTML='<span class="mini" style="margin-right:6px;">Projects detected ('+projects.length+') — pick one to review &amp; download:</span><br>'+
+    projects.map(function(p,i){var f=p.saved||p.f;var lbl=(f.itw||('Project '+(i+1)))+(f.title?' · '+String(f.title).slice(0,42):'');return '<button type="button" class="ptab'+(i===curProj?' on':'')+'" data-i="'+i+'">'+esc(lbl)+'</button>';}).join('');
+  [].forEach.call(el.querySelectorAll('.ptab'),function(b){b.onclick=function(){saveCurrent();loadProject(+b.getAttribute('data-i'));};});
+}
 document.getElementById('extractBtn').onclick=function(){
-  var raw=V('raw');if(!raw){document.getElementById('extractMsg').textContent='Paste the minutes first.';return;}
-  var f=extract(raw);var set=function(id,v){if(v){var el=document.getElementById(id);if(el)el.value=v;}};
-  set('itw',f.itw);set('title',f.title);set('presenter',f.presenter);set('trtDate',f.trtDate);set('dctDate',f.dctDate);
-  set('business',f.business);set('solution',f.solution);set('timeline',f.timeline);set('systems',f.systems);set('teams',f.teams);set('funding',f.funding);set('success',f.success);set('discussion',f.discussion);
-  if(f.loe)document.getElementById('loe').value=f.loe;
-  var got=Object.keys(f).filter(function(k){return f[k];}).length;
-  document.getElementById('extractMsg').innerHTML='<span class="ok">Extracted '+got+' field(s).</span> Review &amp; complete the rest below.';
+  var raw=V('raw');if(!raw){_msg('Paste or add the minutes first.');return;}
+  var segs=splitProjects(raw);
+  projects=segs.map(function(s){return {f:extract(s),saved:null};});
+  curProj=0; loadProject(0);
+  var got=Object.keys(projects[0].f).filter(function(k){return projects[0].f[k];}).length;
+  _msg('<span class="ok">Extracted '+got+' field(s)'+(projects.length>1?(' · '+projects.length+' projects detected'):'')+'.</span> Review &amp; complete below'+(projects.length>1?' — switch projects with the buttons above the form':'')+'.',true);
 };
 /* ---- multi-file: add several minutes docs, show the list, combine for extraction ---- */
 var loadedDocs=[]; // [{name, text}]
