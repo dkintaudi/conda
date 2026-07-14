@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.6</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.7</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -42,7 +42,7 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.6 · local · offline · no CDN</div>
+  <div class="badge">v01.7 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -368,21 +368,26 @@ function pptSlides(){
   if(V('timeline'))d.push({t:'Timeline: '+V('timeline'),lvl:1});
   d.push({t:'Funding: '+(V('funding')||'None'),lvl:1});
   S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:d});
-  // Discussion topics — every topic captured, paginated ~6 per slide
+  // TRT Concerns — the review concerns (impact, ELT, POC approach, production data, scope, …),
+  // matching the DCT deck plan. Logistics topics (timeline, lead team, PM, approval) live in
+  // the POC Details / Teams / DCT Outcome slides and the recommendation doc, not here.
   function firstSentence(s){s=String(s).trim().replace(/\s+/g,' ');var m=s.match(/^(.{0,170}?[.])(?:\s|$)/);return m?m[1]:(s.length>170?s.slice(0,170)+'…':s);}
   var topics=[];
   V('discussion').split(/\n(?=##\s)/).forEach(function(block){var mm=block.match(/^##\s*([^\n]+)\n([\s\S]*)$/);if(mm)topics.push({h:mm[1].trim(),b:firstSentence(mm[2])});});
-  for(var ci=0;ci<topics.length;ci+=6){
-    var body=[{t:'TRT Discussion & Concerns'+(topics.length>6?(' ('+(ci/6+1)+' of '+Math.ceil(topics.length/6)+')'):'')+':',lvl:0}];
-    topics.slice(ci,ci+6).forEach(function(d){body.push({t:d.h+': '+d.b,lvl:1});});
+  var CONCERN=/impact|elt|approach|production|scope|visibility|permission|generative|security|risk|integration|data/i;
+  var shown=topics.filter(function(t){return CONCERN.test(t.h);});
+  if(!shown.length) shown=topics;                       // fallback: show whatever was captured
+  for(var ci=0;ci<shown.length;ci+=6){
+    var body=[{t:'TRT Concerns'+(shown.length>6?(' ('+(ci/6+1)+' of '+Math.ceil(shown.length/6)+')'):'')+':',lvl:0}];
+    shown.slice(ci,ci+6).forEach(function(d){body.push({t:d.h+': '+d.b,lvl:1});});
     S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:body});
   }
-  // Participating teams (+ systems) slide
+  // Impacted Systems, Participating ITB Teams & Roles — its own slide
   if(lines('teams').length||V('systems')){
     var tb=[];
-    if(V('systems'))tb.push({t:'Systems Impacted: '+V('systems'),lvl:0});
-    if(lines('teams').length){tb.push({t:'Participating ITB Teams:',lvl:0});lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});}
-    S.push({layout:'content',title:[{t:PROJ},{t:'Participating Teams',sz:1800}],body:tb});
+    if(V('systems'))tb.push({t:'Impacted Systems: '+V('systems'),lvl:0});
+    if(lines('teams').length){tb.push({t:'Participating ITB Teams & Roles:',lvl:0});lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});}
+    S.push({layout:'content',title:[{t:PROJ},{t:'Impacted Systems, Participating Teams & Roles',sz:1600}],body:tb});
   }
   // DCT Outcome
   var o=[{t:'TRT recommends the IT Work Intake as a Proof of Concept, '+V('loe').toLowerCase()+' level of effort',lvl:0},
