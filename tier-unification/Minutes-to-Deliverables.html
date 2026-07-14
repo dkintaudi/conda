@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.2</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.3</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -35,7 +35,7 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.2 · local · offline · no CDN</div>
+  <div class="badge">v01.3 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -43,9 +43,9 @@
     <h2><span class="step">1</span>Upload or paste the TRT minutes</h2>
     <p class="hint">Drop the minutes Word file (or paste the text), then it auto-extracts into the editable form. Everything happens in your browser &mdash; nothing is uploaded and no internet is used.</p>
     <div id="drop" class="drop">
-      &#11014;&#65039; Drop the minutes <b>.docx</b> here, or
-      <button type="button" class="btn sec" id="browseBtn" style="padding:5px 14px;margin:0 2px;">Choose .docx&hellip;</button>
-      <input type="file" id="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none">
+      &#11014;&#65039; Drop the minutes <b>.docx</b> or <b>.odt</b> here, or
+      <button type="button" class="btn sec" id="browseBtn" style="padding:5px 14px;margin:0 2px;">Choose file&hellip;</button>
+      <input type="file" id="file" accept=".docx,.odt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text" style="display:none">
       <div class="mini" style="margin-top:7px;">Tip: open this page in a real browser (Chrome/Edge/Safari), not a preview pane &mdash; or just paste the text below, which always works.</div>
     </div>
     <textarea id="raw" style="min-height:150px;" placeholder="…or paste the full TRT minutes here (Title, ITW #, Overview, Business, discussion topics, TRT Outcome, Level of Effort, Participating teams, Refer to DCT …)"></textarea>
@@ -92,11 +92,9 @@
       <label>Success criteria</label><input id="success" placeholder="Document upload, download, and delete functions operate as expected">
     </fieldset>
 
-    <fieldset><legend>TRT concerns</legend>
-      <label>Impact to business</label><textarea id="impact"></textarea>
-      <label>ELT list</label><textarea id="elt"></textarea>
-      <label>POC approach</label><textarea id="approach"></textarea>
-      <label>Project management</label><textarea id="pm"></textarea>
+    <fieldset><legend>TRT discussion &amp; concerns</legend>
+      <label>Every discussion topic from the minutes is captured here &mdash; one topic per block starting with <b>## Heading</b>, then its notes. Add, edit, or remove freely; each block becomes a sub-point in the recommendation and a bullet on the deck.</label>
+      <textarea id="discussion" style="min-height:230px;" placeholder="## Impact to Business&#10;…notes…&#10;&#10;## Timeline Shift&#10;…notes…"></textarea>
     </fieldset>
 
     <fieldset><legend>Participating teams &amp; resource allocation</legend>
@@ -166,22 +164,25 @@ function _iblock(d,lt,dt){for(;;){if(d.destLen>67108864||d.i>d.s.length+8)throw 
 function _iuncomp(d){while(d.bitcount>8){d.i--;d.bitcount-=8;}var length=d.s[d.i+1]*256+d.s[d.i];d.i+=4;for(var k=length;k;--k){d.dest.push(d.s[d.i++]);d.destLen++;}d.bitcount=0;}
 _bbase(_lbits,_lbase,4,3);_bbase(_dbits,_dbase,2,1);_lbits[28]=0;_lbase[28]=258;_fixed(_sltree,_sdtree);
 function inflateRaw(src){var d=new IData(src),bfinal,btype;do{bfinal=_getbit(d);btype=_rbits(d,2,0);if(btype===0)_iuncomp(d);else if(btype===1)_iblock(d,_sltree,_sdtree);else if(btype===2){_dtrees(d,d.lt,d.dt);_iblock(d,d.lt,d.dt);}else throw new Error("bad DEFLATE block");}while(!bfinal);return new Uint8Array(d.dest);}
-// Decompress ONLY word/document.xml (skips images/fonts/other parts entirely).
-function docxDocumentXml(bytes){
+// Decompress ONLY the one part we need from a .docx/.odt zip (skips images/fonts).
+function zipFind(bytes,want){
   var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   var p=bytes.length-22;while(p>=0&&dv.getUint32(p,true)!==0x06054b50)p--;
-  if(p<0)throw new Error("not a valid .docx (no zip directory)");
+  if(p<0)throw new Error("not a valid Office file (no zip directory)");
   var count=dv.getUint16(p+10,true),o=dv.getUint32(p+16,true);
   for(var n=0;n<count;n++){
     if(dv.getUint32(o,true)!==0x02014b50)break;
     var method=dv.getUint16(o+10,true),csize=dv.getUint32(o+20,true),nlen=dv.getUint16(o+28,true),elen=dv.getUint16(o+30,true),clen=dv.getUint16(o+32,true),lho=dv.getUint32(o+42,true);
     var name=new TextDecoder().decode(bytes.subarray(o+46,o+46+nlen));
-    if(name==='word/document.xml'){var lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),dstart=lho+30+lnlen+lelen,comp=bytes.subarray(dstart,dstart+csize);return method===0?comp:inflateRaw(comp);}
+    if(name===want){var lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),dstart=lho+30+lnlen+lelen,comp=bytes.subarray(dstart,dstart+csize);return method===0?comp:inflateRaw(comp);}
     o+=46+nlen+elen+clen;
   }
   return null;
 }
-function docxToText(bytes){var xml=docxDocumentXml(bytes);if(!xml)throw new Error("no word/document.xml in file");return new TextDecoder().decode(xml).replace(/<w:tab\/>/g,' ').replace(/<\/w:p>/g,'\n').replace(/<\/w:tc>/g,'\t').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&');}
+function _ent(s){return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&');}
+function docxToText(bytes){var xml=zipFind(bytes,'word/document.xml');if(!xml)return null;return _ent(new TextDecoder().decode(xml).replace(/<w:tab\/>/g,' ').replace(/<w:br\/>/g,'\n').replace(/<\/w:p>/g,'\n').replace(/<\/w:tc>/g,'\t').replace(/<[^>]+>/g,''));}
+function odtToText(bytes){var xml=zipFind(bytes,'content.xml');if(!xml)return null;return _ent(new TextDecoder().decode(xml).replace(/<text:tab\/>/g,' ').replace(/<text:line-break\/>/g,'\n').replace(/<text:s\/>/g,' ').replace(/<\/text:p>/g,'\n').replace(/<\/text:h>/g,'\n').replace(/<\/table:table-cell>/g,'\t').replace(/<[^>]+>/g,''));}
+function fileToText(bytes){var t=null;try{t=docxToText(bytes);}catch(e){}if(t)return t;try{t=odtToText(bytes);}catch(e){}if(t)return t;throw new Error("unrecognized file — please use a .docx or .odt");}
 
 /* ---- PPTX ---- */
 var A='http://schemas.openxmlformats.org/drawingml/2006/main',
@@ -241,29 +242,41 @@ function buildDocx(items){
   var DR='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
   return zipStore([{name:'[Content_Types].xml',data:u8(CT)},{name:'_rels/.rels',data:u8(RELS)},{name:'word/_rels/document.xml.rels',data:u8(DR)},{name:'word/document.xml',data:u8(docBody(items))}]);}
 
-/* ============================ minutes parser (best-effort) ============================ */
+/* ============================ minutes parser ============================ */
 function grab(text,re){var m=text.match(re);return m?String(m[1]).trim().replace(/\s+/g,' '):'';}
-// capture the text that follows a label, up to the next known section label (newline-agnostic)
-function section(text,label,stops){
-  var re=new RegExp(label+'\\s*[:\\-\\u2013]\\s*([\\s\\S]{1,900}?)\\s*(?:'+stops.join('|')+'|$)','i');
-  var m=text.match(re);return m?m[1].trim().replace(/\s+/g,' '):'';
+// Split the Topic|Discussion table into { topicLabel : discussionText } for EVERY topic.
+function splitDiscussion(text){
+  var ANCH=['Impact to HRSD','Impact to Business','Timeline Shift','ELT Project','ELT List','POC Approach','Production Data','Estimated Timeline','Lead Team','Project Manager','Approval','Funding','Systems Impacted','Participating','TRT Outcome','Transcript','TRT OUTCOME','ADDITIONAL DOCUMENTS'];
+  var sm=text.match(/Topic\s*Discussion/i);
+  var start=sm?sm.index+sm[0].length:(text.search(/Impact to (?:HRSD|Business)/i)>=0?text.search(/Impact to (?:HRSD|Business)/i):0);
+  var found=[];
+  ANCH.forEach(function(a){var re=new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');var m=re.exec(text.slice(start));if(m)found.push({pos:m.index+start,label:a,len:m[0].length});});
+  found.sort(function(x,y){return x.pos-y.pos;});
+  var segs={};
+  for(var i=0;i<found.length;i++){var end=i+1<found.length?found[i+1].pos:text.length;var body=text.slice(found[i].pos+found[i].len,end).trim().replace(/\s+/g,' ');if(segs[found[i].label]===undefined)segs[found[i].label]=body;}
+  return segs;
 }
 function extract(text){
-  // Conservative: fill only high-confidence fields; leave the rest for the reviewer.
-  var f={},STOP=['Topic\\b','Discussion Details','Impact to','Timeline Shift','Systems Impacted','Participating','TRT Outcome','TRT OUTCOME','POC Approach','Lead Team','Project Manager','Approval\\b'];
-  var m;
+  var f={},m;
   if(m=text.match(/ITW[\s#:]*?(\d{6,7})\b/i)) f.itw='ITW'+m[1];
-  f.title=grab(text,/Title\s*[:\-]\s*(.+?)(?:\s*ITW\s*#|Presenter|\bITW\d|$)/i)||grab(text,/(Migrate[\s\S]{0,90}?POC\)?)/i);
-  f.presenter=grab(text,/Presenter\s*[:\-]\s*([A-Z][A-Za-z.\- ]{2,40}?)(?:\s{2,}|Overview|Business|\b[A-Z]{2,}\b|$)/);
+  f.title=grab(text,/Title\s*[:\-]?\s*(.+?)(?:\s*ITW\s*#|Presenter|\bITW\d|\n|$)/i)||grab(text,/(Migrate[\s\S]{0,90}?POC\)?)/i);
+  f.presenter=grab(text,/Presenter\s*[:\-]?\s*([A-Z][A-Za-z.\- ]{2,40}?)(?:\s{2,}|Overview|Business|\b[A-Z]{2,}\b|\n|$)/);
   f.trtDate=grab(text,/(?:Date\/?Time|Meeting Date)\s*[:\-]?\s*(?:\w+,?\s*)?(\d{1,2}\/\d{1,2}\/\d{2,4}|\w+\s+\d{1,2},\s*\d{4})/i);
-  f.dctDate=grab(text,/(?:Refer to DCT|Deadline)[\s\S]{0,80}?(\w+\s+\d{1,2},?\s*\d{4}|\d{1,2}\/\d{1,2}\/\d{2,4})/i);
-  f.loe=grab(text,/(?:identified as|☒\s*)\s*(Small|Medium|Large)/i)||(/☒\s*Medium|>=\s*500/i.test(text)?'Medium':'Medium');
-  f.business=section(text,'Business',STOP);
-  f.systems=section(text,'Systems Impacted',['Participating','TRT','Type of','Additional Documents']);
-  f.funding=/no funding|Funding[:\s]*None|there is no funding/i.test(text)?'None identified':'';
-  f.success=grab(text,/(upload,?\s*download,?\s*and\s*delete[^.]{0,60})/i);
-  f.approach=grab(text,/(mock[\s\S]{0,70}?(?:sandbox|data)[^.]{0,50})/i);
-  f.timeline=grab(text,/((?:start\s*)?January\s*1[\s\S]{0,50}?2027[\s\S]{0,40}?(?:March\s*31[\s\S]{0,10}?2027|\d+\s*days|approximately))/i);
+  f.dctDate=grab(text,/(?:Refer to DCT|DCT on|Deadline)[\s\S]{0,80}?(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{4}|\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+  f.loe=grab(text,/(?:identified as|☒\s*)\s*(Small|Medium|Large)/i)||'Medium';
+  f.business=grab(text,/Overview\s*[:\-]?\s*([\s\S]{1,1400}?)(?:\s*Note\s*:|\s*Business\s*:|Topic\s*Discussion)/i)||grab(text,/Business\s*[:\-]?\s*([\s\S]{1,1400}?)(?:Topic\s*Discussion|Impact to)/i);
+  f.solution=grab(text,/(Documents uploaded from EDDConnect[\s\S]{0,200}?updated\.)/i)||grab(text,/(would like to perform a proof[\s\S]{0,140}?\.)/i)||'Conduct a proof of concept (POC) in the DMS sandbox to determine whether DMS can meet the long-term storage needs, storing EDDConnect attachments in DMS instead of Fileshare.';
+  f.timeline=grab(text,/(start\s*January\s*1[a-z]*,?\s*2027[\s\S]{0,50}?(?:March\s*31[a-z]*,?\s*2027|\d+\s*days))/i);
+  f.success=grab(text,/(upload,?\s*download,?\s*and\s*delete\s*functionality\s*passes)/i)||grab(text,/(upload,?\s*download,?\s*and\s*delete\b[^.]{0,30})/i);
+  var segs=splitDiscussion(text),relabel={'Impact to HRSD':'Impact to Business','ELT Project':'ELT List'};
+  var order=['Impact to HRSD','Timeline Shift','ELT Project','POC Approach','Production Data','Estimated Timeline','Lead Team','Project Manager','Approval'];
+  var disc=[];
+  order.forEach(function(t){var body=segs[t];if(body){body=body.replace(/^[-–]\s*/,'');disc.push('## '+(relabel[t]||t)+'\n'+body);}});
+  f.discussion=disc.join('\n\n');
+  f.systems=segs['Systems Impacted']||'';
+  var tm=(segs['Participating']||'').replace(/^ITB\s*LOBs?\s*:?\s*/i,'');
+  if(tm){f.teams=tm.split(/(?=\b(?:PDD|ASD|ISD|CSD|PSD|TGD)\s*:)/).map(function(s){return s.trim();}).filter(Boolean).join('\n');}
+  f.funding=/no funding|is accurate|None/i.test(segs['Funding']||'')?'None identified':(segs['Funding']||'');
   return f;
 }
 
@@ -291,12 +304,12 @@ function recItems(){
   if(V('timeline'))it.push({k:'kv',label:'Timeline',t:V('timeline')});
   if(V('success'))it.push({k:'kv',label:'Success Criteria',t:V('success')});
   it.push({k:'kv',label:'Funding',t:V('funding')||'None identified'});
-  var anyC=V('impact')||V('elt')||V('approach')||V('pm');
-  if(anyC){it.push({k:'sub',t:'TRT Concerns'});
-    if(V('impact'))it.push({k:'kv',label:'Impact to Business',t:V('impact')});
-    if(V('elt'))it.push({k:'kv',label:'ELT List',t:V('elt')});
-    if(V('approach'))it.push({k:'kv',label:'POC Approach',t:V('approach')});
-    if(V('pm'))it.push({k:'kv',label:'Project Management',t:V('pm')});}
+  if(V('discussion')){it.push({k:'sub',t:'TRT Discussion & Concerns'});
+    V('discussion').split(/\n(?=##\s)/).forEach(function(block){
+      var mm=block.match(/^##\s*([^\n]+)\n([\s\S]*)$/);
+      if(mm)it.push({k:'kv',label:mm[1].trim(),t:mm[2].trim().replace(/\s+/g,' ')});
+      else if(block.trim())it.push({k:'b',t:block.trim().replace(/\s+/g,' ')});
+    });}
   if(lines('teams').length){it.push({k:'sub',t:'Participating ITB Teams & Roles'});lines('teams').forEach(function(l){it.push({k:'b',t:l});});}
   it.push({k:'h',t:'TRT OUTCOME'});
   it.push({k:'p',t:'Request is approved as a POC effort and referred to the DCT for approval, resource allocation, and project prioritization.'});
@@ -325,14 +338,22 @@ function pptSlides(){
   if(V('timeline'))d.push({t:'Timeline: '+V('timeline'),lvl:1});
   d.push({t:'Funding: '+(V('funding')||'None'),lvl:1});
   S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:d});
-  // Concerns & Teams
-  var c=[{t:'TRT Concerns:',lvl:0}];
-  if(V('impact'))c.push({t:'Impact to Business: '+V('impact'),lvl:1});
-  if(V('elt'))c.push({t:'ELT List: '+V('elt'),lvl:1});
-  if(V('approach'))c.push({t:'POC Approach: '+V('approach'),lvl:1});
-  if(V('pm'))c.push({t:'Project Management: '+V('pm'),lvl:1});
-  if(lines('teams').length){c.push({t:'Participating ITB Teams:',lvl:0});lines('teams').forEach(function(l){c.push({t:l,lvl:1});});}
-  S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:c});
+  // Discussion topics — every topic captured, paginated ~6 per slide
+  function firstSentence(s){s=String(s).trim().replace(/\s+/g,' ');var m=s.match(/^(.{0,170}?[.])(?:\s|$)/);return m?m[1]:(s.length>170?s.slice(0,170)+'…':s);}
+  var topics=[];
+  V('discussion').split(/\n(?=##\s)/).forEach(function(block){var mm=block.match(/^##\s*([^\n]+)\n([\s\S]*)$/);if(mm)topics.push({h:mm[1].trim(),b:firstSentence(mm[2])});});
+  for(var ci=0;ci<topics.length;ci+=6){
+    var body=[{t:'TRT Discussion & Concerns'+(topics.length>6?(' ('+(ci/6+1)+' of '+Math.ceil(topics.length/6)+')'):'')+':',lvl:0}];
+    topics.slice(ci,ci+6).forEach(function(d){body.push({t:d.h+': '+d.b,lvl:1});});
+    S.push({layout:'content',title:[{t:PROJ},{t:'TRT Discussion',sz:1800}],body:body});
+  }
+  // Participating teams (+ systems) slide
+  if(lines('teams').length||V('systems')){
+    var tb=[];
+    if(V('systems'))tb.push({t:'Systems Impacted: '+V('systems'),lvl:0});
+    if(lines('teams').length){tb.push({t:'Participating ITB Teams:',lvl:0});lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});}
+    S.push({layout:'content',title:[{t:PROJ},{t:'Participating Teams',sz:1800}],body:tb});
+  }
   // DCT Outcome
   var o=[{t:'TRT recommends the IT Work Intake as a Proof of Concept, '+V('loe').toLowerCase()+' level of effort',lvl:0},
          {t:'If the effort is approved, the following is needed:',lvl:0},{t:'Resource Allocation:',lvl:1}];
@@ -356,7 +377,7 @@ document.getElementById('extractBtn').onclick=function(){
   var raw=V('raw');if(!raw){document.getElementById('extractMsg').textContent='Paste the minutes first.';return;}
   var f=extract(raw);var set=function(id,v){if(v){var el=document.getElementById(id);if(el&&!el.value.trim())el.value=v;}};
   set('itw',f.itw);set('title',f.title);set('presenter',f.presenter);set('trtDate',f.trtDate);set('dctDate',f.dctDate);
-  set('business',f.business);set('timeline',f.timeline);set('systems',f.systems);set('funding',f.funding);set('success',f.success);set('approach',f.approach);
+  set('business',f.business);set('solution',f.solution);set('timeline',f.timeline);set('systems',f.systems);set('teams',f.teams);set('funding',f.funding);set('success',f.success);set('discussion',f.discussion);
   if(f.loe)document.getElementById('loe').value=f.loe;
   var got=Object.keys(f).filter(function(k){return f[k];}).length;
   document.getElementById('extractMsg').innerHTML='<span class="ok">Extracted '+got+' field(s).</span> Review &amp; complete the rest below.';
@@ -364,11 +385,11 @@ document.getElementById('extractBtn').onclick=function(){
 function loadDocxFile(file){
   var msg=document.getElementById('extractMsg');
   if(!file){msg.textContent='No file received — try the paste box below.';return;}
-  if(!/\.docx$/i.test(file.name)){msg.textContent='Please choose a .docx file (not .doc/.pdf) — or paste the text below.';return;}
+  if(!/\.(docx|odt)$/i.test(file.name)){msg.textContent='Please choose a .docx or .odt file (not .doc/.pdf) — or paste the text below.';return;}
   msg.textContent='Reading '+file.name+'…';
   var rd=new FileReader();
   rd.onload=function(){ setTimeout(function(){ try{
-    var text=docxToText(new Uint8Array(rd.result));
+    var text=fileToText(new Uint8Array(rd.result));
     document.getElementById('raw').value=text;
     document.getElementById('extractBtn').click();
     var m=document.getElementById('extractMsg');
