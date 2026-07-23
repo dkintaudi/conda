@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.8</title>
+<title>ESPMO Minutes → Recommendation &amp; Presentation — v01.9</title>
 <style>
   :root{--edd-blue:#0b3f73;--edd-blue-2:#1c6fb0;--line:#d9e1ea;--ink:#1f2a38;--muted:#5a6472;--bg:#f4f7fb;--card:#fff;}
   *{box-sizing:border-box;}
@@ -42,7 +42,7 @@
 <header>
   <h1>ESPMO&nbsp;·&nbsp;TRT Minutes → Recommendation &amp; Presentation</h1>
   <div class="sub">Paste the TRT minutes, review the extracted fields, and download the TRT Recommendation (Word) and the DCT presentation (PowerPoint).</div>
-  <div class="badge">v01.8 · local · offline · no CDN</div>
+  <div class="badge">v01.9 · local · offline · no CDN</div>
 </header>
 
 <div class="wrap">
@@ -125,7 +125,7 @@
       <button class="btn" id="pptBtn">⬇ DCT Presentation (.pptx)</button>
       <span class="mini" id="genMsg"></span>
     </div>
-    <p class="note" style="margin-top:12px;">The presentation uses the standard DCT 5-slide layout (Title · Background &amp; Request · TRT Discussion – POC Details · TRT Discussion – Concerns &amp; Teams · DCT Outcome) on the EDD template theme.</p>
+    <p class="note" style="margin-top:12px;">The presentation uses the standard DCT layout (Title · Background &amp; Request · TRT Discussion – POC Details · TRT Concerns · Participating Teams &amp; Roles · DCT Outcome) on the EDD template theme.</p>
   </div>
 </div>
 
@@ -285,8 +285,12 @@ function extract(text){
   order.forEach(function(t){var body=segs[t];if(body){body=body.replace(/^[-–]\s*/,'');disc.push('## '+(relabel[t]||t)+'\n'+body);}});
   f.discussion=disc.join('\n\n');
   f.systems=segs['Systems Impacted']||'';
-  var tm=(segs['Participating']||'').replace(/^ITB\s*LOBs?\s*:?\s*/i,'');
-  if(tm){f.teams=tm.split(/(?=\b(?:PDD|ASD|ISD|CSD|PSD|TGD)\s*:)/).map(function(s){return s.trim();}).filter(Boolean).join('\n');}
+  var tm=(segs['Participating']||'').replace(/^(?:ITB\s*)?(?:LOBs?|Teams?)(?:\s*(?:&|and)\s*Roles?)?\s*:?\s*/i,'').replace(/\bSlide\s*\d+\b/gi,'').trim();
+  if(tm){
+    var parts=tm.split(/(?=\b(?:PDD|ASD|ISD|CSD|PSD|TGD)\s*:)/).map(function(s){return s.trim();}).filter(Boolean);
+    var coded=parts.filter(function(s){return /^(?:PDD|ASD|ISD|CSD|PSD|TGD)\s*:/i.test(s);}); // drop any preamble before the first team code
+    f.teams=(coded.length?coded:parts).join('\n');
+  }
   f.funding=/no funding|is accurate|None/i.test(segs['Funding']||'')?'None identified':(segs['Funding']||'');
   return f;
 }
@@ -384,12 +388,12 @@ function pptSlides(){
     shown.slice(ci,ci+6).forEach(function(d){body.push({t:d.h+': '+d.b,lvl:1});});
     S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'TRT Discussion',sz:1800}],body:body});
   }
-  // Impacted Systems, Participating ITB Teams & Roles — its own slide
-  if(lines('teams').length||V('systems')){
-    var tb=[];
-    if(V('systems'))tb.push({t:'Impacted Systems: '+V('systems'),lvl:0});
-    if(lines('teams').length){tb.push({t:'Participating ITB Teams & Roles:',lvl:0});lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});}
-    S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'Impacted Systems, Participating Teams & Roles',sz:1600}],body:tb});
+  // Participating ITB Teams & Roles — its own slide. Systems already appear on the
+  // POC Details slide above, so they are NOT repeated here (avoids duplicate content).
+  if(lines('teams').length){
+    var tb=[{t:'Participating ITB Teams & Roles:',lvl:0}];
+    lines('teams').forEach(function(l){tb.push({t:l,lvl:1});});
+    S.push({layout:'content',title:[{t:PROJ,sz:2000},{t:'Participating Teams & Roles',sz:1800}],body:tb});
   }
   // DCT Outcome
   var o=[{t:'TRT recommends the IT Work Intake as a Proof of Concept, '+V('loe').toLowerCase()+' level of effort',lvl:0},
