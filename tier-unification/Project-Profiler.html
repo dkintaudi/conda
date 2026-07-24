@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 26;           // v01.26 (Profiler v01.21): added Generate Schedule button — emits the CA-PMF schedule (.xlsx) with the security section highlighted, stamped with the project name
+const VER_MINOR = 27;           // v01.27 (Profiler v01.22): Documents export gains a Requirement column (Mandatory = baseline / Supplementary = triggered), inserted before Applies at
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2445,13 +2445,13 @@ function saveAsExcel(){
   const catHdr    = {font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}}};
   const noteRow   = {font:{name:F,italic:true,sz:8,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}};
   const T=[
-    [{v:'Only the documents triggered for this project. The "Why included" column names the question number(s) that pulled each one in \u2014 your audit trail back to the answers.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
-    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr}]
+    [{v:'Only the documents triggered for this project. Requirement = Mandatory (baseline \u2014 every project) or Supplementary (triggered by tier / method / a flag). The "Why included" column names the question number(s) that pulled each one in \u2014 your audit trail back to the answers.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Requirement',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr}]
   ];
   const cats=["Initiation & Baseline","Planning","Security & Risk","Release & Production","Quality & Sustainment","Closeout & Governance"];
   cats.forEach(cat=>{
     const items=full.filter(a=>a.cat===cat); if(!items.length) return;
-    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
+    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
     items.forEach(a=>{
       const z=(T.length%2===0);
       const base=z?cellZ:cell;
@@ -2460,17 +2460,18 @@ function saveAsExcel(){
         {v:a.nm,s:z?cellZ:cell},
         {v:a.owner,s:own},
         {v:a.timing||'',s:base},
+        {v:(a.trigger==='Baseline'?'Mandatory':'Supplementary'),s:base},
         {v:(a.tier==='T3'?'Large+':(a.tier||'')),s:z?numCZ:numC},
         {v:a.whyText||a.trigger||'',s:base},
       ]);
     });
   });
-  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
-  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  { const ch=withChrome(T,5,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,5,22],ch.merges,ch.rowH);
+  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
+  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  { const ch=withChrome(T,6,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,13,5,22],ch.merges,ch.rowH);
     // merge the intro note across the row so it reads as one banner
-    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,4)]);
+    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,5)]);
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
   // ---------- Sheet 5: Maps (Value × Complexity quadrant + SIMM complexity zone) ----------
