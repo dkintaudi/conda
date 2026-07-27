@@ -521,7 +521,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
             <div class="note" style="margin-top:6px;font-size:11px;">Each attribute rated 0&ndash;4 from your answers; complexity = total &divide; number rated (official SIMM rule). The zone and criticality summarize where the project sits. Pre-fills and sanity-checks the official Appendix C &mdash; it doesn't replace it.</div>
           </div>
           <div class="sect">
-            <h3>Value &amp; Value-to-Complexity</h3>
+            <h3>Priority Value &amp; Priority Value-to-Complexity</h3>
             <div class="simmrow"><span class="k">Priority Value</span><span class="v" id="valScore"></span></div>
             <div class="priowrap"><div class="priobar"><div class="priofill" id="prioFill"></div></div><div class="prionum" id="prioNum">&mdash;</div></div>
             <div id="valBreakdown" style="margin-top:8px;"></div>
@@ -546,9 +546,9 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
             <div class="note" style="margin-top:6px;font-size:11px;"><a href="https://cdt.ca.gov/policy/project-approval-lifecycle-pal/" target="_blank" rel="noopener noreferrer" style="color:var(--edd-blue-2);font-weight:700;text-decoration:underline;">Open the CDT Project Approval Lifecycle (PAL) website &rarr;</a></div>
           </div>
           <div class="sect">
-            <h3>Value-to-Complexity map <span class="ct">value &times; complexity</span></h3>
+            <h3>Priority Value-to-Complexity map <span class="ct">Priority Value &times; Complexity</span></h3>
             <svg class="quad" id="quadChart" viewBox="0 0 300 244" xmlns="http://www.w3.org/2000/svg">
-              <!-- Value × Complexity map. Tier bands are HORIZONTAL by VALUE (y-axis); complexity
+              <!-- Priority Value × Complexity map. Tier bands are HORIZONTAL by VALUE (y-axis); complexity
                    (x-axis) is an indicator only and never changes the tier. Plot x:44–288 (cxi 0–100,
                    avgCx 0–4), y:14–214 (value 100 top → 0 bottom). value 80 → y54; value 60 → y94;
                    avgCx 2.0 = cxi 50 → x166. -->
@@ -2011,7 +2011,7 @@ function buildSummaryHTML(){
        +'<h1 style="color:#16202e;font-family:Georgia,serif;border-bottom:2px solid #c8973f;padding-bottom:6px;margin-top:6px;">'+escHtml(nm)+'</h1>'
        +'<h2 style="color:#12504c;font-family:Georgia,serif;font-size:14px;">Result Summary</h2>'
        +'<table style="border-collapse:collapse;width:100%;margin-bottom:18px;">'
-       +'<tr><td style="'+td+'color:#555;width:38%;">Value-to-Complexity (V\u2013C)</td><td style="'+td+'font-size:14px;font-weight:bold;color:#c8973f;">'+pri+'</td></tr>'
+       +'<tr><td style="'+td+'color:#555;width:38%;">Priority Value-to-Complexity (V\u2013C)</td><td style="'+td+'font-size:14px;font-weight:bold;color:#c8973f;">'+pri+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">V\u2013C Read</td><td style="'+td+'font-weight:bold;color:#222;">'+band+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Value &times; Complexity Map</td><td style="'+td+'font-weight:bold;color:#222;">'+quad+'</td></tr>'
        +'<tr><td style="'+td+'color:#555;">Project Level</td><td style="'+td+'font-weight:bold;color:#222;">'+(window.__LEVEL||'Standard')+'</td></tr>'
@@ -2072,7 +2072,7 @@ function submitEmail(){
     'downloaded to your computer; please attach it to this email before sending.','',
     '\u2500\u2500 PROFILE SUMMARY \u2500\u2500',
     'Project: '+nm,
-    'Value-to-Complexity (V\u2013C): '+pri+'  ('+band+')',
+    'Priority Value-to-Complexity (V\u2013C): '+pri+'  ('+band+')',
     'Value \u00D7 Complexity Map: '+quad,
     'Priority Value: '+val,
     'Business Complexity: '+bizCx,
@@ -2297,7 +2297,7 @@ function saveAsExcel(){
     [{v:'EDD · ESPMO — '+nmText+' — PROFILE',s:kicker},{v:'',s:kicker}],
     [{v:nmText,s:title},{v:'',s:title}],
     [{v:'',s:val},{v:'',s:val}],
-    [{v:'Value-to-Complexity (V–C)',s:label},{v:r.vc,s:hero}],
+    [{v:'Priority Value-to-Complexity (V–C)',s:label},{v:r.vc,s:hero}],
     [{v:'V–C Read',s:label},{v:r.band,s:valNum}],
     [{v:'',s:val},{v:'',s:val}],
     [{v:'Result Summary',s:section},{v:'',s:section}],
@@ -2422,7 +2422,7 @@ function saveAsExcel(){
   const valExcelRow=exRow(valGI), vcExcelRow=exRow(vcGI);
   putRight(valGI,'Priority Value (from intake)',label,{v:r.value,s:valNum});
   const VALCELL='K'+valExcelRow, VCCELL='K'+vcExcelRow;
-  putRight(vcGI,'Value-to-Complexity (V–C)',label,{f:'ROUND('+VALCELL+'-(('+BT+'+'+TT+')/2)*2.5,0)',cached:r.vc,s:valNum});
+  putRight(vcGI,'Priority Value-to-Complexity (V–C)',label,{f:'ROUND('+VALCELL+'-(('+BT+'+'+TT+')/2)*2.5,0)',cached:r.vc,s:valNum});
   // Band: ≥80 Full, else Mini if both-low (value<60 & avgCx<=2.0), else Standard.
   // Live cell shows the natural V–C band; EDD Next / PAL escalation is carried by the
   // cached value and the Governance Tier, not re-derivable from these two cells alone.
@@ -2474,7 +2474,7 @@ function saveAsExcel(){
     aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,5)]);
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
-  // ---------- Sheet 5: Maps (Value × Complexity quadrant + SIMM complexity zone) ----------
+  // ---------- Sheet 5: Maps (Priority Value × Complexity quadrant + SIMM complexity zone) ----------
   // Cell-grid visualizations (no chart engine needed; renders identically everywhere).
   const GRID=10;
   const mapTitle={font:{name:F,bold:true,sz:13,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEAL}},alignment:{vertical:'center'}};
@@ -2501,11 +2501,11 @@ function saveAsExcel(){
   const mergeRows=[];  // rows that should span full width (header/title/sub bands)
   push([{v:'EDD · ESPMO — '+nmText+' — MAPS',s:bandHdr}].concat(Array(WIDTH-1).fill({v:'',s:bandHdr}))); mergeRows.push(MAP.length-1);
   push([blank()]);
-  push([{v:'Value × Complexity Map',s:mapTitle}].concat(Array(WIDTH-1).fill({v:'',s:mapTitle}))); mergeRows.push(MAP.length-1);
+  push([{v:'Priority Value × Complexity Map',s:mapTitle}].concat(Array(WIDTH-1).fill({v:'',s:mapTitle}))); mergeRows.push(MAP.length-1);
   push([{v:'Where this project lands — Value (vertical) against Complexity (horizontal)',s:mapSub}].concat(Array(WIDTH-1).fill({v:'',s:mapSub}))); mergeRows.push(MAP.length-1);
   push([blank()]);
 
-  // 2×2 Value × Complexity quadrant. Value cutoff at 50; complexity cutoff at the SIMM Zone
+  // 2×2 Priority Value × Complexity quadrant. Value cutoff at 50; complexity cutoff at the SIMM Zone
   // "high" line (ZT=2.5 → cxi 62.5), the SAME calc as the V–C Read AND the Zone map below,
   // so all three agree on "high complexity". Four light EDD-blue tints, one per quadrant.
   // Diagonal V–C band grid. V–C = value − cxi/10, so equal-V–C lines are diagonals.
@@ -5090,7 +5090,7 @@ function projectCsv(snap){
   var headers = [
     'Profile ID','Generated At','Tool Build','Project Name','Method','Phase',
     'Priority Value','Business Complexity','Technical Complexity','Avg Complexity',
-    'Complexity Index','Value-to-Complexity','Band','Zone','Criticality','T-shirt Size',
+    'Complexity Index','Priority Value-to-Complexity','Band','Zone','Criticality','T-shirt Size',
     'Governance Level','PII Floor','PMO Documents','TARC Documents','Total Documents',
     'Answered Count','Drivers','TARC Triggered'
   ];
@@ -5247,7 +5247,7 @@ function epicDescription(snap){
   L.push('  Priority Value: ' + s.valueScore + '/100');
   L.push('  Business Complexity: ' + s.businessComplexity + '/4');
   L.push('  Technical Complexity: ' + s.technicalComplexity + '/4');
-  L.push('  Value-to-Complexity (V-C): ' + s.valueToComplexity + '  (band: ' + s.band + ')');
+  L.push('  Priority Value-to-Complexity (V-C): ' + s.valueToComplexity + '  (band: ' + s.band + ')');
   L.push('  Complexity Zone: ' + s.zone + '  ·  Criticality: ' + s.criticality);
   L.push('  T-shirt Size: ' + (TSIZE_BY_TIER[s.artifactTier]||s.artifactTier));
   L.push('');
@@ -5322,7 +5322,7 @@ function jiraCsv(snap, docType){
   var epicName = snap.project.name;          // the link key shared by Epic + its documents
   var headers = [
     'Issue Type','Summary','Description','Labels','Epic Name','Epic Link',
-    'Priority Value','Business Complexity','Technical Complexity','Value-to-Complexity',
+    'Priority Value','Business Complexity','Technical Complexity','Priority Value-to-Complexity',
     'Band','Zone','Criticality','T-shirt Size','Governance Level','PII Floor',
     'PMO Documents','TARC Documents','Total Documents','Profile ID'
   ];
@@ -5434,7 +5434,7 @@ function jiraJson(snap){
       { fieldName: 'Priority Value', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.valueScore },
       { fieldName: 'Business Complexity', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.businessComplexity },
       { fieldName: 'Technical Complexity', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.technicalComplexity },
-      { fieldName: 'Value-to-Complexity', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.valueToComplexity },
+      { fieldName: 'Priority Value-to-Complexity', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:float', value: s.valueToComplexity },
       { fieldName: 'Band', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.band },
       { fieldName: 'Complexity Zone', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.zone },
       { fieldName: 'Criticality', fieldType: 'com.atlassian.jira.plugin.system.customfieldtypes:select', value: s.criticality },
@@ -5577,7 +5577,7 @@ function alignCsv(snap, opts){
   var headers = [
     'External ID','Parent ID','Tier','Work Type','Title','Description','Labels',
     'Linked IDs','Link Type',
-    'Priority Value','Business Complexity','Technical Complexity','Value-to-Complexity',
+    'Priority Value','Business Complexity','Technical Complexity','Priority Value-to-Complexity',
     'Band','Zone','Criticality','T-shirt Size','Governance Level','PII Floor',
     'PMO Documents','TARC Documents','Total Documents','Profile ID'
   ];
