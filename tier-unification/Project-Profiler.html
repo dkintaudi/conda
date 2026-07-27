@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 29;           // v01.29 (Profiler v01.24): Small-size complexity boundary is strict — Small requires avg complexity <= 2.0; > 2.0 bumps a low-value project to Medium (complex work gets proper documentation)
+const VER_MINOR = 30;           // v01.30 (Profiler v01.25): renamed Value-to-Complexity -> Priority Value-to-Complexity for consistency with the Priority Value label
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
