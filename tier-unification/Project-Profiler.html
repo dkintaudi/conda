@@ -554,10 +554,10 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
                    avgCx 2.0 = cxi 50 → x166. -->
               <!-- Full: value >= 80 (top band, full width — regardless of complexity) -->
               <rect x="44" y="14" width="244" height="40" class="q-tgt"/>
-              <!-- Standard: value 60–79 (full width) + value<60 with avgCx>=2.0 (lower-right) -->
+              <!-- Standard: value 60–79 (full width) + value<60 with avgCx>2.0 (lower-right) -->
               <rect x="44" y="54" width="244" height="40" class="q-std"/>
               <rect x="166" y="94" width="122" height="120" class="q-std"/>
-              <!-- Mini: value<60 AND avgCx<2.0 (lower-left corner) -->
+              <!-- Mini: value<60 AND avgCx<=2.0 (lower-left corner) -->
               <rect x="44" y="94" width="122" height="120" class="q-min"/>
               <line x1="44" y1="54" x2="288" y2="54" class="q-div"/>   <!-- value 80 -->
               <line x1="44" y1="94" x2="288" y2="94" class="q-div"/>   <!-- value 60 -->
@@ -588,7 +588,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
               <circle id="quadDot" cx="44" cy="214" r="7" class="q-dot"/>
             </svg>
             <div class="xcheck" id="quadCap" style="background:#f1f5fb;color:#243;"></div>
-            <div class="note" style="margin-top:6px;font-size:11px;color:#8a93a0;">T&#8209;shirt Size bands are horizontal by <b>Priority Value</b>: Large = Priority Value &ge; 80, Medium = 60&ndash;79, Small = Priority Value &lt; 60 <i>and</i> low complexity (avg &lt; 2.0). Above avg complexity 2.0 a low-value project reads Medium, not Small. Extra Large = PAL. Complexity (x-axis) never raises the size on its own. The V&ndash;C read is shown separately to compare projects. Axes run 0&ndash;100 in steps of 25.</div>
+            <div class="note" style="margin-top:6px;font-size:11px;color:#8a93a0;">T&#8209;shirt Size bands are horizontal by <b>Priority Value</b>: Large = Priority Value &ge; 80, Medium = 60&ndash;79, Small = Priority Value &lt; 60 <i>and</i> low complexity (avg &le; 2.0). Above avg complexity 2.0 (i.e. &gt; 2.0) a low-value project reads Medium, not Small. Extra Large = PAL. Complexity (x-axis) never raises the size on its own. The V&ndash;C read is shown separately to compare projects. Axes run 0&ndash;100 in steps of 25.</div>
           </div>
           <div class="sect" id="contraSect" style="display:none">
             <h3>Intake consistency <span class="ct">contradiction checks</span></h3>
@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 28;           // v01.28 (Profiler v01.23): renamed Value -> Priority Value; Small size now requires avg complexity < 2.0 (was < 2.5) so a low-value project above 2.0 reads Medium
+const VER_MINOR = 29;           // v01.29 (Profiler v01.24): Small-size complexity boundary is strict — Small requires avg complexity <= 2.0; > 2.0 bumps a low-value project to Medium (complex work gets proper documentation)
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -1348,7 +1348,7 @@ function compute(){
   // ── UNIFIED GOVERNANCE TIER (single ladder, read everywhere) ──────────────
   // ONE definition drives the map band, the document set (buildArtifacts), and the
   // oversight pill, so they can no longer disagree:
-  //   Tier 1 (Mini)     = value < 60 AND avgCx < 2.0   (the both-low corner)
+  //   Tier 1 (Mini)     = value < 60 AND avgCx <= 2.0   (the both-low corner)
   //   Tier 3 (Full)     = V–C >= 80 OR EDD Next
   //   Tier 4 (PAL)      = PAL applies — forces Full docs + the PAL gate package
   //   Tier 2 (Standard) = everything else
@@ -1358,9 +1358,9 @@ function compute(){
   const highVal=value>=50, highCx=cxi>=(ZT*25);
   // Tier 3 (Full) is driven by VALUE (>= 80), not V-C: complexity is an indicator of how
   // hard a project is, never a demotion. Mini stays the both-low corner (value < 60 AND
-  // avgCx < 2.0). EDD Next is a MARKER ONLY — it does not set the T-shirt Size / tier; an
+  // avgCx <= 2.0). EDD Next is a MARKER ONLY — it does not set the T-shirt Size / tier; an
   // EDD Next project can be any size (even Small). V-C remains a display-only indicator.
-  const naturalTier = (value >= 80) ? 3 : ((value < 60 && avgCx < 2.0) ? 1 : 2);
+  const naturalTier = (value >= 80) ? 3 : ((value < 60 && avgCx <= 2.0) ? 1 : 2);
   const govTier = flags.pal ? 4 : naturalTier;
   window.__GOV_TIER = govTier;
   const quadName = naturalTier===3 ? 'Full' : (naturalTier===1 ? 'Mini' : 'Standard');
@@ -2139,9 +2139,9 @@ function _recompute(){
   // Unified governance tier — the SAME single ladder used in compute() (see there).
   // Tier 3 (Full) is driven by VALUE (>= 80), not V-C: complexity is an indicator of how
   // hard a project is, never a demotion. Mini stays the both-low corner (value < 60 AND
-  // avgCx < 2.0). EDD Next is a MARKER ONLY — it does not set the T-shirt Size / tier; an
+  // avgCx <= 2.0). EDD Next is a MARKER ONLY — it does not set the T-shirt Size / tier; an
   // EDD Next project can be any size (even Small). V-C remains a display-only indicator.
-  const naturalTier = (value >= 80) ? 3 : ((value < 60 && avgCx < 2.0) ? 1 : 2);
+  const naturalTier = (value >= 80) ? 3 : ((value < 60 && avgCx <= 2.0) ? 1 : 2);
   const govTier = flags.pal ? 4 : naturalTier;
   const band = naturalTier===3 ? 'Full' : (naturalTier===1 ? 'Mini' : 'Standard');
   const quad = band;  // map label follows the natural V–C band (single source of truth)
@@ -2423,7 +2423,7 @@ function saveAsExcel(){
   putRight(valGI,'Priority Value (from intake)',label,{v:r.value,s:valNum});
   const VALCELL='K'+valExcelRow, VCCELL='K'+vcExcelRow;
   putRight(vcGI,'Value-to-Complexity (V–C)',label,{f:'ROUND('+VALCELL+'-(('+BT+'+'+TT+')/2)*2.5,0)',cached:r.vc,s:valNum});
-  // Band: ≥80 Full, else Mini if both-low (value<60 & avgCx<2.0), else Standard.
+  // Band: ≥80 Full, else Mini if both-low (value<60 & avgCx<=2.0), else Standard.
   // Live cell shows the natural V–C band; EDD Next / PAL escalation is carried by the
   // cached value and the Governance Tier, not re-derivable from these two cells alone.
   putRight(bandGI,'V–C Read (band)',label,{f:'IF('+VCCELL+'>=80,"Full",IF(AND('+VALCELL+'<60,(('+BT+'+'+TT+')/2)<2.5),"Mini","Standard"))',cached:r.band,s:valNum});
