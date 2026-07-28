@@ -431,6 +431,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
     <div style="margin-top:8px;font-size:11.5px;color:#5a6470;line-height:1.5;">
       Drop one or more files &mdash; <b>Word, PowerPoint, Excel, CSV, or text</b> &mdash; and hit <b>Prefill the form</b>. The tool reads every file, fills in the answers it can detect, and flags anything that needs your eye (including where two files disagree). Review and adjust on the left before you continue.
       Everything runs in your browser; nothing leaves the page.
+      <span style="display:block;margin-top:4px;color:#3a5a78;">Tip: re-upload a <b>profile Excel this tool generated</b> and it reloads the whole profile &mdash; every answer restored, ready to adjust and re-export.</span>
       <span id="importStatus" style="display:block;margin-top:6px;font-style:italic;"></span>
     </div>
   </div>
@@ -678,7 +679,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 34;           // v01.34 (Profiler v01.29): Status column is now a dropdown (Planned / In progress / Complete / Will not complete / Fine) via injected Excel data validation
+const VER_MINOR = 35;           // v01.35 (Profiler v01.30): round-trip — the Excel export embeds a hidden state sheet, and re-uploading a generated profile restores every answer
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -3030,11 +3031,16 @@ function saveAsExcel(){
     XLSX.utils.book_append_sheet(wb, plain(loopRows), 'Loops');
     XLSX.utils.book_append_sheet(wb, plain(contraRows), 'Contradictions');
 
+    // Embed the full raw answer state (hidden) so a generated profile can be re-loaded
+    // later — the round-trip. Carries answers, project name, per-question context, and
+    // method/phase/loe exactly, so a re-import restores the profile without guessing.
+    try { XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ESPMO_PROFILE_STATE_V1'],[JSON.stringify(state)]]), '_ESPMO_STATE'); } catch(e){}
+
     // hide the handoff sheets from the human-facing workbook (data stays fully readable by parsers)
     wb.Workbook = wb.Workbook || {};
     wb.Workbook.Sheets = wb.Workbook.Sheets || [];
     wb.SheetNames.forEach((sn,i)=>{
-      if(sn==='Templates'||sn==='Fields'||sn==='Loops'||sn==='Contradictions'){
+      if(sn==='Templates'||sn==='Fields'||sn==='Loops'||sn==='Contradictions'||sn==='_ESPMO_STATE'){
         wb.Workbook.Sheets[i] = Object.assign({}, wb.Workbook.Sheets[i], {Hidden:1});
       }
     });
@@ -4907,7 +4913,44 @@ function renderReview(merged, sourceNames){
   }
 
   // ---- main: pool one-or-many files -> prefill -------------------------------
+  // Round-trip: restore the whole profile from the hidden state embedded by the Excel export.
+  function restoreProfileState(json){
+    var data = JSON.parse(json);
+    Object.keys(state).forEach(function(k){ delete state[k]; });
+    Object.keys(data).forEach(function(k){ state[k]=data[k]; });
+    window.__revealed = true;                 // reveal the results panel
+    if(typeof render==='function') render();   // repaint the questionnaire from the restored answers
+    if(typeof recompute==='function') recompute(); else if(typeof compute==='function') compute();
+  }
+
+  // Entry point. If the upload is a generated Profiler workbook (carries the hidden
+  // _ESPMO_STATE sheet), restore the profile directly; otherwise fall through to the
+  // labeled-field document importer.
   function importFiles(files){
+    var list = Array.prototype.slice.call(files||[]);
+    if(!list.length){ setStatus('Choose one or more files first.', 'err'); return; }
+    if(typeof fflate==='undefined'){ setStatus('Import unavailable (zip engine missing).', 'err'); return; }
+    var xf = list.find(function(f){ return /\.xls[xm]?$/i.test(f.name); });
+    if(xf && typeof XLSX!=='undefined' && xf.arrayBuffer){
+      xf.arrayBuffer().then(function(ab){
+        var restored=false;
+        try{
+          var wbIn=XLSX.read(new Uint8Array(ab),{type:'array'});
+          var ss=wbIn.Sheets && wbIn.Sheets['_ESPMO_STATE'];
+          if(ss && ss.A2 && ss.A2.v!=null){
+            restoreProfileState(String(ss.A2.v));
+            setStatus('Profile loaded from ' + xf.name + ' \u2014 answers restored. Adjust as needed and re-export.', 'ok');
+            restored=true;
+          }
+        }catch(e){}
+        if(!restored) importFilesDoc(list);
+      }).catch(function(){ importFilesDoc(list); });
+      return;
+    }
+    importFilesDoc(list);
+  }
+
+  function importFilesDoc(files){
     var list = Array.prototype.slice.call(files||[]);
     if(!list.length){ setStatus('Choose one or more files first.', 'err'); return; }
     if(typeof fflate==='undefined'){ setStatus('Import unavailable (zip engine missing).', 'err'); return; }
