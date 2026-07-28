@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 33;           // v01.33 (Profiler v01.28): Documents checklist gains a Status column (Planned / In progress / Complete / Not needed) the PM checks off
+const VER_MINOR = 34;           // v01.34 (Profiler v01.29): Status column is now a dropdown (Planned / In progress / Complete / Will not complete / Fine) via injected Excel data validation
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2155,6 +2155,48 @@ function _recompute(){
   return {flags,bizCx,techCx,cxi,zone,crit,value,avgCx,vc,band,quad,naturalTier,highVal,highCx,artTier,govTier,bizRows,techRows};
 }
 
+// SheetJS (community) cannot write data validations, so after it writes the workbook
+// (uncompressed / STORE) we inject an Excel list dropdown onto the Documents sheet's
+// Status column via a tiny pure-JS STORE zip read/write. Never blocks the export.
+var STATUS_OPTIONS = "Planned,In progress,Complete,Will not complete,Fine";
+(function(){
+  var CRC=(function(){var t=new Uint32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+  function crc32(a){var c=0xFFFFFFFF;for(var i=0;i<a.length;i++)c=CRC[(c^a[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+  function u8(s){return new TextEncoder().encode(s);}
+  function w16(n){return new Uint8Array([n&255,(n>>8)&255]);}
+  function w32(n){return new Uint8Array([n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255]);}
+  function catU8(arr){var n=0,i;for(i=0;i<arr.length;i++)n+=arr[i].length;var o=new Uint8Array(n),p=0;for(i=0;i<arr.length;i++){o.set(arr[i],p);p+=arr[i].length;}return o;}
+  function unzip(bytes){var map={},order=[],i=0,dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+    while(i+4<=bytes.length&&dv.getUint32(i,true)===0x04034b50){var cs=dv.getUint32(i+18,true),nl=dv.getUint16(i+26,true),el=dv.getUint16(i+28,true);
+    var name=new TextDecoder().decode(bytes.subarray(i+30,i+30+nl));var ds=i+30+nl+el;map[name]=bytes.subarray(ds,ds+cs);order.push(name);i=ds+cs;}return {map:map,order:order};}
+  function zip(order,map){var locals=[],central=[],off=0;order.forEach(function(nm){var n=u8(nm),d=map[nm],crc=crc32(d);
+    var lh=catU8([w32(0x04034b50),w16(20),w16(0),w16(0),w16(0),w16(0),w32(crc),w32(d.length),w32(d.length),w16(n.length),w16(0),n,d]);locals.push(lh);
+    central.push(catU8([w32(0x02014b50),w16(20),w16(20),w16(0),w16(0),w16(0),w16(0),w32(crc),w32(d.length),w32(d.length),w16(n.length),w16(0),w16(0),w16(0),w16(0),w32(0),w32(off),n]));off+=lh.length;});
+    var cd=catU8(central),eocd=catU8([w32(0x06054b50),w16(0),w16(0),w16(order.length),w16(order.length),w32(cd.length),w32(off),w16(0)]);return catU8(locals.concat([cd,eocd]));}
+  window.__injectStatusDropdown=function(bytes){
+    try{
+      var z=unzip(bytes),map=z.map,order=z.order,tgt=null,k;
+      for(var oi=0;oi<order.length;oi++){k=order[oi];if(/xl\/worksheets\/sheet\d+\.xml$/.test(k)){var x=new TextDecoder().decode(map[k]);if(x.indexOf('PM Consolidation')>=0){tgt=k;break;}}}
+      if(!tgt) return bytes;
+      var xml=new TextDecoder().decode(map[tgt]);
+      var rows=[],m,re=/<c r="[A-Z]+(\d+)"/g;while(m=re.exec(xml))rows.push(+m[1]);
+      if(!rows.length) return bytes;
+      var hi=Math.max.apply(null,rows);
+      var dv='<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="J5:J'+hi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation></dataValidations>';
+      if(xml.indexOf('</mergeCells>')>=0) xml=xml.replace('</mergeCells>','</mergeCells>'+dv);
+      else xml=xml.replace('</sheetData>','</sheetData>'+dv);
+      map[tgt]=u8(xml);
+      return zip(order,map);
+    }catch(e){ return bytes; }
+  };
+})();
+function _saveXlsxWithDropdown(wb, outName){
+  var arr = XLSX.write(wb, {type:'array', bookType:'xlsx', cellStyles:true, compression:false});
+  var out = window.__injectStatusDropdown(new Uint8Array(arr));
+  var blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=outName;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1500);
+}
 function saveAsExcel(){
   if (typeof XLSX === 'undefined') { alert('Excel library not loaded.'); return; }
   const r=_recompute();
@@ -3045,7 +3087,7 @@ function saveAsExcel(){
   // Write to an array buffer, then patch the worksheet XML to add fit-to-page + page breaks,
   // because this SheetJS build does not serialize pageSetup / rowBreaks itself.
   let canPatch = (typeof fflate !== 'undefined');
-  if(!canPatch){ XLSX.writeFile(wb, outName, {cellStyles:true}); return; }
+  if(!canPatch){ _saveXlsxWithDropdown(wb, outName); return; }
   try{
     const ab = XLSX.write(wb, {type:'array', bookType:'xlsx', cellStyles:true});
     const zip = fflate.unzipSync(new Uint8Array(ab));
@@ -3093,6 +3135,17 @@ function saveAsExcel(){
         const rb = '<rowBreaks count="'+brks.length+'" manualBreakCount="'+brks.length+'">'+items+'</rowBreaks>';
         xml = xml.replace(/(<pageSetup[^>]*\/>)/, '$1'+rb);
       }
+      // Status dropdown on the Documents sheet (SheetJS can't write data validations).
+      // Anchored after </mergeCells> so it stays schema-correct (before pageMargins).
+      if(sn==='Documents'){
+        const jr=[]; let mm; const rre=/<c r="[A-Z]+(\d+)"/g; while(mm=rre.exec(xml)) jr.push(+mm[1]);
+        if(jr.length){
+          const jhi=Math.max.apply(null,jr);
+          const dvx='<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="J5:J'+jhi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation></dataValidations>';
+          if(xml.indexOf('</mergeCells>')!==-1) xml=xml.replace('</mergeCells>','</mergeCells>'+dvx);
+          else xml=xml.replace('</sheetData>','</sheetData>'+dvx);
+        }
+      }
       zip[path] = enc.encode(xml);
     });
     const out = fflate.zipSync(zip, {level:6});
@@ -3102,7 +3155,7 @@ function saveAsExcel(){
     document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url), 4000);
   }catch(e){
     // If anything in the patch path fails, fall back to a clean native write so the user still gets a file.
-    XLSX.writeFile(wb, outName, {cellStyles:true});
+    _saveXlsxWithDropdown(wb, outName);
   }
 }
 function saveAsPptx(){
