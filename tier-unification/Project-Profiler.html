@@ -679,7 +679,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 35;           // v01.35 (Profiler v01.30): round-trip — the Excel export embeds a hidden state sheet, and re-uploading a generated profile restores every answer
+const VER_MINOR = 36;           // v01.36 (Profiler v01.31): round-trip also restores from the Intake Answers sheet, so profiles generated before the embedded state (older files) reload correctly too — no one-off
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -4923,9 +4923,44 @@ function renderReview(merged, sourceNames){
     if(typeof recompute==='function') recompute(); else if(typeof compute==='function') compute();
   }
 
-  // Entry point. If the upload is a generated Profiler workbook (carries the hidden
-  // _ESPMO_STATE sheet), restore the profile directly; otherwise fall through to the
-  // labeled-field document importer.
+  // Fallback round-trip for profiles generated before the embedded-state sheet existed:
+  // reconstruct answers from the structured "Intake Answers" sheet (Question -> Answer
+  // label), matched deterministically against the question set — no guessing, no drift.
+  function restoreFromIntakeSheet(wbIn){
+    if(typeof QUESTIONS==='undefined') return false;
+    var ws = wbIn.Sheets && wbIn.Sheets['Intake Answers']; if(!ws) return false;
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, blankrows:false, defval:''});
+    var hi=-1, i;
+    for(i=0;i<rows.length;i++){ var rl=rows[i].map(function(c){return String(c).trim().toLowerCase();});
+      if(rl.indexOf('question')>=0 && rl.indexOf('answer')>=0){ hi=i; break; } }
+    if(hi<0) return false;
+    var hdr=rows[hi].map(function(c){return String(c).trim().toLowerCase();});
+    var qi=hdr.indexOf('question'), ai=hdr.indexOf('answer'), ci=hdr.indexOf('additional context');
+    if(qi<0||ai<0) return false;
+    var byText={}; QUESTIONS.forEach(function(q){ if(q.id!=='name') byText[String(q.t).trim()]=q; });
+    Object.keys(state).forEach(function(k){ delete state[k]; });
+    var banner=String((rows[0]&&rows[0][0])||'');           // "EDD · ESPMO — <name> — INTAKE ANSWERS"
+    var mnm=banner.match(/ESPMO\s*[—\-]\s*([\s\S]+?)\s*[—\-]\s*INTAKE/i);
+    if(mnm) state.name=mnm[1].trim();
+    var got=0;
+    for(var j=hi+1;j<rows.length;j++){
+      var qt=String(rows[j][qi]||'').trim(), ans=String(rows[j][ai]||'').trim();
+      var q=byText[qt]; if(!q) continue;
+      if(ans===''||ans==='(not answered)'){ /* unanswered */ }
+      else if(q.type==='text'){ state[q.id]=ans; got++; }
+      else if(q.o){ var o=null; for(var k=0;k<q.o.length;k++){ if(String(q.o[k].l).trim()===ans){ o=q.o[k]; break; } } if(o){ state[q.id]=o.v; got++; } }
+      if(ci>=0){ var cx=String(rows[j][ci]||'').trim(); if(cx && cx!=='(not answered)' && typeof setCtx==='function') setCtx(q.id,cx); }
+    }
+    if(got===0) return false;
+    window.__revealed=true;
+    if(typeof render==='function') render();
+    if(typeof recompute==='function') recompute(); else if(typeof compute==='function') compute();
+    return true;
+  }
+
+  // Entry point. If the upload is a generated Profiler workbook (embedded _ESPMO_STATE
+  // sheet, or an older one with an Intake Answers sheet), restore the profile directly;
+  // otherwise fall through to the labeled-field document importer.
   function importFiles(files){
     var list = Array.prototype.slice.call(files||[]);
     if(!list.length){ setStatus('Choose one or more files first.', 'err'); return; }
@@ -4940,6 +4975,9 @@ function renderReview(merged, sourceNames){
           if(ss && ss.A2 && ss.A2.v!=null){
             restoreProfileState(String(ss.A2.v));
             setStatus('Profile loaded from ' + xf.name + ' \u2014 answers restored. Adjust as needed and re-export.', 'ok');
+            restored=true;
+          } else if(restoreFromIntakeSheet(wbIn)){
+            setStatus('Profile loaded from ' + xf.name + ' \u2014 answers restored from its Intake Answers sheet. Adjust as needed and re-export.', 'ok');
             restored=true;
           }
         }catch(e){}
