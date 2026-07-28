@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 31;           // v01.31 (Profiler v01.26): Documents export adds Count / Notes / PM Consolidation columns (from Grace) to help PMs track consolidation and notes
+const VER_MINOR = 32;           // v01.32 (Profiler v01.27): export now includes a Change History tab (Date / tab / what changed) after CA-PMF Templates
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2273,7 +2273,7 @@ function saveAsExcel(){
   // Repeated header band + faint footer (web-safe; both live in cells, no XML injection).
   const bandHdr = {font:{name:F,bold:true,sz:9,color:{rgb:'FFFFFF'},letterSpacing:1},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}};
   const footer  = {font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{vertical:'center'}};
-  const TOTAL_SHEETS = 8;
+  const TOTAL_SHEETS = 9;
   const _footDate = new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   const footTextFor = (idx)=> 'EDD · ESPMO Project Profiler   ·   '+(nmText||'Project')+'   ·   Sheet '+idx+' of '+TOTAL_SHEETS+'   ·   Generated '+_footDate;
   // wrap(rows, cols, sheetTitle, sheetIndex) -> {rows, merges, rowH} with header band row 0 and footer last row
@@ -2753,6 +2753,18 @@ function saveAsExcel(){
     const ch=withChrome(TT,7,'CA-PMF Templates',8); const tWs=makeSheet(ch.rows,[34,12,12,8,40,46,40],ch.merges,ch.rowH);
     tWs['!merges']=(tWs['!merges']||[]).concat([M(1,0,1,6)]);
     XLSX.utils.book_append_sheet(wb, tWs, 'CA-PMF Templates'); }
+
+  // ---------- Change History (blank log; positioned after CA-PMF Templates) ----------
+  // A simple, human-maintained log: Date | which tab changed | what changed. Emitted with
+  // blank rows for the PM to fill in as the profile / documents evolve.
+  { const CH=[
+      [{v:'Log changes to this profile and its documents here — the date, which tab changed, and what changed.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+      [{v:'Date',s:colhdr},{v:'What Changed — tab',s:colhdr},{v:'What Changed',s:colhdr}]
+    ];
+    for(let i=0;i<15;i++){ const z=(CH.length%2===0); const b=z?cellZ:cell; CH.push([{v:'',s:b},{v:'',s:b},{v:'',s:b}]); }
+    const chc=withChrome(CH,3,'Change History',9); const chWs=makeSheet(chc.rows,[16,26,64],chc.merges,chc.rowH);
+    chWs['!merges']=(chWs['!merges']||[]).concat([M(1,0,1,2)]);
+    XLSX.utils.book_append_sheet(wb, chWs, 'Change History'); }
 
   // ---------- Sheets 9–11: HANDOFF (machine-readable, for the Autogenerate) ----------
   // These three sheets are the clean data contract the Autogenerate consumes. They carry NO
