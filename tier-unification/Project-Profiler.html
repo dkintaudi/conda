@@ -678,7 +678,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 32;           // v01.32 (Profiler v01.27): export now includes a Change History tab (Date / tab / what changed) after CA-PMF Templates
+const VER_MINOR = 33;           // v01.33 (Profiler v01.28): Documents checklist gains a Status column (Planned / In progress / Complete / Not needed) the PM checks off
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2445,14 +2445,14 @@ function saveAsExcel(){
   const catHdr    = {font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}}};
   const noteRow   = {font:{name:F,italic:true,sz:8,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}};
   const T=[
-    [{v:'Only the documents triggered for this project. Requirement = Mandatory (baseline \u2014 every project) or Supplementary (triggered by tier / method / a flag). The "Why included" column names the question number(s) that pulled each one in \u2014 your audit trail back to the answers. Count numbers the documents; Notes is free-text for the PM; PM Consolidation is where a PM groups templates they intend to combine (give the rows they will merge the same number).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
-    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Requirement',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr}]
+    [{v:'A checklist the PM reviews and marks up. Requirement = Mandatory (baseline \u2014 every project) or Supplementary (triggered by tier / method / a flag). "Why included" names the question(s) that pulled each doc in. Count numbers the documents; Notes is free-text; PM Consolidation groups templates to combine (same number = merged); Status is where the PM tracks each doc \u2014 Planned / In progress / Complete / Not needed.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Requirement',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr},{v:'Status',s:colhdr}]
   ];
   const cats=["Initiation & Baseline","Planning","Security & Risk","Release & Production","Quality & Sustainment","Closeout & Governance"];
   let docNo=0;
   cats.forEach(cat=>{
     const items=full.filter(a=>a.cat===cat); if(!items.length) return;
-    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
+    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
     items.forEach(a=>{
       const z=(T.length%2===0);
       const base=z?cellZ:cell;
@@ -2467,15 +2467,16 @@ function saveAsExcel(){
         {v:(++docNo),s:z?numCZ:numC},      // Count \u2014 sequential document number
         {v:'',s:base},                      // Notes \u2014 free-text for the PM
         {v:'',s:z?numCZ:numC},              // PM Consolidation \u2014 PM groups templates to merge
+        {v:'Planned',s:base},               // Status \u2014 PM checks off (Planned/In progress/Complete/Not needed)
       ]);
     });
   });
-  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
-  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  { const ch=withChrome(T,9,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,13,5,22,6,40,14],ch.merges,ch.rowH);
+  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
+  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  { const ch=withChrome(T,10,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,13,5,22,6,40,14,13],ch.merges,ch.rowH);
     // merge the intro note across the row so it reads as one banner
-    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,8)]);
+    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,9)]);
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
   // ---------- Sheet 5: Maps (Priority Value × Complexity quadrant + SIMM complexity zone) ----------
