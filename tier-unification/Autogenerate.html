@@ -177,7 +177,7 @@ Read the code
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPMO Autogenerate — v01.6</title>
+<title>ESPMO Autogenerate — v01.7</title>
 <style>
   :root {
     --ink: #11151c;
@@ -377,7 +377,7 @@ body{background:linear-gradient(180deg,#f8fbfe,#eef4fa 48%,#e9f1f8)!important;co
 body::before{content:"";display:block;height:8px;background:linear-gradient(90deg,var(--edd-blue),var(--edd-teal) 62%,var(--edd-gold));}
 .wrap{max-width:1040px;padding:30px 24px 76px;}
 header{position:relative;overflow:hidden;border:0!important;border-radius:22px;margin-bottom:26px!important;padding:28px 32px!important;color:#fff;background:linear-gradient(135deg,var(--edd-blue),var(--edd-blue-2) 60%,var(--edd-teal));box-shadow:0 20px 48px rgba(11,63,115,.22)!important;}
-header::after{content:"v01.6 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
+header::after{content:"v01.7 · draft documents · local only";position:absolute;right:22px;top:20px;padding:6px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.14);font:700 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;}
 .brand{padding-right:340px;row-gap:10px;}
 .brand h1{font-size:26px;color:#fff;}
 .brand .tag{color:#ffe08a!important;border-color:rgba(255,224,138,.65)!important;background:rgba(0,0,0,.16);border-radius:999px;padding:5px 9px;margin-top:4px;}
@@ -412,7 +412,7 @@ footer{border-top-color:#d8e1ec!important;color:#627589!important;}
       <span class="tag">Asset Library</span>
       <span class="v" id="ver"></span>
     </div>
-    <p>Reads the Profiler Engagement Matrix, locates the required templates, fills the approved fields, and produces draft governance documents for review. Runs entirely in your browser — no upload, no server, no login.</p>
+    <p>Reads the Profiler Engagement Matrix, locates the required templates, fills the approved fields, and produces the Project Charter and Project Management Plan drafts plus the project schedule (.xlsx) for review. Runs entirely in your browser — no upload, no server, no login.</p>
   </header>
 
   <!-- STEP 1: engagement matrix -->
@@ -501,7 +501,7 @@ footer{border-top-color:#d8e1ec!important;color:#627589!important;}
       <label class="radio sel" id="inclScheduleLabel" style="display:inline-flex;margin-top:4px">
         <input type="checkbox" id="inclSchedule" checked> Also generate the project schedule (.xlsx) — stamped with name, PM, start date, and Profiler-required filter
       </label>
-      <label class="radio sel" id="inclSecurityLabel" style="display:inline-flex;margin-top:4px">
+      <label class="radio sel" id="inclSecurityLabel" style="display:none;margin-top:4px">
         <input type="checkbox" id="inclSecurity" checked> Also generate the security task files (.xlsx) — Security Tasks Template (no dates) + Security Schedule (formula dates + weekly Gantt)
       </label>
       <div id="secGateCaption" style="display:none;font-size:11px;color:#b3541e;margin:2px 0 0 22px"></div>
@@ -1248,9 +1248,19 @@ function buildGapReport(tf, data, MARK) {
     return files;
   }
 
+  // SCOPE: this build generates only the Project Charter and the Project Management
+  // Plan as documents (the project schedule is emitted separately). Other triggered
+  // artifacts are intentionally not produced here at this time.
+  function isCharterOrPmpDoc(t) {
+    var nm = String(t.document || t.template_name || "").toLowerCase();
+    var id = String(t.deliverable_id || "").trim().toUpperCase();
+    return id === "INI-01" || id === "PLN-01"
+        || /\bproject charter\b/.test(nm)
+        || /\bproject management plan\b/.test(nm);
+  }
   function neededTemplates(profileBuild) {
     var files = profileBuild.templates
-      .filter(function (t) { return isGenerateYes(t.generate); })
+      .filter(function (t) { return isGenerateYes(t.generate) && isCharterOrPmpDoc(t); })
       .map(function (t) { return String(t.file || "").trim(); })
       .filter(Boolean);
     return applyCharterBandFilter(files, profileBuild);
@@ -1263,6 +1273,7 @@ function buildGapReport(tf, data, MARK) {
     return profileBuild.templates
       .filter(function (t) {
         return isGenerateYes(t.generate)
+            && isCharterOrPmpDoc(t)
             && !String(t.file || "").trim();
       })
       .map(function (t) { return String(t.template_name || t.document || "").trim(); })
@@ -4700,7 +4711,7 @@ function ooxmlMimeFor(zip) {
     // box is only a manual INCLUDE for unfired projects, never an EXCLUDE for fired ones.
     var secFired = securityFiredFrom(state.profileBuild);
     var boxChecked = !$("inclSecurity") || $("inclSecurity").checked;   // absent box => default floor
-    var wantSecurity = secFired || boxChecked;
+    var wantSecurity = false;   // SCOPE: this build emits only Charter, PMP, and Schedule — no security task files
     if (wantSecurity) {
       try {
         var secT = buildSecurityTemplateOutput(); outputs.push({ name: secT.name, blob: secT.blob });
