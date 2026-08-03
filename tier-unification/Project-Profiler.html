@@ -679,7 +679,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 36;           // v01.36 (Profiler v01.31): round-trip also restores from the Intake Answers sheet, so profiles generated before the embedded state (older files) reload correctly too — no one-off
+const VER_MINOR = 37;           // v01.37 (Profiler v01.32): Documents tab adds an ESPMO Interlock Agreement checkbox (☐/☑) and moves Status before Notes (order: Count, Interlock, Status, Notes, PM Consolidation)
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2183,7 +2183,10 @@ var STATUS_OPTIONS = "Planned,In progress,Complete,Will not complete,Fine";
       var rows=[],m,re=/<c r="[A-Z]+(\d+)"/g;while(m=re.exec(xml))rows.push(+m[1]);
       if(!rows.length) return bytes;
       var hi=Math.max.apply(null,rows);
-      var dv='<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="J5:J'+hi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation></dataValidations>';
+      var dv='<dataValidations count="2">'
+        +'<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="H5:H'+hi+'"><formula1>"☐,☑"</formula1></dataValidation>'
+        +'<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="I5:I'+hi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation>'
+        +'</dataValidations>';
       if(xml.indexOf('</mergeCells>')>=0) xml=xml.replace('</mergeCells>','</mergeCells>'+dv);
       else xml=xml.replace('</sheetData>','</sheetData>'+dv);
       map[tgt]=u8(xml);
@@ -2488,14 +2491,14 @@ function saveAsExcel(){
   const catHdr    = {font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}}};
   const noteRow   = {font:{name:F,italic:true,sz:8,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}};
   const T=[
-    [{v:'A checklist the PM reviews and marks up. Requirement = Mandatory (baseline \u2014 every project) or Supplementary (triggered by tier / method / a flag). "Why included" names the question(s) that pulled each doc in. Count numbers the documents; Notes is free-text; PM Consolidation groups templates to combine (same number = merged); Status is where the PM tracks each doc \u2014 Planned / In progress / Complete / Not needed.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
-    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Requirement',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr},{v:'Status',s:colhdr}]
+    [{v:'A checklist the PM reviews and marks up. Requirement = Mandatory (baseline \u2014 every project) or Supplementary (triggered by tier / method / a flag). "Why included" names the question(s) that pulled each doc in. Count numbers the documents. ESPMO Interlock Agreement is a checkbox (\u2610 = no, \u2611 = yes) the PM ticks per doc. Status tracks each doc \u2014 Planned / In progress / Complete / Will not complete / Fine. Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'Document',s:colhdr},{v:'Assist / Advise',s:colhdr},{v:'Timing',s:colhdr},{v:'Requirement',s:colhdr},{v:'Applies at',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'ESPMO Interlock Agreement',s:colhdr},{v:'Status',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr}]
   ];
   const cats=["Initiation & Baseline","Planning","Security & Risk","Release & Production","Quality & Sustainment","Closeout & Governance"];
   let docNo=0;
   cats.forEach(cat=>{
     const items=full.filter(a=>a.cat===cat); if(!items.length) return;
-    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
+    T.push([{v:cat,s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr},{v:'',s:catHdr}]);
     items.forEach(a=>{
       const z=(T.length%2===0);
       const base=z?cellZ:cell;
@@ -2508,18 +2511,19 @@ function saveAsExcel(){
         {v:(a.tier==='T3'?'Large+':(a.tier||'')),s:z?numCZ:numC},
         {v:a.whyText||a.trigger||'',s:base},
         {v:(++docNo),s:z?numCZ:numC},      // Count \u2014 sequential document number
+        {v:'\u2610',s:z?numCZ:numC},        // ESPMO Interlock Agreement \u2014 clickable checkbox (\u2610/\u2611), default unchecked
+        {v:'Planned',s:base},               // Status \u2014 PM checks off (Planned/In progress/Complete/Will not complete/Fine)
         {v:'',s:base},                      // Notes \u2014 free-text for the PM
         {v:'',s:z?numCZ:numC},              // PM Consolidation \u2014 PM groups templates to merge
-        {v:'Planned',s:base},               // Status \u2014 PM checks off (Planned/In progress/Complete/Not needed)
       ]);
     });
   });
-  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
-  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  { const ch=withChrome(T,10,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,13,5,22,6,40,14,13],ch.merges,ch.rowH);
+  if(full.length===0) T.push([{v:'(no documents triggered yet)',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell},{v:'',s:cell}]);
+  T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
+  { const ch=withChrome(T,11,'Documents',4); const aWs=makeSheet(ch.rows,[34,15,9,13,5,22,6,22,13,40,14],ch.merges,ch.rowH);
     // merge the intro note across the row so it reads as one banner
-    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,9)]);
+    aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,10)]);
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
   // ---------- Sheet 5: Maps (Priority Value × Complexity quadrant + SIMM complexity zone) ----------
@@ -3147,7 +3151,10 @@ function saveAsExcel(){
         const jr=[]; let mm; const rre=/<c r="[A-Z]+(\d+)"/g; while(mm=rre.exec(xml)) jr.push(+mm[1]);
         if(jr.length){
           const jhi=Math.max.apply(null,jr);
-          const dvx='<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="J5:J'+jhi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation></dataValidations>';
+          const dvx='<dataValidations count="2">'
+            +'<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="H5:H'+jhi+'"><formula1>"☐,☑"</formula1></dataValidation>'
+            +'<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="I5:I'+jhi+'"><formula1>"'+STATUS_OPTIONS+'"</formula1></dataValidation>'
+            +'</dataValidations>';
           if(xml.indexOf('</mergeCells>')!==-1) xml=xml.replace('</mergeCells>','</mergeCells>'+dvx);
           else xml=xml.replace('</sheetData>','</sheetData>'+dvx);
         }
