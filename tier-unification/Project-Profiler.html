@@ -679,7 +679,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 38;           // v01.38 (Profiler v01.33): reworded Q16 (organizational teams involved) and Q17 (contractors/subcontractors); added an Artificial Intelligence section (3 questions: core AI, human review, decision impact)
+const VER_MINOR = 39;           // v01.39 (Profiler v01.34): exclude the transient __ackContra (dismissed-contradiction) flag from the round-trip state so reloads re-evaluate contradictions cleanly
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -3038,7 +3038,8 @@ function saveAsExcel(){
     // Embed the full raw answer state (hidden) so a generated profile can be re-loaded
     // later — the round-trip. Carries answers, project name, per-question context, and
     // method/phase/loe exactly, so a re-import restores the profile without guessing.
-    try { XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ESPMO_PROFILE_STATE_V1'],[JSON.stringify(state)]]), '_ESPMO_STATE'); } catch(e){}
+    try { var _persistState={}; Object.keys(state).forEach(function(k){ if(k!=='__ackContra') _persistState[k]=state[k]; });   // __ackContra is a transient UI flag (dismissed contradiction warnings) — not persisted, so reloads re-evaluate cleanly
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['ESPMO_PROFILE_STATE_V1'],[JSON.stringify(_persistState)]]), '_ESPMO_STATE'); } catch(e){}
 
     // hide the handoff sheets from the human-facing workbook (data stays fully readable by parsers)
     wb.Workbook = wb.Workbook || {};
