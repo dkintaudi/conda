@@ -691,6 +691,14 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
                                      (Templates / Fields / Loops) for Autogenerate
    The scoring follows SIMM §19 / CA-PMF; every output traces to intake answers.
    =========================================================================== */
+// ---- Defense-in-depth: prototype-pollution guard -------------------------
+// The vendored xlsx-js-style (SheetJS 0.18.5 core) predates the CVE-2023-30533
+// fix, so a maliciously crafted spreadsheet parsed by XLSX.read could try to
+// pollute Object.prototype. Freezing the base prototypes here neutralizes that
+// class of attack at runtime — any write to Object/Array prototype is rejected,
+// so a poisoned key can't take effect. The libraries load before this runs, so
+// their own setup is unaffected. (Compensating control for the frozen library.)
+try { Object.freeze(Object.prototype); Object.freeze(Array.prototype); } catch(e){}
 // ---- Versioning ----------------------------------------------------------
 // VERSION is a stamped Major.Minor edition published into this file. It climbs ONLY
 // when a new copy of the Profiler tool is produced (a new build saved, or a
@@ -701,7 +709,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 41;           // v01.41 (Profiler v01.36): library provenance verified — restored SheetJS to byte-identical xlsx-js-style 1.2.0 (reverted a stray edit in the unused encryption parser); recorded verified SHA-256 hashes for SheetJS + fflate
+const VER_MINOR = 42;           // v01.42 (Profiler v01.37): defense-in-depth prototype-pollution guard (freeze Object/Array prototypes) — compensates CVE-2023-30533 in code without touching the vendored library
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
