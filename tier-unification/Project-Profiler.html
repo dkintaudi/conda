@@ -62,6 +62,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content-Security-Policy: make the "no network egress" design enforceable at the platform
+     level. The tool is fully self-contained, so nothing loads or connects externally.
+     connect-src 'none' blocks any fetch/XHR/WebSocket/beacon (defeats XSS-to-exfiltration);
+     default-src 'none' blocks external resource loads; inline script/style are allowed because
+     the whole app is inlined; data:/blob: cover embedded images and client-side file downloads. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
 <title>ESPMO Project Profiler — v01.20</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
@@ -679,7 +685,7 @@ var XLSX={};function make_xlsx_lib(a){a.version="0.18.5",a.style_version="1.2.0"
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 39;           // v01.39 (Profiler v01.34): exclude the transient __ackContra (dismissed-contradiction) flag from the round-trip state so reloads re-evaluate contradictions cleanly
+const VER_MINOR = 40;           // v01.40 (Profiler v01.35): security hardening — escape imported content in the import review (DOM-XSS fix), add CSP, cap zip decompression, whitelist restored state keys
 const _pad2 = n => String(n).padStart(2,'0');
 const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
 // Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
@@ -2159,6 +2165,15 @@ function _recompute(){
 // SheetJS (community) cannot write data validations, so after it writes the workbook
 // (uncompressed / STORE) we inject an Excel list dropdown onto the Documents sheet's
 // Status column via a tiny pure-JS STORE zip read/write. Never blocks the export.
+// Decompression-bomb guard for every zip we open (docx/pptx/xlsx). Caps the input size and
+// the total inflated size so a small malicious archive can't exhaust memory / hang the tab.
+function safeUnzipSync(bytes){
+  if(bytes && bytes.length > 50*1024*1024) throw new Error('That file is too large to open safely (over 50 MB).');
+  var CAP=300*1024*1024, total=0;
+  var out = fflate.unzipSync(bytes, {filter:function(f){ total += (f.originalSize||0); if(total>CAP) throw new Error('This archive expands to an unsafe size and was refused.'); return true; }});
+  var t2=0; for(var k in out){ t2 += (out[k]?out[k].length:0); if(t2>CAP) throw new Error('This archive expands to an unsafe size and was refused.'); }
+  return out;
+}
 var STATUS_OPTIONS = "Planned,In progress,Complete,Will not complete,Fine";
 (function(){
   var CRC=(function(){var t=new Uint32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
@@ -3101,7 +3116,7 @@ function saveAsExcel(){
   if(!canPatch){ _saveXlsxWithDropdown(wb, outName); return; }
   try{
     const ab = XLSX.write(wb, {type:'array', bookType:'xlsx', cellStyles:true});
-    const zip = fflate.unzipSync(new Uint8Array(ab));
+    const zip = safeUnzipSync(new Uint8Array(ab));
     const dec = new TextDecoder(), enc = new TextEncoder();
     // sheetN.xml order matches wb.SheetNames order
     wb.SheetNames.forEach((sn, i)=>{
@@ -4817,7 +4832,7 @@ global.ProfilerImport = {
     var ext = extOf(file);
     if(ext==='docx' || ext==='pptx'){
       return readArrayBuffer(file).then(function(u8){
-        var zip = fflate.unzipSync(u8);
+        var zip = safeUnzipSync(u8);
         return ext==='docx' ? PI.docxText(zip) : PI.pptxText(zip);
       });
     }
@@ -4858,17 +4873,22 @@ function renderReview(merged, sourceNames){
     var notices   = merged.notices || [];
     if(!conflicts.length && !notices.length){ host.innerHTML=''; host.style.display='none'; return; }
     host.style.display='block';
+    // Escape ALL values that trace back to imported file content before they reach innerHTML —
+    // parsed field values, free text, and file names are untrusted. (Security: prevents DOM-XSS
+    // from a crafted intake document. Self-contained escaper so it never depends on outer scope.)
+    var esc = function(s){ return String(s==null?'':s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
     // How many items are we summarizing? Drives the toggle button label.
     var itemCount = conflicts.length + notices.length;
     var qLabel = function(id){
       var q=(getQuestions()||[]).filter(function(x){return x.id===id;})[0];
-      return q && q.t ? q.t : id;
+      return esc(q && q.t ? q.t : id);
     };
     var optLabel = function(id, v){
       var q=(getQuestions()||[]).filter(function(x){return x.id===id;})[0];
-      if(!q||!q.o) return v;
+      if(!q||!q.o) return esc(v);
       var o=q.o.filter(function(x){return x.v===v;})[0];
-      return o? o.l : v;
+      return esc(o? o.l : v);
     };
     var html = '';
     html += '<div style="max-width:1180px;margin:0 auto 18px;padding:14px 18px;border:1px solid #e3c98a;border-radius:12px;background:#fff9ec;">';
@@ -4879,8 +4899,8 @@ function renderReview(merged, sourceNames){
         if(c.kind==='doc'){
           html += '<div style="margin:7px 0;padding:8px 10px;background:#fff;border:1px solid #ecd9a3;border-radius:8px;font-size:12.5px;color:#3a3a3a;">'
                +  '<b>'+qLabel(c.id)+'</b><br>'
-               +  'Using <b>'+optLabel(c.id,c.fieldValue)+'</b> (from '+(c.fieldSource||'one file')+'); '
-               +  'another file ('+(c.otherSource||'another')+') said <b>'+optLabel(c.id,c.otherValue)+'</b>.'
+               +  'Using <b>'+optLabel(c.id,c.fieldValue)+'</b> (from '+esc(c.fieldSource||'one file')+'); '
+               +  'another file ('+esc(c.otherSource||'another')+') said <b>'+optLabel(c.id,c.otherValue)+'</b>.'
                +  '</div>';
         } else {
           html += '<div style="margin:7px 0;padding:8px 10px;background:#fff;border:1px solid #ecd9a3;border-radius:8px;font-size:12.5px;color:#3a3a3a;">'
@@ -4894,7 +4914,7 @@ function renderReview(merged, sourceNames){
       html += '<div style="font-weight:700;font-size:13px;color:#8a6d1f;margin:'+(conflicts.length?'12px':'0')+' 0 8px;">\uD83D\uDCDD Please review</div>';
       notices.forEach(function(n){
         html += '<div style="margin:6px 0;padding:8px 10px;background:#fff;border:1px solid #ecd9a3;border-radius:8px;font-size:12.5px;color:#3a3a3a;">'
-             +  n.message + (n.value? ' <span style="color:#777;">(\u201C'+n.value+'\u201D)</span>':'')
+             +  esc(n.message) + (n.value? ' <span style="color:#777;">(\u201C'+esc(n.value)+'\u201D)</span>':'')
              +  '</div>';
       });
     }
@@ -4924,8 +4944,23 @@ function renderReview(merged, sourceNames){
   // Round-trip: restore the whole profile from the hidden state embedded by the Excel export.
   function restoreProfileState(json){
     var data = JSON.parse(json);
+    if(!data || typeof data!=='object' || Array.isArray(data)) return;
+    // Whitelist: only known question ids (validated against their allowed option values,
+    // or a string for text questions) plus the two structured PM fields are restored.
+    // Unknown keys and out-of-range values from a hand-edited export are dropped — the tool
+    // re-derives all scores on render, so nothing authoritative is trusted from the file.
+    var Q = (typeof QUESTIONS!=='undefined'?QUESTIONS:[]), byId={};
+    Q.forEach(function(q){ byId[q.id]=q; });
     Object.keys(state).forEach(function(k){ delete state[k]; });
-    Object.keys(data).forEach(function(k){ state[k]=data[k]; });
+    Object.keys(data).forEach(function(k){
+      var v=data[k];
+      if(k==='__context'){ if(v && typeof v==='object' && !Array.isArray(v)) state.__context=v; return; }
+      if(k==='__related'){ if(Array.isArray(v)) state.__related=v; return; }
+      var q=byId[k]; if(!q) return;                                   // reject unknown keys
+      if(q.type==='text'){ if(typeof v==='string') state[k]=v; return; }
+      if(Array.isArray(q.o)){ if(q.o.some(function(o){return o.v===v;})) state[k]=v; return; } // only valid option values
+      if(typeof v==='string') state[k]=v;
+    });
     window.__revealed = true;                 // reveal the results panel
     if(typeof render==='function') render();   // repaint the questionnaire from the restored answers
     if(typeof recompute==='function') recompute(); else if(typeof compute==='function') compute();
@@ -5086,7 +5121,7 @@ function renderReview(merged, sourceNames){
   // TRT .docx -> PowerPoint (single Word file; unchanged behavior)
   function importToPptx(file){
     readArrayBuffer(file).then(function(u8){
-      var zip = fflate.unzipSync(u8);
+      var zip = safeUnzipSync(u8);
       var lines = PI.docxText(zip);
       var trt = PI.parseTRT(lines);
       if(!trt){ setStatus('That Word file doesn\u2019t look like a TRT recommendation \u2014 no DCT deck generated.', 'err'); return; }
