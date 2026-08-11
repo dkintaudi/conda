@@ -4,7 +4,7 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.formatting.rule import FormulaRule
 from openpyxl.utils import get_column_letter
 
-UP="/root/.claude/uploads/90189ac0-b18e-5100-ac2a-e29fd112f6b5/f3ea1d57-IDP_Security_Tasks_Templatev1.xlsx"
+UP="SOURCE_IDP_Security_Tasks_Templatev1.xlsx"
 tasks=json.load(open('/tmp/sectasks.json'))
 for t in tasks:
     t['id']=int(t['id'])

@@ -84,7 +84,7 @@
      default-src 'none' blocks external resource loads; inline script/style are allowed because
      the whole app is inlined; data:/blob: cover embedded images and client-side file downloads. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
-<title>ESPMO Project Profiler — v01.20</title>
+<title>ESPMO Project Profiler — v1.2</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -324,7 +324,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v01.20 · local browser tool · no upload";
+  content:"v1.2 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -709,10 +709,10 @@ try { Object.freeze(Object.prototype); Object.freeze(Array.prototype); } catch(e
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
 const VER_MAJOR = 1;
-const VER_MINOR = 43;           // v01.43 (Profiler v01.38): embed a SHA-256 handoff integrity checksum (_INTEGRITY) over the governance fields (Finding 6)
+const VER_MINOR = 2;            // v1.2 — ESPMO toolset release edition
 const _pad2 = n => String(n).padStart(2,'0');
-const _verStr = b => 'v'+_pad2(VER_MAJOR)+'.'+_pad2(b);
-// Current tool-edition version string (e.g. v01.02). Read-only; nothing advances it at runtime.
+const _verStr = b => 'v'+VER_MAJOR+'.'+b;
+// Current tool-edition version string (e.g. v1.2). Read-only; nothing advances it at runtime.
 function currentVersion(){ return _verStr(VER_MINOR); }
 const TOOL_VERSION = currentVersion();   // back-compat alias
 // Date stamp for filenames: YYYYMMDD in local time (e.g. 20260611).
@@ -5406,7 +5406,7 @@ global.ProfilerExport = {
     // Don't export an empty/hidden profile.
     if(!window.__revealed){ return null; }
     if(typeof _recompute !== 'function'){ return null; }
-    var version = (typeof currentVersion==='function') ? currentVersion() : 'v01.00';
+    var version = (typeof currentVersion==='function') ? currentVersion() : 'v1.0';
     return PE.buildSnapshot({
       recompute: _recompute,
       state: state,
@@ -5896,7 +5896,7 @@ global.ProfilerAlign = { alignCsv: alignCsv, epicExtId: epicExtId, featExtId: fe
   var PJ = window.ProfilerJira, PE = window.ProfilerExport;
   function gather(){
     if(!window.__revealed || typeof _recompute!=='function') return null;
-    var version = (typeof currentVersion==='function') ? currentVersion() : 'v01.00';
+    var version = (typeof currentVersion==='function') ? currentVersion() : 'v1.0';
     return PE.buildSnapshot({ recompute:_recompute, state:state, QUESTIONS:QUESTIONS, QNUM:QNUM, getOpt:getOpt,
       artifactsFull:window.__ARTIFACTS_FULL||[], level:window.__LEVEL||'Standard',
       tarcTriggered:window.__TARC_TRIGGERED||[], piiFloor:window.__PII_FLOOR===true,

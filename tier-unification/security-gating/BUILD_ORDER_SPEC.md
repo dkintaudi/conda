@@ -3,7 +3,6 @@
 **Target:** Toolset v01.2 → v01.3 candidate
 **Scope:** `01_Tools_Self_Contained/Project-Profiler.html`, `01_Tools_Self_Contained/Autogenerate.html`, `00_START_HERE_User_Auditor_Guide.docx` (changelog note)
 **Author of record:** D. Kintaudi, ESPMO / TGD
-**Executor:** Claude Code
 
 ---
 
