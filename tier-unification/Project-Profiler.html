@@ -1608,11 +1608,6 @@ const PMO_OWNED = new Set([
 // Explicit non-PMO ownership (who guides / owns instead). Everything not PMO-owned flows to EAO guidance;
 // these have a named owner the EAO points the PM to.
 const OWNER_NOTE = {
-  "Vendor SOW & Contract Oversight":"TGD \u2014 Procurement",
-  "Implementation Plan":"Development Team",
-  "Rollback Plan":"Development Team",
-  "RFC / RRB":"Development Team",
-  "RRR Checklist":"Development Team"
 };
 // Direct routing owner — shown as its OWN tag (not "TARC \u2192 …"). Cloud work routes through the
 // Cloud Architecture Engagement; procurement artifacts route to (IT) Procurement; the Interface
@@ -1629,7 +1624,19 @@ const ROUTE_OWNER = {
   "Requirements Management Plan":"Business Analyst",
   "Vendor SOW & Contract Oversight":"IT Procurement",
   "IT Procurement Intake Form (PIF)":"IT Procurement",
-  "Budgetary Quote":"IT Procurement"
+  "Budgetary Quote":"IT Procurement",
+  "Implementation Plan":"Development Team",
+  "Rollback Plan":"Development Team",
+  "RFC / RRB":"RPP / RRB",
+  "RRR Checklist":"Development Team",
+  // Cyber Security Division groups — route each security artifact to its owning group
+  // (keeps the on-screen owner tags consistent with the Excel Documents / Engagement Matrix).
+  "Privacy Impact Assessment (PIA)":"Privacy Oversight Group",
+  "System Security Plan (SSP) — Initial (Sections 1 & 2)":"Integrated Risk Management",
+  "Certification & Accreditation (C&A) Package":"Integrated Risk Management",
+  "Information System Recovery Plan (ISRP)":"ISD",
+  "Security Information & Event Management (SIEM) / Logging Kickoff":"Cybersecurity Ops & Fraud",
+  "Vulnerability Scan & Pen Test":"CDRG"
 };
   
 
@@ -2071,6 +2078,15 @@ function buildSummaryHTML(){
     rows+='<tr><td style="padding:6px 10px;border:1px solid #ccc;font-size:11px;color:#555;width:38%;vertical-align:top;">'+escHtml(q.t)+'</td><td style="padding:6px 10px;border:1px solid #ccc;font-size:11px;color:#222;"><div style="font-weight:bold;">'+ans+'</div>'+(ctx?'<div style="margin-top:4px;color:#555;font-weight:normal;"><span style="font-weight:bold;color:#777;">Additional Context:</span> '+ctx+'</div>':'')+'</td></tr>';
   });
   const td='padding:6px 10px;border:1px solid #ccc;font-size:11px;';
+  // Group the triggered artifacts by their actual owning team (mirrors the Excel
+  // Documents / Engagement Matrix), instead of a single PMO-vs-TARC rollup.
+  const _allArt=(window.__PMO_OWNED_LIST||[]).concat(window.__TARC_LIST||[]);
+  const _grp={}; _allArt.forEach(n=>{ const o=PMO_OWNED.has(n)?'PMO':(ROUTE_OWNER[n]||OWNER_NOTE[n]||'TARC'); (_grp[o]=_grp[o]||[]).push(n); });
+  const _ownerOrder=['PMO','Development Team','RPP / RRB','Business Analyst','ISD / Cloud Team','ISD','IT Procurement','Cloud','CDRG','Cybersecurity Ops & Fraud','Integrated Risk Management','Privacy Oversight Group','EA / AI','TARC'];
+  const _owners=Object.keys(_grp).sort((a,b)=>{const ia=_ownerOrder.indexOf(a),ib=_ownerOrder.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+  let assistRows='';
+  _owners.forEach(o=>{ const c=(o==='PMO')?'#12504c':'#7a5320'; assistRows+='<tr><td style="'+td+'color:'+c+';font-weight:bold;width:38%;vertical-align:top;">'+escHtml(o)+' assists / advises</td><td style="'+td+'color:#222;">'+_grp[o].map(escHtml).join(', ')+'</td></tr>'; });
+  if(!assistRows) assistRows='<tr><td style="'+td+'color:#555;" colspan="2">(none triggered)</td></tr>';
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escHtml(nm)+' \u2014 ESPMO Intake</title></head>'
        +'<body style="font-family:Calibri,Arial,sans-serif;padding:20px;color:#222;">'
        +'<p style="color:#1f6f6a;font-size:11px;font-weight:bold;letter-spacing:0.2em;margin:0;">EDD \u00B7 ESPMO \u00B7 PROJECT INTAKE</p>'
@@ -2089,10 +2105,7 @@ function buildSummaryHTML(){
        +'</table>'
        +'<h2 style="color:#12504c;font-family:Georgia,serif;font-size:14px;">Artifact Assistance</h2>'
        +'<table style="border-collapse:collapse;width:100%;margin-bottom:18px;">'
-       +'<tr><td style="'+td+'color:#12504c;font-weight:bold;width:38%;vertical-align:top;">PMO assists / advises</td>'
-       +'<td style="'+td+'color:#222;">'+((window.__PMO_OWNED_LIST&&window.__PMO_OWNED_LIST.length)?window.__PMO_OWNED_LIST.join(', '):'(none triggered)')+'</td></tr>'
-       +'<tr><td style="'+td+'color:#7a5320;font-weight:bold;vertical-align:top;">TARC assists / advises</td>'
-       +'<td style="'+td+'color:#222;">'+((window.__TARC_LIST&&window.__TARC_LIST.length)?window.__TARC_LIST.join(', '):'(none triggered)')+'</td></tr>'
+       +assistRows
        +'<tr><td style="'+td+'color:#555;vertical-align:top;">TARC role</td>'
        +'<td style="'+td+'color:#555;font-style:italic;">These route through TARC (Technical Architecture Review Committee) for technical/architecture review, bringing the delivery teams prepared \u2014 Procurements (TGD), Application Services, Product Services, Cyber Security, Infrastructure Services, Product Development. PMO and TARC provide assistance and a point of contact; the delivery teams produce the artifacts.</td></tr>'
        +'</table>'
