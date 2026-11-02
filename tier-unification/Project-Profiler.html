@@ -1631,12 +1631,12 @@ const ROUTE_OWNER = {
   "RRR Checklist":"Development Team",
   // Cyber Security Division groups — route each security artifact to its owning group
   // (keeps the on-screen owner tags consistent with the Excel Documents / Engagement Matrix).
-  "Privacy Impact Assessment (PIA)":"Cybersecurity (POG)",
-  "System Security Plan (SSP) — Initial (Sections 1 & 2)":"Cybersecurity (IRM)",
-  "Certification & Accreditation (C&A) Package":"Cybersecurity (IRM)",
-  "Information System Recovery Plan (ISRP)":"Cybersecurity (IRM)",
-  "Security Information & Event Management (SIEM) / Logging Kickoff":"Cybersecurity (COFG)",
-  "Vulnerability Scan & Pen Test":"Cybersecurity (CDRG)"
+  "Privacy Impact Assessment (PIA)":"Cybersecurity — Privacy Oversight Group (POG)",
+  "System Security Plan (SSP) — Initial (Sections 1 & 2)":"Cybersecurity — Integrated Risk Management (IRM)",
+  "Certification & Accreditation (C&A) Package":"Cybersecurity — Integrated Risk Management (IRM)",
+  "Information System Recovery Plan (ISRP)":"Cybersecurity — Integrated Risk Management (IRM)",
+  "Security Information & Event Management (SIEM) / Logging Kickoff":"Cybersecurity — Operations and Fraud Group (COFG)",
+  "Vulnerability Scan & Pen Test":"Cybersecurity — Cyber Defense and Response Group (CDRG)"
 };
   
 
@@ -2082,7 +2082,7 @@ function buildSummaryHTML(){
   // Documents / Engagement Matrix), instead of a single PMO-vs-TARC rollup.
   const _allArt=(window.__PMO_OWNED_LIST||[]).concat(window.__TARC_LIST||[]);
   const _grp={}; _allArt.forEach(n=>{ const o=PMO_OWNED.has(n)?'PMO':(ROUTE_OWNER[n]||OWNER_NOTE[n]||'TARC'); (_grp[o]=_grp[o]||[]).push(n); });
-  const _ownerOrder=['PMO','Development Team','RPP / RRB','Business Analyst','ISD / Cloud Technologies Section','ISD','IT Procurement','Cybersecurity (CDRG)','Cybersecurity (COFG)','Cybersecurity (IRM)','Cybersecurity (POG)','Cybersecurity (SPC)','EA / AI','TARC'];
+  const _ownerOrder=['PMO','Development Team','RPP / RRB','Business Analyst','ISD / Cloud Technologies Section','ISD','IT Procurement','Cybersecurity — Cyber Defense and Response Group (CDRG)','Cybersecurity — Operations and Fraud Group (COFG)','Cybersecurity — Integrated Risk Management (IRM)','Cybersecurity — Privacy Oversight Group (POG)','Cybersecurity — Security Policy and Compliance (SPC)','EA / AI','TARC'];
   const _owners=Object.keys(_grp).sort((a,b)=>{const ia=_ownerOrder.indexOf(a),ib=_ownerOrder.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
   let assistRows='';
   _owners.forEach(o=>{ const c=(o==='PMO')?'#12504c':'#7a5320'; assistRows+='<tr><td style="'+td+'color:'+c+';font-weight:bold;width:38%;vertical-align:top;">'+escHtml(o)+' assists / advises</td><td style="'+td+'color:#222;">'+_grp[o].map(escHtml).join(', ')+'</td></tr>'; });
@@ -2401,7 +2401,7 @@ function saveAsExcel(){
     'INI-03':{assist:'PMO', trig:'baseline'},
     'INI-04':{assist:'PMO', trig:'tier'},
     'INI-05':{assist:'PMO', trig:'baseline'},
-    'INI-06':{assist:'TARC', trig:'security', owner:'Cybersecurity (SPC)'},
+    'INI-06':{assist:'TARC', trig:'security', owner:'Cybersecurity — Security Policy and Compliance (SPC)'},
     'INI-07':{assist:'TARC', trig:'baseline', owner:'EA / AI'},
     'INI-08':{assist:'PMO', trig:'production', owner:'Development Team'},
     'PLN-01':{assist:'PMO', trig:'tier'},
@@ -2415,22 +2415,22 @@ function saveAsExcel(){
     'PLN-09':{assist:'TARC', trig:'production', lead:'Dev Ld', owner:'Development Team'},
     'PLN-10':{assist:'PMO', trig:'predictive'},
     'PLN-11':{assist:'PMO', trig:'predictive'},
-    'EXE-01':{assist:'TARC', trig:'pii', lead:'BizOwn / Sys Own', owner:'Cybersecurity (IRM)'},
-    'EXE-02':{assist:'TARC', trig:'pii', owner:'Cybersecurity (POG)'},
-    'EXE-03':{assist:'TARC', trig:'pii', owner:'Cybersecurity (IRM)'},
-    'EXE-04':{assist:'TARC', trig:'pii', owner:'Cybersecurity (IRM)'},
+    'EXE-01':{assist:'TARC', trig:'pii', lead:'BizOwn / Sys Own', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
+    'EXE-02':{assist:'TARC', trig:'pii', owner:'Cybersecurity — Privacy Oversight Group (POG)'},
+    'EXE-03':{assist:'TARC', trig:'pii', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
+    'EXE-04':{assist:'TARC', trig:'pii', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
     'EXE-05':{assist:'TARC', trig:'cloud', owner:'ISD / Cloud Technologies Section'},
     'EXE-06':{assist:'TARC', trig:'cloud'},
     'EXE-07':{assist:'TARC', trig:'cloud', owner:'EA / AI'},
-    'EXE-08':{assist:'TARC', trig:'pii', owner:'Cybersecurity (IRM)'},
-    'EXE-09':{assist:'TARC', trig:'security', owner:'Cybersecurity (IRM)'},
-    'EXE-10':{assist:'TARC', trig:'security', lead:'CSD Sec', owner:'Cybersecurity (COFG)'},
-    'EXE-11':{assist:'TARC', trig:'security', owner:'Cybersecurity (CDRG)'},
-    'EXE-12':{assist:'TARC', trig:'security', owner:'Cybersecurity (CDRG)'},
-    'EXE-13':{assist:'TARC', trig:'security', owner:'Cybersecurity (CDRG)'},
+    'EXE-08':{assist:'TARC', trig:'pii', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
+    'EXE-09':{assist:'TARC', trig:'security', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
+    'EXE-10':{assist:'TARC', trig:'security', lead:'CSD Sec', owner:'Cybersecurity — Operations and Fraud Group (COFG)'},
+    'EXE-11':{assist:'TARC', trig:'security', owner:'Cybersecurity — Cyber Defense and Response Group (CDRG)'},
+    'EXE-12':{assist:'TARC', trig:'security', owner:'Cybersecurity — Cyber Defense and Response Group (CDRG)'},
+    'EXE-13':{assist:'TARC', trig:'security', owner:'Cybersecurity — Cyber Defense and Response Group (CDRG)'},
     'EXE-14':{assist:'PMO', trig:'predictive'},
     'EXE-15':{assist:'TARC', trig:'production', lead:'Dev Ld', owner:'RPP / RRB'},
-    'EXE-16':{assist:'TARC', trig:'security', owner:'Cybersecurity (IRM)'},
+    'EXE-16':{assist:'TARC', trig:'security', owner:'Cybersecurity — Integrated Risk Management (IRM)'},
     'EXE-17':{assist:'PMO', trig:'production', owner:'Development Team'},
     'EXE-18':{assist:'TARC', trig:'production', lead:'Dev Ld', owner:'Development Team'},
     'EXE-19':{assist:'PMO', trig:'agile'},
@@ -2674,15 +2674,15 @@ function saveAsExcel(){
       {nm:'AI – Use Case Template',appr:'EAAI',tl:'Initiate / Plan',req:'As Needed',why:'Q32 — AI core component',note:'Comprehensive AI list; tracked by EA / AI and in the PM project folder.'},
     ]},
     {cat:'Security, Privacy & Risk', items:[
-      {nm:'Privacy Threshold / Impact Assessment (PTA / PIA)',appr:'Cybersecurity (POG)',tl:'Plan',req:'Required',why:'Baseline — every project (CSD)',note:'POG — Privacy Unit. A PTA is completed on every project (SIMM 5310-C); a PIA follows when the project collects or uses personal information.'},
-      {nm:'Certification & Accreditation (C&A) Package',appr:'Cybersecurity (IRM)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'For a new or modified system. Package includes the System Security Plan (SSP), Business Impact Analysis (BIA), PTA / PIA, Technology Recovery Plan (TRP / ISRP), and POA&M, as applicable. Completion is required before a new system goes live.'},
-      {nm:'Risk Assessment & Risk Acceptance',appr:'Cybersecurity (IRM)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'IRM identifies threats, vulnerabilities, likelihood / impact, and mitigation. Formal CSD risk acceptance is used when a risk cannot be fully mitigated.'},
-      {nm:'Generative AI Risk Assessment (SIMM 5305-F)',appr:'Cybersecurity (IRM)',tl:'Plan',req:'As Needed',why:'Q32 — AI core component',note:'For projects with Generative AI or GenAI-enabled functionality. Gen AI Assessment Questionnaire and SIMM 5305-F; routed to IRM for cybersecurity risk review.'},
-      {nm:'CDRG Security Engagement',appr:'Cybersecurity (CDRG)',tl:'Analysis',req:'As Needed',why:'Q28 — security review',note:'Cyber Defense and Response Group — vulnerability management, data security, cloud security posture management, and endpoint detection & response (EDR), as applicable.'},
-      {nm:'Firewall Connection Request (ITB 7441 + FAD)',appr:'Cybersecurity (CDRG)',tl:'Design',req:'As Needed',why:'Q29 — cloud / infra',note:'For new or changed network traffic through an EDD firewall. Submit via ServiceNow after required training; includes the ITB 7441 and the Firewall Architecture Diagram (FAD). CSD reviews / authorizes; ISD implements.'},
-      {nm:'SIEM / Elasticsearch Integration',appr:'Cybersecurity (COFG)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'COFG — for system / application security logging, log-source integration, alerts, or dashboards. Submit a ServiceNow Change-Task to initiate the Elasticsearch Request Form.'},
-      {nm:'Security Policy & Compliance Guidance',appr:'Cybersecurity (SPC)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'SPC — security-policy, compliance, and information-practices guidance. Reference the System and Services Acquisition (SA) Policy (pending) and the SA Standard.'},
-      {nm:'Non-Standard Software Review (VSCE + IT Exception)',appr:'Cybersecurity (SPC)',tl:'Plan',req:'As Needed',why:'As needed — non-standard software',note:'For software not on the EDD Software Standards List (or listed but not “Approved”): CSD Vendor Security & Compliance Evaluation (VSCE), the EAO EDD IT Exception Request Form, and a PTA / PIA. GenAI components also require the SIMM 5305-F.'},
+      {nm:'Privacy Threshold / Impact Assessment (PTA / PIA)',appr:'Cybersecurity — Privacy Oversight Group (POG)',tl:'Plan',req:'Required',why:'Baseline — every project (CSD)',note:'POG — Privacy Unit. A PTA is completed on every project (SIMM 5310-C); a PIA follows when the project collects or uses personal information.'},
+      {nm:'Certification & Accreditation (C&A) Package',appr:'Cybersecurity — Integrated Risk Management (IRM)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'For a new or modified system. Package includes the System Security Plan (SSP), Business Impact Analysis (BIA), PTA / PIA, Technology Recovery Plan (TRP / ISRP), and POA&M, as applicable. Completion is required before a new system goes live.'},
+      {nm:'Risk Assessment & Risk Acceptance',appr:'Cybersecurity — Integrated Risk Management (IRM)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'IRM identifies threats, vulnerabilities, likelihood / impact, and mitigation. Formal CSD risk acceptance is used when a risk cannot be fully mitigated.'},
+      {nm:'Generative AI Risk Assessment (SIMM 5305-F)',appr:'Cybersecurity — Integrated Risk Management (IRM)',tl:'Plan',req:'As Needed',why:'Q32 — AI core component',note:'For projects with Generative AI or GenAI-enabled functionality. Gen AI Assessment Questionnaire and SIMM 5305-F; routed to IRM for cybersecurity risk review.'},
+      {nm:'CDRG Security Engagement',appr:'Cybersecurity — Cyber Defense and Response Group (CDRG)',tl:'Analysis',req:'As Needed',why:'Q28 — security review',note:'Cyber Defense and Response Group — vulnerability management, data security, cloud security posture management, and endpoint detection & response (EDR), as applicable.'},
+      {nm:'Firewall Connection Request (ITB 7441 + FAD)',appr:'Cybersecurity — Cyber Defense and Response Group (CDRG)',tl:'Design',req:'As Needed',why:'Q29 — cloud / infra',note:'For new or changed network traffic through an EDD firewall. Submit via ServiceNow after required training; includes the ITB 7441 and the Firewall Architecture Diagram (FAD). CSD reviews / authorizes; ISD implements.'},
+      {nm:'SIEM / Elasticsearch Integration',appr:'Cybersecurity — Operations and Fraud Group (COFG)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'COFG — for system / application security logging, log-source integration, alerts, or dashboards. Submit a ServiceNow Change-Task to initiate the Elasticsearch Request Form.'},
+      {nm:'Security Policy & Compliance Guidance',appr:'Cybersecurity — Security Policy and Compliance (SPC)',tl:'Plan',req:'As Needed',why:'Q28 — security review',note:'SPC — security-policy, compliance, and information-practices guidance. Reference the System and Services Acquisition (SA) Policy (pending) and the SA Standard.'},
+      {nm:'Non-Standard Software Review (VSCE + IT Exception)',appr:'Cybersecurity — Security Policy and Compliance (SPC)',tl:'Plan',req:'As Needed',why:'As needed — non-standard software',note:'For software not on the EDD Software Standards List (or listed but not “Approved”): CSD Vendor Security & Compliance Evaluation (VSCE), the EAO EDD IT Exception Request Form, and a PTA / PIA. GenAI components also require the SIMM 5305-F.'},
     ]},
     {cat:'Application Services (ASD)', items:[
       {nm:'Document Imaging / Scanning',appr:'Document Technology Services Section',tl:'Analysis',req:'As Needed',why:'As needed — document imaging / scanning',note:'Likely group: DMS Operations. Contact the section intake point; engage in Planning, no later than Analysis.'},
@@ -2731,7 +2731,7 @@ function saveAsExcel(){
   });
   T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
   T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
-  { const ch=withChrome(T,10,'Documents',4); const aWs=makeSheet(ch.rows,[34,20,11,13,24,6,22,13,40,14],ch.merges,ch.rowH);
+  { const ch=withChrome(T,10,'Documents',4); const aWs=makeSheet(ch.rows,[34,30,11,13,24,6,22,13,40,14],ch.merges,ch.rowH);
     aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,9)]);
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
@@ -2994,15 +2994,15 @@ function saveAsExcel(){
     // PMO first, TARC last, specific owning teams in between.
     // Dashboard owner order: PMO, delivery teams, Business Analyst, Cloud/ISD, procurement,
     // then the enterprise review teams (CSD Security, EA / AI, TARC) last.
-    const GRP_ORDER={'PMO':0,'Development Team':1,'RPP / RRB':2,'Business Analyst':3,'ISD / Cloud Technologies Section':4,'ISD':5,'IT Procurement':6,'Cybersecurity (CDRG)':7,'Cybersecurity (COFG)':8,'Cybersecurity (IRM)':9,'Cybersecurity (POG)':10,'Cybersecurity (SPC)':11,'CSD Security':12,'EA / AI':13,'TARC':14};
+    const GRP_ORDER={'PMO':0,'Development Team':1,'RPP / RRB':2,'Business Analyst':3,'ISD / Cloud Technologies Section':4,'ISD':5,'IT Procurement':6,'Cybersecurity — Cyber Defense and Response Group (CDRG)':7,'Cybersecurity — Operations and Fraud Group (COFG)':8,'Cybersecurity — Integrated Risk Management (IRM)':9,'Cybersecurity — Privacy Oversight Group (POG)':10,'Cybersecurity — Security Policy and Compliance (SPC)':11,'CSD Security':12,'EA / AI':13,'TARC':14};
     const grpRank=o=> (o in GRP_ORDER)?GRP_ORDER[o]:6;
-    const GRP_COLOR={'PMO':TEALDK,'Development Team':'2C5E86','RPP / RRB':'2C5E86','Business Analyst':'3B6B46','ISD / Cloud Technologies Section':'1F6F6A','ISD':'1F6F6A','IT Procurement':'6A4E86','Cybersecurity (CDRG)':'8A3A3A','Cybersecurity (COFG)':'9B4A2F','Cybersecurity (IRM)':'7A4A2A','Cybersecurity (POG)':'6A4E86','Cybersecurity (SPC)':'5A4A7A','CSD Security':'8A3A3A','EA / AI':'7A5320','TARC':'7A5320'};
+    const GRP_COLOR={'PMO':TEALDK,'Development Team':'2C5E86','RPP / RRB':'2C5E86','Business Analyst':'3B6B46','ISD / Cloud Technologies Section':'1F6F6A','ISD':'1F6F6A','IT Procurement':'6A4E86','Cybersecurity — Cyber Defense and Response Group (CDRG)':'8A3A3A','Cybersecurity — Operations and Fraud Group (COFG)':'9B4A2F','Cybersecurity — Integrated Risk Management (IRM)':'7A4A2A','Cybersecurity — Privacy Oversight Group (POG)':'6A4E86','Cybersecurity — Security Policy and Compliance (SPC)':'5A4A7A','CSD Security':'8A3A3A','EA / AI':'7A5320','TARC':'7A5320'};
     const grpColor=o=> GRP_COLOR[o]||'2C5E86';
     const distinctOwners=[]; active.forEach(d=>{ const o=ownerOf(d); if(distinctOwners.indexOf(o)<0) distinctOwners.push(o); });
     distinctOwners.sort((x,y)=>grpRank(x)-grpRank(y));
     distinctOwners.forEach(o=>renderGroup(o, grpColor(o)));
     if(active.length===0) EM.push([cell('(no deliverables triggered yet — answer more questions)',false,{})].concat(Array(EMW-1).fill(cell('',false,{}))));
-    const emCols=[7,5,7,22,11,11,12,15];
+    const emCols=[24,5,7,22,11,11,12,15];
     const baseMerges=[M(0,0,0,EMW-1),M(1,0,1,EMW-1)].concat(sectionMerges.map(r=>M(r,0,r,EMW-1)));
     const emWs=makeSheet(EM,emCols,baseMerges);
     emWs['!rows']=EM.map((_,i)=>{
