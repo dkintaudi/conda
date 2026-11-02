@@ -86,7 +86,7 @@
      default-src 'none' blocks external resource loads; inline script/style are allowed because
      the whole app is inlined; data:/blob: cover embedded images and client-side file downloads. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
-<title>ESPMO Project Profiler — v1.2</title>
+<title>ESPMO Project Profiler — v2</title>
 <!-- Fonts use the system stack (no external CDN) so the tool runs fully offline behind locked-down networks. -->
 <style>
   :root{
@@ -326,7 +326,7 @@ body::before{content:"";display:block;height:8px;background:linear-gradient(90de
 }
 .mast::before{content:"";position:absolute;inset:auto -10% -42% auto;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);}
 .mast::after{
-  content:"v1.2 · local browser tool · no upload";
+  content:"v2 · local browser tool · no upload";
   position:absolute;right:24px;top:22px;padding:6px 10px;border-radius:999px;
   color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
   font:700 11px/1.2 "IBM Plex Mono","Cascadia Mono",Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;
@@ -702,13 +702,18 @@ try { Object.freeze(Object.prototype); Object.freeze(Array.prototype); } catch(e
 // Profiler produced it, for which project, on what date.
 // A static HTML file cannot increment itself, so whoever produces a new copy bumps
 // VER_MINOR (and VER_MAJOR for a big change, which resets the minor to .00).
-const VER_MAJOR = 1;
-const VER_MINOR = 2;            // v1.2 — ESPMO toolset release edition
+const VER_MAJOR = 2;            // v2 — ESPMO toolset release edition
+const VER_BASE  = 0;            // build climbs by one on each download (persisted per browser)
 const _pad2 = n => String(n).padStart(2,'0');
-const _verStr = b => 'v'+VER_MAJOR+'.'+b;
-// Current tool-edition version string (e.g. v1.2). Read-only; nothing advances it at runtime.
-function currentVersion(){ return _verStr(VER_MINOR); }
+const VER_KEY = 'espmo_profiler_build';
+function _verBuild(){ try{ var n=parseInt(localStorage.getItem(VER_KEY),10); return (isNaN(n)||n<0)?VER_BASE:n; }catch(e){ return VER_BASE; } }
+const _verStr = b => 'v'+VER_MAJOR+(b>0?('.'+b):'');
+// Tool-edition version. Starts at v2 and climbs (v2.1, v2.2, …) once per download, stored in
+// the browser so each exported file is uniquely versioned for traceability.
+function currentVersion(){ return _verStr(_verBuild()); }
+function bumpVersion(){ try{ localStorage.setItem(VER_KEY, String(_verBuild()+1)); }catch(e){} if(typeof refreshVerBadge==='function'){ try{ refreshVerBadge(); }catch(e){} } return currentVersion(); }
 const TOOL_VERSION = currentVersion();   // back-compat alias
+try{ window.currentVersion=currentVersion; window.bumpVersion=bumpVersion; }catch(e){}
 // Date stamp for filenames: YYYYMMDD in local time (e.g. 20260611).
 function _dateStamp(){ const d=new Date();
   return d.getFullYear()+_pad2(d.getMonth()+1)+_pad2(d.getDate()); }
@@ -2173,7 +2178,7 @@ function submitEmail(){
   // open the draft slightly after the download kicks off
   setTimeout(()=>{ window.location.href='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body); }, 400);
 }
-document.getElementById('saveBtn').addEventListener('click', saveAsDoc);
+document.getElementById('saveBtn').addEventListener('click', function(){ saveAsDoc(); bumpVersion(); });
 
 // Feedback: star rating + comment (collected into state, flows to email + Excel)
 const FB_LABELS={1:'Poor',2:'Fair',3:'Good',4:'Great',5:'Excellent'};
@@ -3607,11 +3612,11 @@ function saveAsPptx(){
 
 function refreshVerBadge(){ try{
   const el=document.getElementById('verBadge'); if(!el) return;
-  // Version is a fixed tool edition (does not climb at runtime), just show it.
+  // Version starts at v2 and climbs by one on each download; show the current value.
   el.textContent = '\u00B7 '+currentVersion();
 }catch(e){} }
-document.getElementById('excelBtn').addEventListener('click', function(){ saveAsExcel(); refreshVerBadge(); });
-document.getElementById('pptxBtn').addEventListener('click', function(){ saveAsPptx(); refreshVerBadge(); });
+document.getElementById('excelBtn').addEventListener('click', function(){ saveAsExcel(); bumpVersion(); });
+document.getElementById('pptxBtn').addEventListener('click', function(){ saveAsPptx(); bumpVersion(); });
 // ===== ESPMO Profiler, Document Import (docx/pptx -> Excel ; TRT docx -> PowerPoint) =====
 // ===== ESPMO Profiler, Deterministic labeled-field matcher (v01.02) =====
 /* ============================================================================
@@ -5510,7 +5515,7 @@ refreshVerBadge();
       download(out, slugify(name)+'_Schedule'+(ver?'_'+ver:'')+(ds?'_'+ds:'')+'.xlsx');
     }catch(e){ alert('Could not generate the schedule: '+(e&&e.message?e.message:e)); }
   }
-  function wire(){var b=document.getElementById('scheduleBtn');if(b&&!b._wired){b._wired=1;b.addEventListener('click',generate);}}
+  function wire(){var b=document.getElementById('scheduleBtn');if(b&&!b._wired){b._wired=1;b.addEventListener('click',function(){ generate(); try{ if(window.bumpVersion) window.bumpVersion(); }catch(e){} });}}
   if(document.readyState!=='loading')wire();else document.addEventListener('DOMContentLoaded',wire);
 })();
 </script>
