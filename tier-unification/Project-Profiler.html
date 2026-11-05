@@ -2662,25 +2662,14 @@ function saveAsExcel(){
   // Documents checklist — curated governance catalog with the Approver/Advise taxonomy.
   const DOCS_CATALOG=[
     {cat:'Initiation & Baseline', items:[
+      {nm:'Project Charter (Mini)',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:'Combined PM foundation. Includes the Stakeholder Register, RACI, and Engagement Matrix.'},
       {nm:'Engage Cloud Architect',appr:'ISD / Cloud Technologies Section',tl:'Initiate',req:'As Needed',why:'Q28 — cloud / infra',note:'Engage the Cloud Architect (ISD / Cloud Technologies Section). Identification only — the questionnaire flags that cloud engagement is needed; the actual engagement happens in Planning / Analysis / Design.'},
       {nm:'EA / AI Project Engagement Plan',appr:'EAAI',tl:'Initiate',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Stakeholder Register',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Engagement Matrix',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'RACI',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'RAID / CRAID Log',appr:'PMO',tl:'Ongoing',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Project Charter (Mini)',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:''},
     ]},
     {cat:'Planning / Analysis / Design', items:[
+      {nm:'Project Management Plan (Mini)',appr:'PMO',tl:'Plan',req:'Required',why:'Baseline — every project',note:'Includes subsidiary plans as needed: Requirements Documentation & Traceability Matrix (RTM), Training Plan, and Transition Plan.'},
       {nm:'Project Schedule',appr:'PMO',tl:'Plan',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Project Management Plan (Mini)',appr:'PMO',tl:'Plan',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Requirements Documentation',appr:'Business Analyst',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: predictive)',note:''},
-      {nm:'Test Plan & Test Cases',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: predictive)',note:''},
-      {nm:'Training Plan',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: predictive)',note:''},
-      {nm:'Transition Plan',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: predictive)',note:''},
-      {nm:'Requirements Traceability Matrix',appr:'Business Analyst',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: predictive)',note:''},
-      {nm:'Product Vision',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: agile)',note:''},
-      {nm:'Product Backlog',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: agile)',note:''},
-      {nm:'Roadmap / Sprint Planning',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 (delivery approach: agile)',note:''},
+      {nm:'Delivery Approach Pack',appr:'PMO',tl:'Plan',req:'As Needed',why:'Q1 — delivery approach (predictive / agile)',note:'Predictive: Test Plan & Test Cases, Test Strategy (Q29). Agile: Product Vision, Product Backlog, Roadmap / Sprint Planning.'},
       {nm:'New Product Evaluation',appr:'EAAI',tl:'Plan',req:'As Needed',why:'As needed — known non-standard or replacement product',note:'EA formal review with CSD and others. Covers initial review, evaluation, and management summary. New-product steps: research, structured evaluation, executive summary for DCT approval.'},
       {nm:'Structured Vendor Evaluation',appr:'EAAI',tl:'Plan',req:'As Needed',why:'As needed — market scan to select a product',note:'Different motion from New Product Evaluation. EA provides the final evaluation deliverable / recommendation.'},
       {nm:'Cloud Architecture Engagement Review',appr:'ISD / Cloud Technologies Section',tl:'Plan',req:'As Needed',why:'Q28 — cloud / infra',note:'Review with the cloud team, not just the diagram. Confirm the output artifact (conformance / non-conformance, approved services).'},
@@ -2717,21 +2706,15 @@ function saveAsExcel(){
       {nm:'Cloud Documentation',appr:'ISD / Cloud Technologies Section',tl:'Execute',req:'As Needed',why:'Q28 — cloud / infra',note:''},
     ]},
     {cat:'Quality & Sustainment', items:[
-      {nm:'Test Strategy',appr:'Development Team',tl:'Plan',req:'As Needed',why:'Q29 — testing',note:''},
       {nm:'Operations, Support & M&O Plan',appr:'ISD',tl:'Execute',req:'As Needed',why:'Q30 — support / M&O',note:''},
     ]},
     {cat:'Release & Production', items:[
-      {nm:'Implementation Plan',appr:'Development Team',tl:'Execute',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Rollback Plan',appr:'Development Team',tl:'Execute',req:'As Needed',why:'Q13 — new service',note:''},
+      {nm:'Implementation & Release Readiness',appr:'PMO',tl:'Execute',req:'Required',why:'Baseline — every project',note:'Implementation Plan (baseline). As needed for a new or changed system (Q13): Rollback Plan, RRR Checklist, and Hypercare / Production Readiness.'},
       {nm:'RFC / RRB',appr:'RPP / RRB',tl:'Execute',req:'As Needed',why:'Q13 — new service',note:''},
-      {nm:'RRR Checklist',appr:'Development Team',tl:'Execute',req:'As Needed',why:'Q13 — new service',note:''},
-      {nm:'Hypercare / Production Readiness',appr:'Development Team / Customer',tl:'Execute',req:'As Needed',why:'Q13 — new service',note:''},
     ]},
     {cat:'Closeout & Governance', items:[
-      {nm:'Status Reporting',appr:'PMO',tl:'Ongoing',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Closeout Report',appr:'PMO',tl:'Close',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Retrospective',appr:'PMO',tl:'Close',req:'Required',why:'Baseline — every project',note:''},
-      {nm:'Delegated Approvals',appr:'PMO',tl:'Ongoing',req:'Required',why:'Baseline — every project',note:'Approval may sit with the Sponsor rather than PMO — confirm.'},
+      {nm:'Status & Controls',appr:'PMO',tl:'Ongoing',req:'Required',why:'Baseline — every project',note:'Status Reporting, RAID / CRAID Log, and Delegated Approvals. (Delegated-approval authority may sit with the Sponsor — confirm.)'},
+      {nm:'Closeout',appr:'PMO',tl:'Close',req:'Required',why:'Baseline — every project',note:'Closeout Report and Retrospective.'},
     ]},
   ];
   const T=[
