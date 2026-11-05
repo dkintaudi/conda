@@ -1178,6 +1178,23 @@ function questionCardEl(q){
 // PAL matrix, 4 rows x 3 shared columns (No/Yes/Not sure). Still emits the same .opt elements
 // (data-id per field, data-v code), so clicks, state, and export are identical to four separate
 // questions; the merge exists only in the DOM. Per-row "Not sure" round-trips independently.
+function palBlockEl(qs){
+  const d=document.createElement('div'); d.className='q';
+  const L=['a','b','c','d','e','f'];
+  let h='<div class="num">PAL</div><div class="qt">Project Approval Lifecycle (PAL)</div>'
+    +'<div class="qh">SAM 4819.37 \u2014 answer each part. Any Yes (or a cost / criticality trigger) flags <b>anticipated PAL</b>; confirm at PAL Stage 1 (SIMM 19A.2). Advisory \u2014 does not change complexity or value.</div>';
+  qs.forEach((q,ix)=>{
+    const sep = ix===0 ? 'padding:6px 0 0;' : 'padding:11px 0 0;border-top:1px dashed var(--line-soft);margin-top:11px;';
+    h+='<div style="'+sep+'">';
+    h+='<div style="font-size:14px;font-weight:600;color:var(--ink-soft);line-height:1.35;margin-bottom:8px;"><span style="font-family:monospace;font-size:12px;color:var(--accent);font-weight:700;margin-right:7px;">'+L[ix]+'</span>'+htmlEsc(q.t)+'</div>';
+    h+='<div class="opts">';
+    const sel0=state[q.id];
+    q.o.forEach(o=>{ const sel=sel0===o.v; const heavy=sel&&o.f; h+='<div class="opt'+(sel?' sel':'')+(heavy?' heavy':'')+'" data-id="'+htmlEsc(q.id)+'" data-v="'+htmlEsc(o.v)+'">'+htmlEsc(o.l)+'</div>'; });
+    h+='</div></div>';
+  });
+  d.innerHTML=h;
+  return d;
+}
 function palMatrixEl(qs){
   const d=document.createElement('div'); d.className='q';
   const COLS=[['n','No'],['y','Yes'],['ns','Not sure']];
@@ -1218,11 +1235,10 @@ function render(){
     const gl=document.createElement('div'); gl.className='group-label'; gl.textContent='Section '+(gi+1)+' of '+SECTION_ORDER.length+' · '+SECTION_LABEL[g]; c.appendChild(gl);
     const qs=QUESTIONS.filter(q=>q.g===g && q.id!=='name' && condMet(q));
     if(g==='PAL Determination'){
-      // The funding-range question (5 options) renders as a normal option card; the four
-      // Yes/No/Not-sure PAL triggers render as the shared 3-column PAL matrix.
-      const isTrigger = q => Array.isArray(q.o) && q.o.length===3 && q.o.map(o=>o.v).join(',')==='n,y,ns';
-      qs.filter(q=>!isTrigger(q)).forEach(q=>c.appendChild(questionCardEl(q)));
-      c.appendChild(palMatrixEl(qs.filter(isTrigger)));
+      // All PAL questions (funding range + the Yes/No/Not-sure triggers) render as ONE
+      // PAL block with labeled parts a-d. They remain separate questions underneath,
+      // so scoring and PAL triggers are unchanged.
+      c.appendChild(palBlockEl(qs));
     }
     else qs.forEach(q=>c.appendChild(questionCardEl(q)));
   });
