@@ -2662,7 +2662,7 @@ function saveAsExcel(){
   // Documents checklist — curated governance catalog with the Approver/Advise taxonomy.
   const DOCS_CATALOG=[
     {cat:'Initiation & Baseline', items:[
-      {nm:'Cloud Engagement',appr:'ISD / Cloud Technologies Section',tl:'Initiate / Plan',req:'As Needed',why:'Q28 — cloud / infra',note:'Engage the Cloud Architect (ISD / Cloud Technologies Section). Covers the Cloud Architecture Engagement Review, Cloud Architecture Diagram, Telecommunications SPOC, and Cloud Documentation.'},
+      {nm:'Cloud Engagement',appr:'ISD / Cloud Technologies Section',tl:'Initiate / Plan',req:'As Needed',why:'Q28 — cloud / infra',note:'Engage the Cloud Architect (ISD / Cloud Technologies Section). Covers the Cloud Architecture Engagement Review, Cloud Architecture Diagram, and Telecommunications SPOC.'},
       {nm:'EA / AI Engagement',appr:'EAAI',tl:'Initiate',req:'Required',why:'Baseline — every project',note:'EA / AI Project Engagement Plan (baseline). As needed: New Product Evaluation, Structured Vendor Evaluation, and – for AI (Q31) – the AI Labor Relations Questionnaire and AI Use Case Template.'},
       {nm:'Initiation Documentation',appr:'PMO',tl:'Initiate',req:'Required',why:'Baseline — every project',note:'Includes the Change Proposal, Project Charter, Engagement Matrix (RACI), Stakeholder Register, and RAID / CRAID Log.'},
     ]},
@@ -2695,11 +2695,14 @@ function saveAsExcel(){
       {nm:'Mainframe Application / Program Change',appr:'Mainframe Services Section',tl:'Analysis',req:'As Needed',why:'As needed — mainframe program (UI / DI / tax)',note:'Likely group: Mainframe Benefit Services (UI / DI) or Tax/Employer Services, by program. Contact the section intake point; engage in Planning, no later than Analysis.'},
       {nm:'Mainframe Interface / Testing / Implementation',appr:'Mainframe Services Section',tl:'Analysis',req:'As Needed',why:'As needed — mainframe data exchange / testing',note:'Likely group: Mainframe Technical Services. Contact the section intake point; engage in Planning, no later than Analysis.'},
     ]},
+    {cat:'Execution', items:[
+      {nm:'Implementation & Release Readiness',appr:'PMO',tl:'Execute',req:'Required',why:'Baseline — every project',note:'Implementation Plan (baseline). As needed for a new or changed system (Q13): Rollback Plan, RRR Checklist, and Hypercare / Production Readiness.'},
+      {nm:'Cloud Documentation',appr:'ISD / Cloud Technologies Section',tl:'Execute',req:'As Needed',why:'Q28 — cloud / infra',note:''},
+    ]},
     {cat:'Quality & Sustainment', items:[
       {nm:'Operations, Support & M&O Plan',appr:'ISD',tl:'Execute',req:'As Needed',why:'Q30 — support / M&O',note:''},
     ]},
     {cat:'Release & Production', items:[
-      {nm:'Implementation & Release Readiness',appr:'PMO',tl:'Execute',req:'Required',why:'Baseline — every project',note:'Implementation Plan (baseline). As needed for a new or changed system (Q13): Rollback Plan, RRR Checklist, and Hypercare / Production Readiness.'},
       {nm:'RFC / RRB',appr:'RPP / RRB',tl:'Execute',req:'As Needed',why:'Q13 — new service',note:''},
     ]},
     {cat:'Closeout & Governance', items:[
