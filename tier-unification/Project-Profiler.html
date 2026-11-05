@@ -1600,7 +1600,7 @@ const PMO_OWNED = new Set([
   "Project Charter (Mini)","Project Charter (Full)","Stakeholder Register","RAID / CRAID Log",
   "Engagement Matrix","RACI",
   // Planning documentation up to the SAD
-  "Project Management Plan (Mini)","Project Management Plan (Full)","Project Schedule",
+  "Project Management Plan","Project Schedule",
   "Risk Management Plan","Quality Management Plan","Communications Management Plan","Change & Schedule Management Plan",
   "Scope Management Plan","Organization Management Plan","Procurement Management Plan","Cost Management Plan",
   "Test Plan & Test Cases",
@@ -1681,7 +1681,7 @@ function buildArtifacts(tier, flags){
   // with the subsidiary plans below). Emitted as baseline ("base") docs.
   var _full = tier>=2;
   add(_full?"Project Charter (Full)":"Project Charter (Mini)","Initiation & Baseline","Initiate","base","INI-01");
-  add(_full?"Project Management Plan (Full)":"Project Management Plan (Mini)","Planning","Plan","base","PLN-01");
+  add("Project Management Plan","Planning","Plan","base","PLN-01");
   if(tier>=2) _T.tier2.forEach(d=>add(d.nm,d.cat,d.ph,"tier",d.id));
   if(tier>=3) _T.tier3.forEach(d=>add(d.nm,d.cat,d.ph,"tier",d.id));
   if(method==='waterfall'||method==='hybrid'||method==='tbd') _T.method.predictive.forEach(d=>add(d.nm,d.cat,d.ph,"predictive",d.id));
@@ -3107,8 +3107,7 @@ function saveAsExcel(){
     const TEMPLATE_FILES = {
       'Project Charter (Mini)':'Project_Charter_Mini_TEMPLATE.docx',   // Light
       'Project Charter (Full)':'Project_Charter_Full_TEMPLATE.docx',   // Medium+
-      'Project Management Plan (Mini)':'Project_Management_Plan_Mini_TEMPLATE.docx',  // Light
-      'Project Management Plan (Full)':'Project_Management_Plan_TEMPLATE.docx',       // Medium+ (expands at High)
+      'Project Management Plan':'Project_Management_Plan_TEMPLATE.docx',       // scalable base; generator tailors content by size
       'Project Governance Plan':'Governance_Management_Plan_TEMPLATE.docx',  // Tier-3 governance deliverable (INI-02)
       'Stakeholder Register':'03_Stakeholder_Register_TEMPLATE.docx',
       'Engagement Matrix':'04_Engagement_Matrix_TEMPLATE.docx',
