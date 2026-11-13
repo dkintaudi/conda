@@ -1,6 +1,6 @@
 # ESPMO Rules workbook — regeneration
 
-The reference **Rules workbook** (`ESPMO-Rules-v01.03.xlsx`) is generated *from* the
+The reference **Rules workbook** (`../ESPMO-Rules-v01.05.xlsx`) is generated *from* the
 Profiler's published rules block so the tool and the spreadsheet cannot drift.
 
 Source of truth: `ESPMO_RULES` (between `ESPMO_RULES_START/END`) inside
@@ -11,11 +11,11 @@ consumed at runtime by `determinePAL()` — the same block the workbook's
 ## Regenerate
 
 ```bash
-# 1) dump the live rules (needs jsdom): writes /tmp/rules_dump.json
-node dump_rules_full.js
+# 1) dump the live rules (needs jsdom); output path optional, default /tmp/rules_dump.json
+node dump_rules_full.js rules_dump.json
 
-# 2) build the workbook (needs python openpyxl): writes /tmp/ESPMO-Rules-v01.03.xlsx
-python3 gen_rules_wb.py
+# 2) build the workbook (needs python openpyxl); args: [dump.json] [output.xlsx]
+python3 gen_rules_wb.py rules_dump.json ../ESPMO-Rules-v01.05.xlsx
 ```
 
 ## Verify alignment
@@ -26,7 +26,16 @@ cost UNKNOWN → INDETERMINATE, any trigger → PAL → governance Tier 4).
 ## Sheets
 
 `_meta · Questions · Value · Value_Score_Responses · RatingMaps · SIMM_Biz ·
-SIMM_Tech · Triggers · TierQuestionIds · PAL_Determination · Tshirt_Templates`
+SIMM_Tech · Triggers · TierQuestionIds · PAL_Determination · Tshirt_Templates ·
+Documents_Checklist · Package_Map`
+
+- **Triggers** now has a "fired by (questions)" column naming the answers behind each flag,
+  including the derived ones (security also fires from Q10 / Q17 / Q22 / Q28; PAL from Q18–Q21).
+- **Documents_Checklist** is the Profiler's Documents sheet catalog: each package, its approver,
+  its trigger flags (an item shows when ANY fires) and the questions behind them.
+- **Package_Map** lists every document the Profiler recommends, the checklist package it
+  belongs to, and which trigger recommends it. `../package-check/verify_packages.js` checks
+  the two lists agree.
 
 ## CA-PMF T-shirt template matrix
 

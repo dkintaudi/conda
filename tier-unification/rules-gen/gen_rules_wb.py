@@ -1,8 +1,11 @@
-import json, openpyxl
+import json, sys, openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-D=json.load(open('/tmp/rules_dump.json'))
+# usage: python3 gen_rules_wb.py [rules_dump.json] [output.xlsx]
+IN=sys.argv[1] if len(sys.argv)>1 else '/tmp/rules_dump.json'
+OUT=sys.argv[2] if len(sys.argv)>2 else '/tmp/ESPMO-Rules-v01.05.xlsx'
+D=json.load(open(IN))
 R=D['rules']; VM=D['valueModel']; QN=D['qnum']
 
 wb=openpyxl.Workbook(); wb.remove(wb.active)
@@ -36,12 +39,11 @@ def widths(ws,ws_w):
 # ---------- _meta ----------
 ws=sheet("_meta"); band_row(ws,"EDD · ESPMO · GOVERNANCE RULES (round-trip schema)",2)
 meta=[("Description","Regenerated FROM the live Profiler ESPMO_RULES block — questions, scoring, triggers, and the PAL calculation all derive from the same source, so the tool and this workbook cannot drift."),
- ("schema","RT-1.1"),("rulesVersion","01.04"),("generatedFrom","Profiler ESPMO_RULES (32 questions, weighted value model, ESPMO_RULES.pal, ESPMO_RULES.tshirt)"),
+ ("schema","RT-1.1"),("rulesVersion","01.05"),("generatedFrom","Profiler ESPMO_RULES ("+str(len(QN))+" numbered questions, weighted value model, ESPMO_RULES.pal, ESPMO_RULES.tshirt)"),
  ("zoneThreshold",R['scoring']['zoneThreshold']),("value.model","weighted 0/1/3/9 drivers, normalized to 100 (Σ weight×value / "+str(D['valueMax'])+" × 100)"),
  ("value.weightSum",D['valueWsum']),("value.max",D['valueMax']),
  ("pal.spec",R['pal']['spec']),("pal.palTier",R['pal']['palTier']),
- ("pal.config.EDD_COST_DELEGATION",str(R['pal']['config']['EDD_COST_DELEGATION'])),
- ("pal.config.COST_KNOWN",str(R['pal']['config']['COST_KNOWN'])),
+ ("pal.config",", ".join("%s=%s"%(k,v) for k,v in R['pal'].get('config',{}).items()) or "(none — cost is an answer trigger, see PAL_Determination)"),
  ("govTier.palTier",R['scoring'].get('govTier',{}).get('palTier',4)),
  ("govTier.eddnextFloor",R['scoring'].get('govTier',{}).get('eddnextFloor',3))]
 for k,v in meta: datarow(ws,[k,v])
@@ -102,15 +104,28 @@ simm("SIMM_Tech","SIMM technical complexity axis",R['scoring']['simmTech'])
 
 # ---------- Triggers ----------
 ws=sheet("Triggers"); band_row(ws,"Triggers → documents (flag origin pulls each document in)",5)
-hdr(ws,["origin (flag)","document","category","phase","note"])
+hdr(ws,["origin (flag)","document","category","phase","note","fired by (questions)"])
+# which answers set each flag (from the question options), plus the Profiler's derived flags
+FLAGQ={}
+for q in R['questions']:
+    for o in q.get('o') or []:
+        if o.get('f'): FLAGQ.setdefault(o['f'],[]).append("Q%02d=%s"%(QN.get(q['id'],0),o['l']))
+DERIVED={'security':'also fires when sensitive data (Q22), public impact (Q10), cloud (Q28) or a vendor (Q17) is flagged',
+         'pal':'PAL determination: any of '+", ".join("Q%02d %s"%(QN.get(t['q'],0),t['label']) for t in R['pal']['triggers'] if t.get('q'))+' (see PAL_Determination)'}
+STATEQ={'__state_testing':'Q29 testing answered (not N/A)','__state_support':'Q30 support answered (not N/A)'}
+def fired(fk):
+    if fk in STATEQ: return STATEQ[fk]
+    parts=[", ".join(FLAGQ.get(fk,[]))] if FLAGQ.get(fk) else []
+    if fk in DERIVED: parts.append(DERIVED[fk])
+    return " ; ".join(parts)
 T=R['triggers']
 for grp in ['baseline','tier2','tier3']:
-    for d0 in T.get(grp,[]): datarow(ws,[grp,d0['nm'],d0.get('cat',''),d0.get('ph',''),""])
+    for d0 in T.get(grp,[]): datarow(ws,[grp,d0['nm'],d0.get('cat',''),d0.get('ph',''),"",{"baseline":"every project"}.get(grp,"complexity tier")])
 for meth in ['predictive','agile']:
-    for d0 in T.get('method',{}).get(meth,[]): datarow(ws,["method:"+meth,d0['nm'],d0.get('cat',''),d0.get('ph',''),""])
+    for d0 in T.get('method',{}).get(meth,[]): datarow(ws,["method:"+meth,d0['nm'],d0.get('cat',''),d0.get('ph',''),"","Q%02d delivery approach"%QN.get('method',1)])
 for fk,fv in T.get('flags',{}).items():
-    for d0 in fv.get('docs',[]): datarow(ws,["flag:"+fk,d0['nm'],d0.get('cat',''),d0.get('ph',''),fv.get('origin','')])
-widths(ws,[18,44,22,14,22])
+    for d0 in fv.get('docs',[]): datarow(ws,["flag:"+fk,d0['nm'],d0.get('cat',''),d0.get('ph',''),fv.get('origin',''),fired(fk)])
+widths(ws,[18,44,22,14,22,60])
 
 # ---------- TierQuestionIds ----------
 ws=sheet("TierQuestionIds"); band_row(ws,"Tier-driving question ids (high answers can push the complexity tier)",1)
@@ -128,12 +143,15 @@ for k in ['pal','indeterminate','regular']:
     datarow(ws,[k.upper(),P['rule'][k],"→ status:",P['status'][k],""])
 ws.append([])
 ws.append(["Cost trigger configuration (SIMM 15A / delegation agreement)"]); ws.cell(ws.max_row,1).font=sectF; ws.cell(ws.max_row,1).fill=sect
-datarow(ws,["EDD_COST_DELEGATION",str(P['config']['EDD_COST_DELEGATION']),"COST_KNOWN",str(P['config']['COST_KNOWN']),"While COST_KNOWN is false the cost trigger returns UNKNOWN → INDETERMINATE when triggers 2–5 are all No."])
+if P.get('config'):
+    datarow(ws,["EDD_COST_DELEGATION",str(P['config'].get('EDD_COST_DELEGATION')),"COST_KNOWN",str(P['config'].get('COST_KNOWN')),"While COST_KNOWN is false the cost trigger returns UNKNOWN → INDETERMINATE when the other triggers are all No."])
+else:
+    datarow(ws,["(none)","","","","Cost is answered directly by an intake question (see the cost trigger below); no delegation config is used."])
 ws.append([])
 ws.append(["Triggers (any Yes ⇒ PAL)"]); ws.cell(ws.max_row,1).font=sectF; ws.cell(ws.max_row,1).fill=sect
 hdr(ws,["#","trigger key","source question id","Yes value","label / meaning"])
 for i,t in enumerate(P['triggers'],1):
-    qtext = t['q'] if t.get('q') else "(cost vs. delegation tier — config)"
+    qtext = (("Q%02d "%QN[t['q']]) if t.get('q') in QN else "")+t['q'] if t.get('q') else "(cost vs. delegation tier — config)"
     datarow(ws,[i,t['key'],qtext,t.get('yes','—'),t['label']])
 ws.append([])
 datarow(ws,["Disclaimer",P['disclaimer'],"","",""])
@@ -153,7 +171,37 @@ for t in TS:
                 t.get('path',''),t.get('note','')])
 widths(ws,[34,42,14,8,6,12,9,10,9,46,40])
 
+# ---------- Documents_Checklist (the packages on the Profiler's Documents sheet) ----------
+CAT=D.get('docsCatalog',[]); PK=D.get('packageOf',{})
+TRIGQ={'base':'every project','cloud':fired('cloud'),'security':fired('security'),'production':fired('production'),
+       'pii':fired('pii'),'ai':fired('ai'),'asd':fired('asd'),'vendor':fired('vendor'),'archnew':fired('archnew'),
+       'pal':fired('pal'),'acquisition':'Q32 acquisition = Yes or Not sure','support':'Q30 support answered (not N/A)'}
+ws=sheet("Documents_Checklist"); band_row(ws,"Documents checklist — packages the Profiler lists (an item shows when ANY of its triggers fires)",8)
+hdr(ws,["category","document / package","approver / advise","timeline","requirement","trigger flags","fired by (questions)","contents / note"])
+for g in CAT:
+    for it in g['items']:
+        tr=it.get('trig') or 'base'; tl=tr if isinstance(tr,list) else [tr]
+        datarow(ws,[g['cat'],it['nm'],it.get('appr',''),it.get('tl',''),it.get('req',''),", ".join(tl),
+                    "  OR  ".join(TRIGQ.get(t,t) for t in tl),it.get('note','')])
+widths(ws,[22,40,32,12,12,26,60,60])
+
+# ---------- Package_Map (every recommended document -> its checklist package) ----------
+SRCOF={}
+for grp in ['baseline','tier2','tier3']:
+    for d0 in T.get(grp,[]): SRCOF.setdefault(d0['nm'],[]).append(grp)
+for meth in ['predictive','agile']:
+    for d0 in T.get('method',{}).get(meth,[]): SRCOF.setdefault(d0['nm'],[]).append("method:"+meth)
+for fk,fv in T.get('flags',{}).items():
+    for d0 in fv.get('docs',[]): SRCOF.setdefault(d0['nm'],[]).append("flag:"+fk)
+for nm in ("Project Charter","Project Management Plan"): SRCOF.setdefault(nm,[]).append("baseline")
+ws=sheet("Package_Map"); band_row(ws,"Package map — each document the Profiler recommends and the checklist package it belongs to",3)
+hdr(ws,["document","package","recommended by"])
+order={g_it['nm']:i for i,g_it in enumerate(it2 for g in CAT for it2 in g['items'])}
+for nm,pkg in sorted(PK.items(), key=lambda kv:(order.get(kv[1],999),kv[0])):
+    datarow(ws,[nm,pkg,", ".join(SRCOF.get(nm,[])) or "—"])
+widths(ws,[52,44,40])
+
 # freeze header-ish rows and save
-out="/tmp/ESPMO-Rules-v01.04.xlsx"
+out=OUT
 wb.save(out)
 print("saved",out,"sheets:",wb.sheetnames)
