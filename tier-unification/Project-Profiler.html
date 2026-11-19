@@ -3076,7 +3076,7 @@ function saveAsExcel(){
         nameCell(resp, isPMO?'Project Manager':'System Owner', z,'1F6F6A',true),
         nameCell('PM','Project Manager',z,'8A3A3A',true),
         nameCell(cons, isPMO?'ESPMO (PMO)':d.appr, z,'7A5C00',false),
-        nameCell('Sponsor','Executive Sponsor',z,'5A6472',false),
+        nameCell('Business Sponsor','Business Sponsor',z,'5A6472',false),
         cell(d.req||'',z,{}),
         cell(d.why||'',z,{color:'27506F'})
       ]);
@@ -3113,25 +3113,30 @@ function saveAsExcel(){
     const roleCell=(t,z,mode)=>({v:t||'',s:{font:{name:F,bold:mode!=='hint',italic:mode==='hint',sz:8.5,color:{rgb:mode==='hint'?'97A0AB':TEALDK}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'center',wrapText:true},border:FILLB}});
     const fillCell=(z)=>({v:'',s:{font:{name:F,sz:8.5,color:{rgb:INK}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'center',wrapText:true},border:FILLB}});
     const raciCell=(t,z)=>({v:t||'',s:{font:{name:F,bold:true,sz:8.5,color:{rgb:t==='A'?'8A3A3A':t==='R'?'1F6F6A':t==='C'?'7A5C00':'5A6472'}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{horizontal:'center',vertical:'center'},border:FILLB}});
+    const iiCell=(t,z)=>({v:t||'',s:{font:{name:F,sz:8,color:{rgb:'5A6472'}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{horizontal:'center',vertical:'center'},border:FILLB}});
     const SK=[];
     SK.push([{v:'EDD · ESPMO — '+nmText+' — STAKEHOLDER LIST',s:bandSK}].concat(Array(SKW-1).fill({v:'',s:bandSK})));
-    SK.push([{v:'Name the actual people behind each project role so the whole team can see who is who — this IS your Stakeholder List / Register, so there is no need to build a separate one. The roles below are pre-filled from the documents this project triggered and mirror the Engagement Matrix RACI (A=Accountable · R=Responsible · C=Consulted · I=Informed). Fill in Name, Title, Organization, and Contact, then add any project-specific stakeholders (end users, SMEs, vendors) in the blank rows.    Agile & Hybrid note: Agile and Hybrid projects still move through the same governance phases (Initiate → Plan → Execute → Close) and still have requirements — in Agile they live in the Product Vision, Backlog, and user stories / acceptance criteria rather than a single up-front spec.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(SKW-1).fill({v:'',s:{}})));
+    SK.push([{v:'Name the actual people behind each project role so the whole team can see who is who — this IS your Stakeholder List / Register, so there is no need to build a separate one. The roles below are pre-filled from the documents this project triggered and mirror the Engagement Matrix RACI (A=Accountable · R=Responsible · C=Consulted · I=Informed). Fill in Name, Title, Organization, and Contact, then add any project-specific stakeholders (end users, SMEs, vendors) in the blank rows. The six core roles at the top apply to every project; Business Owner may be more than one (one per business section), and Transition to Support is the technical lead / business lead who take the solution into operations. Interest · Influence values are starting defaults — adjust per your project.    Agile & Hybrid note: Agile and Hybrid projects still move through the same governance phases (Initiate → Plan → Execute → Close) and still have requirements — in Agile they live in the Product Vision, Backlog, and user stories / acceptance criteria rather than a single up-front spec.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(SKW-1).fill({v:'',s:{}})));
     SK.push([hdrSK('Project Role / Group'),hdrSK('Name'),hdrSK('Title'),hdrSK('Organization / Division'),hdrSK('Email · Phone'),hdrSK('RACI','8A3A3A'),hdrSK('Interest · Influence','7A5C00'),hdrSK('Notes','27506F')]);
-    const addRow=(role,raci,mode)=>{ const z=(SK.length%2===1); SK.push([ roleCell(role,z,mode), fillCell(z), fillCell(z), fillCell(z), fillCell(z), raciCell(raci,z), fillCell(z), fillCell(z) ]); };
-    // core roles present on every project
-    addRow('Executive Sponsor','I');
-    addRow('Business Owner','C');
-    addRow('Project Manager','A');
-    addRow('System Owner','R');
-    addRow('ESPMO (PMO)','C');
+    const addRow=(role,raci,ii,mode)=>{ const z=(SK.length%2===1); SK.push([ roleCell(role,z,mode), fillCell(z), fillCell(z), fillCell(z), fillCell(z), raciCell(raci,z), ii?iiCell(ii,z):fillCell(z), fillCell(z) ]); };
+    // the six core roles present on EVERY project (fill in the real people)
+    addRow('Business Sponsor','I','High · High');
+    addRow('IT Sponsor','I','High · High');
+    addRow('Project Manager','A','High · High');
+    addRow('System Owner','R','High · High');
+    addRow('Business Owner','C','High · High');
+    addRow('Business Owner — additional section (if any)','C','High · High','hint');
+    addRow('Transition to Support (Technical Lead / Business Lead)','R','High · Med');
+    // PMO office (Consulted on the PMO documents)
+    addRow('ESPMO (PMO)','C','Med · Med');
     // governance / specialist teams this project triggered (Consulted)
-    govTeams.forEach(t=>addRow(t,'C'));
+    govTeams.forEach(t=>addRow(t,'C','Med · High'));
     // suggested additional stakeholders (editable prompts)
-    addRow('Technical SME','C','hint');
-    addRow('Business Area Rep / End Users','I','hint');
-    addRow('Vendor / Contractor (if any)','C','hint');
+    addRow('Technical SME','C','Med · Med','hint');
+    addRow('End Users / Business Area Rep','I','High · Low','hint');
+    addRow('Vendor / Contractor (if any)','C','Med · Med','hint');
     // blank rows for the PM to add anyone else
-    for(let i=0;i<8;i++) addRow('','', 'hint');
+    for(let i=0;i<8;i++) addRow('','','', 'hint');
     const skWs=makeSheet(SK,[26,20,20,24,24,7,16,26],[M(0,0,0,SKW-1),M(1,0,1,SKW-1)]);
     skWs['!rows']=SK.map((_,i)=>{ if(i===0) return {hpt:18}; if(i===1) return {hpt:60}; if(i===2) return {hpt:26}; return {hpt:22}; });
     skWs['!autofilter']={ref:'A3:'+XLSX.utils.encode_col(SKW-1)+SK.length};
