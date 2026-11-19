@@ -2796,7 +2796,7 @@ function saveAsExcel(){
     ]},
   ];
   const T=[
-    [{v:'The PM is accountable for this documentation set: the PM completes the PMO documents, and the System Owner completes & files each specialist document, with the owning team in the Approver column reviewing and approving. Filter the Approver / Requirement / Status columns to see who approves what and track completion.    A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'The PM is accountable for this documentation set: the PM completes the PMO documents, and the System Owner completes & files each specialist document, with the owning team in the Approver column reviewing and approving. Filter the Approver / Requirement / Status columns to see who approves what and track completion.    A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).    Agile & Hybrid note: every project — Agile included — moves through the same governance phases (Initiate → Plan → Execute → Close) and still has requirements; in Agile they take the form of a Product Vision, Product Backlog, and user stories / acceptance criteria rather than a single up-front specification. The delivery approach changes how the work is done, not whether these phases and documents apply.',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
     [{v:'Document / Engagement',s:colhdr},{v:'Approver / Advise',s:colhdr},{v:'Timeline',s:colhdr},{v:'Requirement',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'ESPMO Interlock Agreement',s:colhdr},{v:'Status',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr}]
   ];
   let docNo=0;
@@ -3047,7 +3047,7 @@ function saveAsExcel(){
     const hdrCellEM=(t,col)=>({v:t,s:{font:{name:F,bold:true,sz:8,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col||TEALDK}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}});
     const EM=[];
     EM.push([{v:'Engagement Matrix — RACI for each document this project triggered',s:{font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:TEALDK}}}})));
-    EM.push([{v:'The PM is Accountable (A) for the full documentation set. The System Owner is Responsible (R) for completing & filing each specialist document, with the owning governance team Consulted (C) — they provide requirements, review, and approve. The PM is Responsible for the PMO documents (ESPMO consulted).    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input / reviews / approves)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage (C).',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
+    EM.push([{v:'The PM is Accountable (A) for the full documentation set. The System Owner is Responsible (R) for completing & filing each specialist document, with the owning governance team Consulted (C) — they provide requirements, review, and approve. The PM is Responsible for the PMO documents (ESPMO consulted).    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input / reviews / approves)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage (C).    Agile & Hybrid note: every project — Agile included — moves through the same governance phases (Initiate → Plan → Execute → Close) and still has requirements (as a Product Vision, Backlog, and user stories / acceptance criteria). Methodology changes how the work is done, not whether these phases, documents, and roles apply.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
     EM.push([hdrCellEM('Phase'),hdrCellEM('Document / Engagement'),hdrCellEM('R · Responsible','1F6F6A'),hdrCellEM('A · Accountable','8A3A3A'),
              hdrCellEM('C · Consulted','C8973F'),hdrCellEM('I · Informed','5A6472'),
              hdrCellEM('Requirement','7A5C00'),hdrCellEM('Why (question)','27506F')]);
@@ -3087,6 +3087,50 @@ function saveAsExcel(){
     });
     emWs['!freeze']={ySplit:3,topLeftCell:'A4',activePane:'bottomLeft',state:'frozen'};
     XLSX.utils.book_append_sheet(wb, emWs, 'Engagement Matrix');
+  }
+
+  // ---------- Sheet 6b: Stakeholder List (fill-in template, seeded from triggered roles) ----------
+  // The profiler hands the PM the Stakeholder Register template directly — roles are pre-filled
+  // from the documents this project triggered and mirror the Engagement Matrix RACI; the PM just
+  // adds the real people. Ties 1:1 to the Engagement Matrix so names and roles stay in sync.
+  {
+    const SKW=8;
+    const skFlags=Object.assign({}, _recompute().flags);
+    const skOn=t=>{ if(Array.isArray(t)) return t.some(x=>skOn(x)); t=t||'base'; if(t==='base') return true; if(t==='acquisition') return state.acquisition==='y'||state.acquisition==='ns'; if(t==='support') return !!state.support && state.support!=='na'; return !!skFlags[t]; };
+    // distinct governance teams (Approver values other than PMO) from the triggered doc set
+    const govSeen={}; const govTeams=[];
+    DOCS_CATALOG.forEach(g=>g.items.forEach(it=>{ if(skOn(it.trig) && it.appr && it.appr!=='PMO' && !govSeen[it.appr]){ govSeen[it.appr]=1; govTeams.push(it.appr); } }));
+    const bandSK={font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}};
+    const hdrSK=(t,col)=>({v:t,s:{font:{name:F,bold:true,sz:8,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col||TEALDK}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}});
+    const FILLB={bottom:{style:'hair',color:{rgb:'C9C9C9'}}};
+    // role cell (known / seeded), fill-in cell (blank, bordered), raci cell
+    const roleCell=(t,z,mode)=>({v:t||'',s:{font:{name:F,bold:mode!=='hint',italic:mode==='hint',sz:8.5,color:{rgb:mode==='hint'?'97A0AB':TEALDK}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'center',wrapText:true},border:FILLB}});
+    const fillCell=(z)=>({v:'',s:{font:{name:F,sz:8.5,color:{rgb:INK}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'center',wrapText:true},border:FILLB}});
+    const raciCell=(t,z)=>({v:t||'',s:{font:{name:F,bold:true,sz:8.5,color:{rgb:t==='A'?'8A3A3A':t==='R'?'1F6F6A':t==='C'?'7A5C00':'5A6472'}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{horizontal:'center',vertical:'center'},border:FILLB}});
+    const SK=[];
+    SK.push([{v:'EDD · ESPMO — '+nmText+' — STAKEHOLDER LIST',s:bandSK}].concat(Array(SKW-1).fill({v:'',s:bandSK})));
+    SK.push([{v:'Name the actual people behind each project role so the whole team can see who is who — this IS your Stakeholder List / Register, so there is no need to build a separate one. The roles below are pre-filled from the documents this project triggered and mirror the Engagement Matrix RACI (A=Accountable · R=Responsible · C=Consulted · I=Informed). Fill in Name, Title, Organization, and Contact, then add any project-specific stakeholders (end users, SMEs, vendors) in the blank rows.    Agile & Hybrid note: Agile and Hybrid projects still move through the same governance phases (Initiate → Plan → Execute → Close) and still have requirements — in Agile they live in the Product Vision, Backlog, and user stories / acceptance criteria rather than a single up-front spec.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(SKW-1).fill({v:'',s:{}})));
+    SK.push([hdrSK('Project Role / Group'),hdrSK('Name'),hdrSK('Title'),hdrSK('Organization / Division'),hdrSK('Email · Phone'),hdrSK('RACI','8A3A3A'),hdrSK('Interest · Influence','7A5C00'),hdrSK('Notes','27506F')]);
+    const addRow=(role,raci,mode)=>{ const z=(SK.length%2===1); SK.push([ roleCell(role,z,mode), fillCell(z), fillCell(z), fillCell(z), fillCell(z), raciCell(raci,z), fillCell(z), fillCell(z) ]); };
+    // core roles present on every project
+    addRow('Executive Sponsor','I');
+    addRow('Business Owner','C');
+    addRow('Project Manager','A');
+    addRow('System Owner','R');
+    addRow('ESPMO (PMO)','C');
+    // governance / specialist teams this project triggered (Consulted)
+    govTeams.forEach(t=>addRow(t,'C'));
+    // suggested additional stakeholders (editable prompts)
+    addRow('Technical SME','C','hint');
+    addRow('Business Area Rep / End Users','I','hint');
+    addRow('Vendor / Contractor (if any)','C','hint');
+    // blank rows for the PM to add anyone else
+    for(let i=0;i<8;i++) addRow('','', 'hint');
+    const skWs=makeSheet(SK,[26,20,20,24,24,7,16,26],[M(0,0,0,SKW-1),M(1,0,1,SKW-1)]);
+    skWs['!rows']=SK.map((_,i)=>{ if(i===0) return {hpt:18}; if(i===1) return {hpt:60}; if(i===2) return {hpt:26}; return {hpt:22}; });
+    skWs['!autofilter']={ref:'A3:'+XLSX.utils.encode_col(SKW-1)+SK.length};
+    skWs['!freeze']={ySplit:3,topLeftCell:'A4',activePane:'bottomLeft',state:'frozen'};
+    XLSX.utils.book_append_sheet(wb, skWs, 'Stakeholder List');
   }
 
   // ---------- Sheet 7: Glossary (acronyms & terms), from template Acronyms List ----------
