@@ -3047,7 +3047,7 @@ function saveAsExcel(){
     const hdrCellEM=(t,col)=>({v:t,s:{font:{name:F,bold:true,sz:8,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col||TEALDK}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}});
     const EM=[];
     EM.push([{v:'Engagement Matrix — RACI for each document this project triggered',s:{font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:TEALDK}}}})));
-    EM.push([{v:'The PM is Accountable (A) for the full documentation set. The System Owner is Responsible (R) for completing & filing each specialist document, with the owning governance team Consulted (C) — they provide requirements, review, and approve. The PM is Responsible for the PMO documents (ESPMO consulted).    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input / reviews / approves)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage (C).    Agile & Hybrid note: every project — Agile included — moves through the same governance phases (Initiate → Plan → Execute → Close) and still has requirements (as a Product Vision, Backlog, and user stories / acceptance criteria). Methodology changes how the work is done, not whether these phases, documents, and roles apply.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
+    EM.push([{v:'The PM is Accountable (A) for the full documentation set. The System Owner is Responsible (R) for completing & filing each specialist document, with the owning governance team Consulted (C) — they provide requirements, review, and approve. The PM is Responsible for the PMO documents (ESPMO consulted).    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input / reviews / approves)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage (C).    Names fill in automatically: type a person next to their role on the Stakeholder List tab and it appears here beside R / A / C / I (shown as "Role — Name").    Agile & Hybrid note: every project — Agile included — moves through the same governance phases (Initiate → Plan → Execute → Close) and still has requirements (as a Product Vision, Backlog, and user stories / acceptance criteria). Methodology changes how the work is done, not whether these phases, documents, and roles apply.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
     EM.push([hdrCellEM('Phase'),hdrCellEM('Document / Engagement'),hdrCellEM('R · Responsible','1F6F6A'),hdrCellEM('A · Accountable','8A3A3A'),
              hdrCellEM('C · Consulted','C8973F'),hdrCellEM('I · Informed','5A6472'),
              hdrCellEM('Requirement','7A5C00'),hdrCellEM('Why (question)','27506F')]);
@@ -3063,14 +3063,20 @@ function saveAsExcel(){
     const active=[]; DOCS_CATALOG.forEach(g=>g.items.forEach(it=>{ if(_emOn(it.trig)) active.push(it); }));
     active.sort((a,b)=>{ const r=grpRank(a.appr)-grpRank(b.appr); if(r) return r; return ((PHRANK[a.tl]==null)?9:PHRANK[a.tl])-((PHRANK[b.tl]==null)?9:PHRANK[b.tl]); });
     const sectionMerges=[];
+    // Live link to the Stakeholder List tab: each R/A/C/I cell looks up its role there and,
+    // when the PM has typed a person's name next to that role, shows "Role  —  Name".
+    const SKREF="'Stakeholder List'!$A:$B";
+    const nameCell=(label,key,z,color,bold)=>{ const K=String(key).replace(/"/g,'""'), L=String(label).replace(/"/g,'""');
+      const f='IFERROR(IF((VLOOKUP("'+K+'",'+SKREF+',2,0)&"")="","'+L+'","'+L+'  —  "&VLOOKUP("'+K+'",'+SKREF+',2,0)),"'+L+'")';
+      return { f:f, cached:label, s:{font:{name:F,sz:8,bold:!!bold,color:{rgb:color}},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'top',wrapText:true}} }; };
     active.forEach((d,i)=>{ const z=(i%2===1); const isPMO=(d.appr==='PMO'); const resp=isPMO?'PM':'System Owner'; const cons=isPMO?'ESPMO':d.appr;
       EM.push([
         cell(d.tl||'',z,{}),
         cell(d.nm,z,{bold:true,color:TEALDK}),
-        cell(resp,z,{color:'1F6F6A',bold:true}),
-        cell('PM',z,{color:'8A3A3A',bold:true}),
-        cell(cons,z,{color:'7A5C00'}),
-        cell('Sponsor',z,{color:'5A6472'}),
+        nameCell(resp, isPMO?'Project Manager':'System Owner', z,'1F6F6A',true),
+        nameCell('PM','Project Manager',z,'8A3A3A',true),
+        nameCell(cons, isPMO?'ESPMO (PMO)':d.appr, z,'7A5C00',false),
+        nameCell('Sponsor','Executive Sponsor',z,'5A6472',false),
         cell(d.req||'',z,{}),
         cell(d.why||'',z,{color:'27506F'})
       ]);
