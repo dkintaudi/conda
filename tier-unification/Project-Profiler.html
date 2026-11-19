@@ -2796,7 +2796,7 @@ function saveAsExcel(){
     ]},
   ];
   const T=[
-    [{v:'The PM is accountable for completing this documentation set: the PM completes the PMO documents, and each listed team completes & files its own. Filter the Approver / Requirement / Status columns to see who completes what.    A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'The PM is accountable for this documentation set: the PM completes the PMO documents, and the System Owner completes & files each specialist document, with the owning team in the Approver column reviewing and approving. Filter the Approver / Requirement / Status columns to see who approves what and track completion.    A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
     [{v:'Document / Engagement',s:colhdr},{v:'Approver / Advise',s:colhdr},{v:'Timeline',s:colhdr},{v:'Requirement',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'ESPMO Interlock Agreement',s:colhdr},{v:'Status',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr}]
   ];
   let docNo=0;
@@ -3047,7 +3047,7 @@ function saveAsExcel(){
     const hdrCellEM=(t,col)=>({v:t,s:{font:{name:F,bold:true,sz:8,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col||TEALDK}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}});
     const EM=[];
     EM.push([{v:'Engagement Matrix — RACI for each document this project triggered',s:{font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:TEALDK}}}})));
-    EM.push([{v:'The PM is Accountable (A) for completing the full documentation set. Each listed team is Responsible (R) for completing & filing its own documents; the PM is Responsible for the PMO documents.    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
+    EM.push([{v:'The PM is Accountable (A) for the full documentation set. The System Owner is Responsible (R) for completing & filing each specialist document, with the owning governance team Consulted (C) — they provide requirements, review, and approve. The PM is Responsible for the PMO documents (ESPMO consulted).    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input / reviews / approves)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage (C).',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
     EM.push([hdrCellEM('Phase'),hdrCellEM('Document / Engagement'),hdrCellEM('R · Responsible','1F6F6A'),hdrCellEM('A · Accountable','8A3A3A'),
              hdrCellEM('C · Consulted','C8973F'),hdrCellEM('I · Informed','5A6472'),
              hdrCellEM('Requirement','7A5C00'),hdrCellEM('Why (question)','27506F')]);
@@ -3063,13 +3063,13 @@ function saveAsExcel(){
     const active=[]; DOCS_CATALOG.forEach(g=>g.items.forEach(it=>{ if(_emOn(it.trig)) active.push(it); }));
     active.sort((a,b)=>{ const r=grpRank(a.appr)-grpRank(b.appr); if(r) return r; return ((PHRANK[a.tl]==null)?9:PHRANK[a.tl])-((PHRANK[b.tl]==null)?9:PHRANK[b.tl]); });
     const sectionMerges=[];
-    active.forEach((d,i)=>{ const z=(i%2===1); const resp=(d.appr==='PMO')?'PM':d.appr;
+    active.forEach((d,i)=>{ const z=(i%2===1); const isPMO=(d.appr==='PMO'); const resp=isPMO?'PM':'System Owner'; const cons=isPMO?'ESPMO':d.appr;
       EM.push([
         cell(d.tl||'',z,{}),
         cell(d.nm,z,{bold:true,color:TEALDK}),
         cell(resp,z,{color:'1F6F6A',bold:true}),
         cell('PM',z,{color:'8A3A3A',bold:true}),
-        cell('ESPMO',z,{color:'7A5C00'}),
+        cell(cons,z,{color:'7A5C00'}),
         cell('Sponsor',z,{color:'5A6472'}),
         cell(d.req||'',z,{}),
         cell(d.why||'',z,{color:'27506F'})
