@@ -2796,7 +2796,7 @@ function saveAsExcel(){
     ]},
   ];
   const T=[
-    [{v:'A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
+    [{v:'The PM is accountable for completing this documentation set: the PM completes the PMO documents, and each listed team completes & files its own. Filter the Approver / Requirement / Status columns to see who completes what.    A checklist the PM reviews and marks up. "Document / Engagement" includes both required artifacts and the enterprise front door when a division/team engagement is required. Requirement = Required (every project, or always once its trigger applies) or As Needed (depends on the project — applies only when a specific situation arises, e.g., AI, a new product, non-standard software). "Why included" names the question(s) that pulled each item in. Approver/Advise names the team that approves or advises. ESPMO Interlock Agreement is a checkbox (☐ = no, ☑ = yes). Status tracks progress; Notes is free-text; PM Consolidation groups templates to combine (same number = merged).',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow},{v:'',s:noteRow}],
     [{v:'Document / Engagement',s:colhdr},{v:'Approver / Advise',s:colhdr},{v:'Timeline',s:colhdr},{v:'Requirement',s:colhdr},{v:'Why included (which question)',s:colhdr},{v:'Count',s:colhdr},{v:'ESPMO Interlock Agreement',s:colhdr},{v:'Status',s:colhdr},{v:'Notes',s:colhdr},{v:'PM Consolidation',s:colhdr}]
   ];
   let docNo=0;
@@ -2813,10 +2813,12 @@ function saveAsExcel(){
       T.push([{v:it.nm,s:z?cellZ:cell},{v:it.appr,s:own},{v:it.tl,s:base},{v:it.req,s:base},{v:it.why,s:base},{v:(++docNo),s:z?numCZ:numC},{v:'\u2610',s:z?numCZ:numC},{v:'Planned',s:base},{v:it.note||'',s:base},{v:'',s:z?numCZ:numC}]);
     });
   });
+  const _docLast=T.length;
   T.push([{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
   T.push([{v:'Download the official CA-PMF templates for these artifacts: https://www.capmf.cdt.ca.gov/Templates.html',s:{font:{name:F,italic:true,sz:8,color:{rgb:'9AA0A6'}},alignment:{wrapText:true,vertical:'top'}}},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val},{v:'',s:val}]);
   { const ch=withChrome(T,10,'Documents',4); const aWs=makeSheet(ch.rows,[34,30,11,13,24,6,22,13,40,14],ch.merges,ch.rowH);
     aWs['!merges']=(aWs['!merges']||[]).concat([M(1,0,1,9)]);
+    aWs['!autofilter']={ref:'A3:J'+(_docLast+1)};
     XLSX.utils.book_append_sheet(wb, aWs, 'Documents'); }
 
   // ---------- Sheet 5: CSD Engagement (front-door routing, from CSD input) ----------
@@ -3044,51 +3046,42 @@ function saveAsExcel(){
     };
     const hdrCellEM=(t,col)=>({v:t,s:{font:{name:F,bold:true,sz:8,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col||TEALDK}},alignment:{horizontal:'left',vertical:'center',wrapText:true}}});
     const EM=[];
-    EM.push([{v:'Engagement Matrix — who does what on each deliverable this project triggered (EDD PM RACI)',s:{font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:TEALDK}}}})));
-    EM.push([{v:'Only documents triggered by this project\u2019s answers are shown, grouped by the team that owns / approves each. Mirrors the Documents tab, pivoted by owner.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
-    EM.push([hdrCellEM('Owner'),hdrCellEM('#'),hdrCellEM('Phase'),hdrCellEM('Document / Engagement'),
-             hdrCellEM('Approver / Advises','1F6F6A'),hdrCellEM('Requirement','C8973F'),
-             hdrCellEM('Interlock','5A6472'),hdrCellEM('Why (question)','27506F')]);
+    EM.push([{v:'Engagement Matrix — RACI for each document this project triggered',s:{font:{name:F,bold:true,sz:10,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:TEALDK}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:TEALDK}}}})));
+    EM.push([{v:'The PM is Accountable (A) for completing the full documentation set. Each listed team is Responsible (R) for completing & filing its own documents; the PM is Responsible for the PMO documents.    RACI — R: Responsible (does & files it)  ·  A: Accountable (PM, owns the outcome)  ·  C: Consulted (gives input)  ·  I: Informed (kept in the loop).    Only documents triggered by this project are shown — use the column filters to show who completes what (R / Requirement) or who to engage.',s:{font:{name:F,italic:true,sz:7.5,color:{rgb:'5A6472'}},alignment:{vertical:'center',wrapText:true}}}].concat(Array(EMW-1).fill({v:'',s:{}})));
+    EM.push([hdrCellEM('Phase'),hdrCellEM('Document / Engagement'),hdrCellEM('R · Responsible','1F6F6A'),hdrCellEM('A · Accountable','8A3A3A'),
+             hdrCellEM('C · Consulted','C8973F'),hdrCellEM('I · Informed','5A6472'),
+             hdrCellEM('Requirement','7A5C00'),hdrCellEM('Why (question)','27506F')]);
     const cell=(t,z,opt)=>({v:t||'',s:Object.assign({font:{name:F,sz:8,color:{rgb:(opt&&opt.color)||INK},bold:!!(opt&&opt.bold)},fill:z?{fgColor:{rgb:ZEBRA}}:undefined,alignment:{vertical:'top',wrapText:true}}, {})});
     const sectionBand=(label,col)=>[{v:label,s:{font:{name:F,bold:true,sz:9,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:col}},alignment:{vertical:'center'}}}].concat(Array(EMW-1).fill({v:'',s:{fill:{fgColor:{rgb:col}}}}));
     const assistTag=(grp)=>({v:grp,s:{font:{name:F,bold:true,sz:8,color:{rgb:grp==='PMO'?'FFFFFF':'8A5A12'}},fill:{fgColor:{rgb:grp==='PMO'?TEAL:'FCEFD6'}},alignment:{horizontal:'center',vertical:'center'}}});
-    // Consolidated: source the same documents the Documents tab shows, grouped by owner.
+    // Consolidated RACI: same documents as the Documents tab, one flat filterable row each.
     const _emflags=Object.assign({}, _recompute().flags);
     const _emOn=t=>{ if(Array.isArray(t)) return t.some(x=>_emOn(x)); t=t||'base'; if(t==='base')return true; if(t==='acquisition')return state.acquisition==='y'||state.acquisition==='ns'; if(t==='support')return !!state.support && state.support!=='na'; return !!_emflags[t]; };
-    const active=[]; DOCS_CATALOG.forEach(g=>g.items.forEach(it=>{ if(_emOn(it.trig)) active.push(it); }));
-    const sectionMerges=[]; let emNo=0;
-    const ownerOf=(d)=>d.appr;
-    const renderGroup=(grp,col)=>{
-      const items=active.filter(d=>ownerOf(d)===grp);
-      if(!items.length) return;
-      sectionMerges.push(EM.length);
-      EM.push(sectionBand(grp+'  ·  '+items.length+' document'+(items.length===1?'':'s'), col));
-      items.forEach((d,i)=>{ const z=(i%2===1);
-        EM.push([
-          assistTag(grp),
-          cell(String(++emNo),z,{bold:true,color:TEALDK}),
-          cell(d.tl||'',z,{}),
-          cell(d.nm,z,{}),
-          cell(d.appr,z,{color:'1F6F6A',bold:true}),
-          cell(d.req||'',z,{color:'7A5C00'}),
-          cell('☐',z,{color:'5A6472'}),
-          cell(d.why||'',z,{color:'27506F'})
-        ]);
-      });
-    };
     const GRP_ORDER={'PMO':0,'Development Team':1,'RPP / RRB':2,'Business Analyst':3,'ISD / Cloud Technologies Section':4,'ISD':5,'IT Procurement':6,'Cybersecurity — Cyber Defense and Response Group (CDRG)':7,'Cybersecurity — Operations and Fraud Group (COFG)':8,'Cybersecurity — Integrated Risk Management (IRM)':9,'Cybersecurity — Privacy Oversight Group (POG)':10,'Cybersecurity — Security Policy and Compliance (SPC)':11,'EAAI':12,'TARC':13,'PDD / Enterprise Testing Solutions (ETS)':14,'Document Technology Services Section':15,'Enterprise Applications Section':16,'Mainframe Services Section':17};
     const grpRank=o=> (o in GRP_ORDER)?GRP_ORDER[o]:50;
-    const GRP_COLOR={'PMO':TEALDK,'Development Team':'2C5E86','RPP / RRB':'2C5E86','Business Analyst':'3B6B46','ISD / Cloud Technologies Section':'1F6F6A','ISD':'1F6F6A','IT Procurement':'6A4E86','Cybersecurity — Cyber Defense and Response Group (CDRG)':'8A3A3A','Cybersecurity — Operations and Fraud Group (COFG)':'9B4A2F','Cybersecurity — Integrated Risk Management (IRM)':'7A4A2A','Cybersecurity — Privacy Oversight Group (POG)':'6A4E86','Cybersecurity — Security Policy and Compliance (SPC)':'5A4A7A','EAAI':'7A5320','TARC':'7A5320','PDD / Enterprise Testing Solutions (ETS)':'2C5E86','Document Technology Services Section':'3B6B46','Enterprise Applications Section':'2C5E86','Mainframe Services Section':'6A4E86'};
-    const grpColor=o=> GRP_COLOR[o]||'2C5E86';
-    const distinctOwners=[]; active.forEach(d=>{ const o=ownerOf(d); if(distinctOwners.indexOf(o)<0) distinctOwners.push(o); });
-    distinctOwners.sort((x,y)=>grpRank(x)-grpRank(y));
-    distinctOwners.forEach(o=>renderGroup(o, grpColor(o)));
-    if(active.length===0) EM.push([cell('(no deliverables triggered yet — answer more questions)',false,{})].concat(Array(EMW-1).fill(cell('',false,{}))));
-    const emCols=[24,5,7,22,11,11,12,15];
+    const PHRANK={'Initiate':0,'Initiate / Plan':1,'Plan':2,'Analysis':3,'Design':4,'Execute':5,'Ongoing':6,'Close':7};
+    const active=[]; DOCS_CATALOG.forEach(g=>g.items.forEach(it=>{ if(_emOn(it.trig)) active.push(it); }));
+    active.sort((a,b)=>{ const r=grpRank(a.appr)-grpRank(b.appr); if(r) return r; return ((PHRANK[a.tl]==null)?9:PHRANK[a.tl])-((PHRANK[b.tl]==null)?9:PHRANK[b.tl]); });
+    const sectionMerges=[];
+    active.forEach((d,i)=>{ const z=(i%2===1); const resp=(d.appr==='PMO')?'PM':d.appr;
+      EM.push([
+        cell(d.tl||'',z,{}),
+        cell(d.nm,z,{bold:true,color:TEALDK}),
+        cell(resp,z,{color:'1F6F6A',bold:true}),
+        cell('PM',z,{color:'8A3A3A',bold:true}),
+        cell('ESPMO',z,{color:'7A5C00'}),
+        cell('Sponsor',z,{color:'5A6472'}),
+        cell(d.req||'',z,{}),
+        cell(d.why||'',z,{color:'27506F'})
+      ]);
+    });
+    if(active.length===0) EM.push([cell('(no documents triggered yet — answer more questions)',false,{})].concat(Array(EMW-1).fill(cell('',false,{}))));
+    const emCols=[8,28,18,10,13,13,11,20];
     const baseMerges=[M(0,0,0,EMW-1),M(1,0,1,EMW-1)].concat(sectionMerges.map(r=>M(r,0,r,EMW-1)));
     const emWs=makeSheet(EM,emCols,baseMerges);
+    emWs['!autofilter']={ref:'A3:'+XLSX.utils.encode_col(EMW-1)+EM.length};
     emWs['!rows']=EM.map((_,i)=>{
-      if(i===0) return {hpt:18}; if(i===1) return {hpt:22}; if(i===2) return {hpt:14};
+      if(i===0) return {hpt:18}; if(i===1) return {hpt:52}; if(i===2) return {hpt:14};
       if(sectionMerges.includes(i)) return {hpt:16};
       return {hpt:24};
     });
